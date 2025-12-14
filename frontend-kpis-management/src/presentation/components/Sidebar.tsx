@@ -31,7 +31,7 @@ const menuItems = [
     disabled: true,
   },
   {
-    label: 'Eventos',
+    label: 'Administracion',
     to: '/events',
     icon: FaHeart,
     description: 'Proximamente...',
