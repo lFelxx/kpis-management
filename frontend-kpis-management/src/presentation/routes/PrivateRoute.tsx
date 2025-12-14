@@ -18,8 +18,8 @@ export const PrivateRoute = () =>{
 
     if (loading) {
         return (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
           </div>
         );
       }

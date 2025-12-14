@@ -45,7 +45,7 @@ export const Dashboard = () => {
       title: "Total Ventas",
       value: formatCurrency(safeTotalSales),
       description: "Ventas totales del equipo",
-      color: "bg-blue-500",
+      color: "bg-chart-4",
       trend: { value: 12, isPositive: true }
     },
     {
@@ -53,7 +53,7 @@ export const Dashboard = () => {
       title: "Meta Total",
       value: formatCurrency(safeTotalGoal),
       description: "Meta establecida",
-      color: "bg-indigo-500",
+      color: "bg-primary",
       trend: { value: 8, isPositive: true }
     },
     {
@@ -61,14 +61,14 @@ export const Dashboard = () => {
       title: "Asesor con mejor UPT",
       value: bestUptAdviser ? bestUptAdviser.adviserName : "N/A",
       description: bestUptAdviser ? `UPT: ${bestUptAdviser.upt || 'N/A'}` : "Sin datos",
-      color: "bg-green-500"
+      color: "bg-chart-1"
     },
     {
       icon: FaCheckCircle,
       title: "Cumplimiento",
       value: `${safeGoalAchievement.toFixed(1)}%`,
       description: "Porcentaje de meta alcanzada",
-      color: "bg-purple-500",
+      color: "bg-chart-2",
       trend: { value: 5, isPositive: safeGoalAchievement > 100 }
     },
     {
@@ -76,7 +76,7 @@ export const Dashboard = () => {
       title: "Promedio de Ventas",
       value: formatCurrency(safeAverageSales),
       description: "Por asesor",
-      color: "bg-yellow-500",
+      color: "bg-chart-3",
       trend: { value: 3, isPositive: true }
     },
     {
@@ -84,28 +84,28 @@ export const Dashboard = () => {
       title: "Mejor Asesor",
       value: bestAdviser ? bestAdviser.adviserName : "N/A",
       description: bestAdviser ? `${formatCurrency(bestAdviser.totalSales)} en ventas` : "",
-      color: "bg-pink-500"
+      color: "bg-accent-foreground"
     }
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-red-600">{error}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
+        <p className="text-destructive">{error}</p>
         <button
           onClick={() => {
             fetchAdvisers();
             fetchMetrics();
           }}
-          className="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors"
+          className="px-4 py-2 bg-chart-1/20 hover:bg-chart-1/30 text-chart-1 rounded-lg transition-colors"
         >
           Reintentar
         </button>
@@ -114,10 +114,10 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Visión general del rendimiento del equipo</p>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">Visión general del rendimiento del equipo</p>
       </div>
 
       {/* Tarjetas del Dashboard */}
@@ -129,7 +129,7 @@ export const Dashboard = () => {
 
       {/* Tabla de asesores */}
       <div className="mt-10">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Resumen de Asesores</h2>
+        <h2 className="text-2xl font-semibold text-foreground mb-4">Resumen de Asesores</h2>
         <AdviserTable advisers={advisers} hideActions />
       </div>
     </div>

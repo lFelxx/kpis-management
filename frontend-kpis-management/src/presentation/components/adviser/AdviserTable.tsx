@@ -26,14 +26,14 @@ export const AdviserTable = ({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg text-black">
+      <div className="bg-card rounded-xl shadow-lg border border-border">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Asesores</h2>
+            <h2 className="text-xl font-semibold text-foreground">Asesores</h2>
             {!hideActions && (
               <button
                 onClick={() => setIsUpdateGoalsModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-colors text-sm font-medium"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow transition-colors text-sm font-medium"
               >
                 Establecer Meta
               </button>
@@ -42,30 +42,33 @@ export const AdviserTable = ({
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ventas</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meta</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <tr className="bg-muted">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ventas</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Meta</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
                 {!hideActions && <th className="px-6 py-3"></th>}
               </tr>
             </thead>
             <tbody>
               {advisers.map((adviser) => (
-                <tr key={adviser.id} className="hover:bg-gray-50 transition-colors duration-200">
+                <tr key={adviser.id} className="hover:bg-accent transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-semibold text-gray-900">{adviser.name} {adviser.lastName}</span>
+                    <span className="font-semibold text-foreground">{adviser.name} {adviser.lastName}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-blue-600 font-medium">
+                    <span className="text-chart-4 font-medium">
                       $ {(adviser.currentMonthSales ?? 0).toLocaleString()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-indigo-600 font-medium">${(adviser.goalValue ?? 0).toLocaleString()}</span>
+                    <span className="text-primary font-medium">${(adviser.goalValue ?? 0).toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${adviser.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      adviser.active 
+                        ? 'bg-chart-1/20 text-chart-1 shadow-[0_2px_8px_rgba(16,185,129,0.3)]' 
+                        : 'bg-destructive/20 text-destructive shadow-[0_2px_8px_rgba(239,68,68,0.2)]'
                       }`}>
                       {adviser.active ? 'Activo' : 'Inactivo'}
                     </span>
@@ -75,21 +78,21 @@ export const AdviserTable = ({
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => onEdit?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-yellow-100 text-yellow-800 hover:bg-yellow-200 text-xs font-semibold transition"
+                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-3/20 text-chart-3 hover:bg-chart-3/30 shadow-[0_2px_8px_rgba(234,179,8,0.3)] hover:shadow-[0_4px_12px_rgba(234,179,8,0.4)] text-xs font-semibold transition"
                           title="Editar"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => onSum?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 text-xs font-semibold transition"
+                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-1/20 text-chart-1 hover:bg-chart-1/30 shadow-[0_2px_8px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.4)] text-xs font-semibold transition"
                           title="Sumar"
                         >
                           Sumar
                         </button>
                         <button
                           onClick={() => onEditComparison?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs font-semibold transition"
+                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-4/20 text-chart-4 hover:bg-chart-4/30 shadow-[0_2px_8px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.4)] text-xs font-semibold transition"
                           title="Comparación"
                         >
                           <PencilIcon className="h-4 w-4" />
@@ -97,14 +100,14 @@ export const AdviserTable = ({
                         </button>
                         <button
                           onClick={() => onEditUpt?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 text-xs font-semibold transition"
+                          className="flex items-center gap-1 px-3 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30 shadow-[0_2px_8px_rgba(168,85,247,0.3)] hover:shadow-[0_4px_12px_rgba(168,85,247,0.4)] text-xs font-semibold transition"
                           title="UPT"
                         >
                           UPT
                         </button>
                         <button
                           onClick={() => onDelete?.(adviser.id)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-red-100 text-red-800 hover:bg-red-200 text-xs font-semibold transition"
+                          className="flex items-center gap-1 px-3 py-1 rounded bg-destructive/20 text-destructive hover:bg-destructive/30 shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:shadow-[0_4px_12px_rgba(239,68,68,0.4)] text-xs font-semibold transition"
                           title="Eliminar"
                         >
                           Eliminar

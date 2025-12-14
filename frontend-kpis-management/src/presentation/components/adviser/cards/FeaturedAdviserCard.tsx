@@ -11,34 +11,34 @@ interface FeaturedAdviserCardProps {
 
 const styles = {
     best: {
-        cardBg: 'bg-white',
-        borderColor: 'border-emerald-400',
-        iconBg: 'bg-emerald-500',
-        avatarGradient: 'from-emerald-400 to-teal-500',
-        badgeGradient: 'from-yellow-400 to-amber-500',
-        salesColor: 'text-emerald-600',
-        progressBg: 'bg-emerald-100',
-        progressBar: 'bg-emerald-500',
-        statBorder: 'border-emerald-200',
-        statBg: 'bg-emerald-50',
+        cardBg: 'bg-card',
+        borderColor: 'border-chart-1',
+        iconBg: 'bg-chart-1',
+        avatarGradient: 'from-chart-1 to-primary',
+        badgeGradient: 'from-chart-3 to-chart-3',
+        salesColor: 'text-chart-1',
+        progressBg: 'bg-chart-1/20',
+        progressBar: 'bg-chart-1',
+        statBorder: 'border-chart-1/30',
+        statBg: 'bg-chart-1/10',
         label: 'Mejor Asesor',
-        labelBg: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+        labelBg: 'bg-gradient-to-r from-chart-1 to-primary',
         labelIcon: '🏆',
         icon: TrophyIcon,
     },
     worst: {
-        cardBg: 'bg-white',
-        borderColor: 'border-orange-400',
-        iconBg: 'bg-orange-500',
-        avatarGradient: 'from-orange-400 to-red-500',
-        badgeGradient: 'from-slate-600 to-slate-700',
-        salesColor: 'text-orange-600',
-        progressBg: 'bg-orange-100',
-        progressBar: 'bg-orange-500',
-        statBorder: 'border-orange-200',
-        statBg: 'bg-orange-50',
+        cardBg: 'bg-card',
+        borderColor: 'border-chart-3',
+        iconBg: 'bg-chart-3',
+        avatarGradient: 'from-chart-3 to-destructive',
+        badgeGradient: 'from-muted to-muted-foreground',
+        salesColor: 'text-chart-3',
+        progressBg: 'bg-chart-3/20',
+        progressBar: 'bg-chart-3',
+        statBorder: 'border-chart-3/30',
+        statBg: 'bg-chart-3/10',
         label: 'Plan hermano',
-        labelBg: 'bg-gradient-to-r from-orange-500 to-red-500',
+        labelBg: 'bg-gradient-to-r from-chart-3 to-destructive',
         labelIcon: '⚡',
         icon: Frown,
     },
@@ -142,7 +142,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="text-xl font-bold text-gray-900"
+                    className="text-xl font-bold text-foreground"
                 >
                     {adviser?.name || ''} {adviser?.lastName || ''}
                 </motion.h2>
@@ -156,7 +156,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                 transition={{ delay: 0.4, type: "spring" }}
                 className="flex justify-center mb-4"
             >
-                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${theme.avatarGradient} flex items-center justify-center shadow-xl border-3 border-white ring-2 ring-gray-100`}>
+                <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${theme.avatarGradient} flex items-center justify-center shadow-xl border-3 border-card ring-2 ring-border`}>
                     <span className="text-4xl font-extrabold text-white">
                         {adviser?.name?.charAt(0) || ''}{adviser?.lastName?.charAt(0) || ''}
                     </span>
@@ -170,14 +170,14 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                 transition={{ delay: 0.3 }}
                 className={`${theme.statBg} rounded-lg p-4 mb-3 border-2 ${theme.statBorder}`}
             >
-                <p className="text-gray-600 text-sm font-semibold mb-1">Ventas del Mes</p>
+                <p className="text-muted-foreground text-sm font-semibold mb-1">Ventas del Mes</p>
                 <p className={`text-3xl font-black ${theme.salesColor} mb-3`}>
                     ${((adviser?.currentMonthSales ?? 0) / 1000).toFixed(0)}K
                 </p>
                 
                 {/* Barra de progreso */}
                 <div>
-                    <div className="flex justify-end text-xs text-gray-600 font-bold mb-1.5">
+                    <div className="flex justify-end text-xs text-muted-foreground font-bold mb-1.5">
                         <span>{achievement.toFixed(1)}%</span>
                     </div>
                     <div className={`h-3 ${theme.progressBg} rounded-full overflow-hidden`}>
@@ -200,7 +200,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
             >
                 {/* Meta */}
                 <div className={`${theme.statBg} rounded-lg p-3 border ${theme.statBorder}`}>
-                    <p className="text-gray-600 text-xs font-semibold mb-1">Meta</p>
+                    <p className="text-muted-foreground text-xs font-semibold mb-1">Meta</p>
                     <p className={`text-xl font-bold ${theme.salesColor}`}>
                         ${((adviser?.goalValue ?? 0) / 1000).toFixed(0)}K
                     </p>
@@ -208,11 +208,11 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
 
                 {/* Estado */}
                 <div className={`${theme.statBg} rounded-lg p-3 border ${theme.statBorder} flex flex-col justify-start items-start`}>
-                    <p className="text-gray-600 text-xs font-semibold mb-1">Estado</p>
+                    <p className="text-muted-foreground text-xs font-semibold mb-1">Estado</p>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                         adviser?.active 
-                            ? 'bg-emerald-100 text-emerald-800' 
-                            : 'bg-gray-200 text-gray-800'
+                            ? 'bg-chart-1/20 text-chart-1' 
+                            : 'bg-muted text-muted-foreground'
                     }`}>
                         {adviser?.active ? '✓ Activo' : '✗ Inactivo'}
                     </span>

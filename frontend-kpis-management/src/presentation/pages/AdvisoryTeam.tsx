@@ -40,7 +40,7 @@ export const AdvisoryTeam = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background">
       <Toaster position="top-right" />
       <AddEditAdviserModal />
 
@@ -60,12 +60,12 @@ export const AdvisoryTeam = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Miembros del equipo</h1>
-            <p className="text-gray-600 mt-2">Gestiona los miembros del equipo</p>
+            <h1 className="text-3xl font-bold text-foreground">Miembros del equipo</h1>
+            <p className="text-muted-foreground mt-2">Gestiona los miembros del equipo</p>
           </div>
           <button
             onClick={openAddModal}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition-colors"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-md transition-colors"
           >
             + Agregar asesor
           </button>

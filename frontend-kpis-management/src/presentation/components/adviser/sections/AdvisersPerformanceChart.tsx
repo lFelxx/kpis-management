@@ -61,7 +61,7 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) =>{
           legend: {
             position: 'top',
             labels: {
-              color: '#374151',
+              color: '#ffffff',
               font: { size: 14, family: "'Inter', sans-serif" },
               pointStyle: 'circle',
               usePointStyle: true
@@ -70,14 +70,14 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) =>{
           title: {
             display: true,
             text: 'Ventas vs Metas por Asesor',
-            color: '#1F2937',
+            color: '#ffffff',
             font: { size: 18, weight: 'bold', family: "'Inter', sans-serif" }
           },
           tooltip: {
-            backgroundColor: 'white',
-            titleColor: '#1F2937',
-            bodyColor: '#374151',
-            borderColor: '#E5E7EB',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
             borderWidth: 1,
             cornerRadius: 8,
             usePointStyle: true,
@@ -93,14 +93,14 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) =>{
           x: {
             beginAtZero: true,
             ticks: {
-              color: '#374151',
+              color: '#ffffff',
               callback: val => `$${Number(val).toLocaleString()}`
             },
-            grid: { color: 'rgba(0,0,0,0.05)' }
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           },
           y: {
-            ticks: { color: '#374151', font: { size: 12 } },
-            grid: { color: 'rgba(0,0,0,0.05)' }
+            ticks: { color: '#ffffff', font: { size: 12 } },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           }
         },
         animation: {
@@ -111,7 +111,7 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) =>{
     
       return (
         <motion.div
-          className="mb-8 bg-white p-8 rounded-2xl shadow-lg backdrop-blur-sm bg-opacity-90"
+          className="mb-8 bg-card p-8 rounded-2xl shadow-md border border-border"
           style={{ height: '500px' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

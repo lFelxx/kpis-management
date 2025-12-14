@@ -103,20 +103,20 @@ export const EditWeeklyComparisonModal: React.FC = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-200">
+        <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-border">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between p-6 border-b border-border">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Editar Comparación Semanal</h2>
-              <p className="text-sm text-indigo-600 mt-1 font-semibold">
+              <h2 className="text-2xl font-bold text-foreground">Editar Comparación Semanal</h2>
+              <p className="text-sm text-primary mt-1 font-semibold">
                 Semana {weekNumber} - {month}/{year}
               </p>
             </div>
             <button
               onClick={closeModal}
-              className="rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition"
+              className="rounded-full p-2 bg-muted hover:bg-muted/80 transition"
             >
-              <XMarkIcon className="h-6 w-6 text-gray-700" />
+              <XMarkIcon className="h-6 w-6 text-muted-foreground" />
             </button>
           </div>
 
@@ -124,7 +124,7 @@ export const EditWeeklyComparisonModal: React.FC = () => {
           <div className="p-6">
             {!editingType ? (
               <div className="space-y-4">
-                <p className="text-gray-700 mb-4 font-medium">
+                <p className="text-foreground mb-4 font-medium">
                   Selecciona qué valor deseas editar:
                 </p>
                 {/* Botón para editar semana actual */}
@@ -133,13 +133,13 @@ export const EditWeeklyComparisonModal: React.FC = () => {
                     console.log('🎯 Botón Semana Actual clickeado - Valor mostrado:', formatCurrency(currentWeekSales));
                     setEditingType('current');
                   }}
-                  className="w-full flex items-center justify-between p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 transition"
+                  className="w-full flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/20 border-2 border-primary/30 transition"
                 >
                   <div>
-                    <p className="font-semibold text-indigo-700">Semana Actual</p>
-                    <p className="text-lg font-bold text-gray-900">{formatCurrency(currentWeekSales)}</p>
+                    <p className="font-semibold text-primary">Semana Actual</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(currentWeekSales)}</p>
                   </div>
-                  <PencilIcon className="h-6 w-6 text-indigo-600" />
+                  <PencilIcon className="h-6 w-6 text-primary" />
                 </button>
                 {/* Botón para editar semana anterior */}
                 <button
@@ -147,22 +147,22 @@ export const EditWeeklyComparisonModal: React.FC = () => {
                     console.log('🎯 Botón Semana Anterior clickeado - Valor mostrado:', formatCurrency(previousWeekSales));
                     setEditingType('previous');
                   }}
-                  className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 transition"
+                  className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 border-2 border-border transition"
                 >
                   <div>
-                    <p className="font-semibold text-gray-700">Semana Anterior</p>
-                    <p className="text-lg font-bold text-gray-900">{formatCurrency(previousWeekSales)}</p>
+                    <p className="font-semibold text-foreground">Semana Anterior</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(previousWeekSales)}</p>
                   </div>
-                  <PencilIcon className="h-6 w-6 text-gray-500" />
+                  <PencilIcon className="h-6 w-6 text-muted-foreground" />
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-gray-700 font-medium">
-                  Editando ventas de la semana <span className="font-bold text-indigo-600">{editingType === 'current' ? 'actual' : 'anterior'}</span>:
+                <p className="text-foreground font-medium">
+                  Editando ventas de la semana <span className="font-bold text-primary">{editingType === 'current' ? 'actual' : 'anterior'}</span>:
                 </p>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Valor de ventas
                   </label>
                   <input
@@ -176,13 +176,13 @@ export const EditWeeklyComparisonModal: React.FC = () => {
                         setTempPreviousSales(value);
                       }
                     }}
-                    className="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-indigo-50 text-gray-900 text-lg font-bold transition"
+                    className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
                     placeholder="Ingresa el valor"
                     min="0"
                     step="0.01"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Formato: <span className="font-semibold text-indigo-700">{formatCurrency(editingType === 'current' ? tempCurrentSales : tempPreviousSales)}</span>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Formato: <span className="font-semibold text-primary">{formatCurrency(editingType === 'current' ? tempCurrentSales : tempPreviousSales)}</span>
                   </p>
                 </div>
               </div>
@@ -190,18 +190,18 @@ export const EditWeeklyComparisonModal: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
             {editingType && (
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition"
+                className="px-4 py-2 text-foreground bg-muted hover:bg-muted/80 rounded-lg font-semibold transition"
               >
                 Cancelar
               </button>
             )}
             <button
               onClick={closeModal}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition"
+              className="px-4 py-2 text-foreground bg-muted hover:bg-muted/80 rounded-lg font-semibold transition"
             >
               Cerrar
             </button>
@@ -209,7 +209,7 @@ export const EditWeeklyComparisonModal: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={isLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {isLoading ? 'Guardando...' : 'Guardar'}
               </button>

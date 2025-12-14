@@ -66,38 +66,38 @@ export const UpdateAllGoalsModal = ({ isOpen, onClose }: UpdateAllGoalsModalProp
       <div className="fixed inset-0 bg-black bg-opacity-40" aria-hidden="true" />
 
              <div className="fixed inset-0 flex items-center justify-center p-4">
-         <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full">
-           <DialogTitle className="text-lg font-bold text-gray-900 mb-2">
+         <div className="bg-card rounded-xl shadow-xl p-8 max-w-md w-full border border-border">
+           <DialogTitle className="text-lg font-bold text-foreground mb-2">
              Establecer Meta para Todos los Asesores
            </DialogTitle>
-                         <p className="text-gray-600 mb-6">
+                         <p className="text-muted-foreground mb-6">
                 Ingresa el valor de la meta que se aplicará a todos los asesores para el mes actual.
               </p>
               <input
                 type="number"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                className="w-full border rounded px-3 py-2 mb-4 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border-2 border-border rounded-lg px-4 py-3 mb-4 bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition"
                 placeholder="Ingresa el valor de la meta"
                 min={0}
                 step={1000}
                 autoFocus
               />
               {goal && (
-                <p className="text-sm text-gray-500 mb-4">
-                  Formato: <span className="font-semibold text-indigo-700">{formatCurrency(Number(goal) || 0)}</span>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Formato: <span className="font-semibold text-primary">{formatCurrency(Number(goal) || 0)}</span>
                 </p>
               )}
            <div className="flex gap-4 justify-center">
                            <button
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium"
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-medium"
                 onClick={handleClose}
                 disabled={loading}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium disabled:opacity-50"
                 onClick={handleSetGoal}
                 disabled={!goal || Number(goal) <= 0 || loading}
               >

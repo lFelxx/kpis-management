@@ -45,23 +45,23 @@ export const AdviserList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8 bg-red-50 rounded-lg border border-red-200">
-        <h3 className="text-red-800 font-semibold mb-2">Error</h3>
-        <p className="text-red-600">{error}</p>
+      <div className="p-8 bg-destructive/10 rounded-lg border border-destructive/30">
+        <h3 className="text-destructive font-semibold mb-2">Error</h3>
+        <p className="text-destructive/80">{error}</p>
         <button
           onClick={() => {
             fetchAdvisers();
             fetchMetrics();
           }}
-          className="mt-4 px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors"
+          className="mt-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
         >
           Reintentar
         </button>
@@ -70,7 +70,7 @@ export const AdviserList: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen space-y-8">
+    <div className="p-6 bg-background min-h-screen space-y-8">
       <FeaturedAdvisersSection bestAdviser={bestAdviserAsAdviser} worstAdviser={worstAdviser}/>
       <AdvisersPerformanceChart advisers={sortedAdvisers}/>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

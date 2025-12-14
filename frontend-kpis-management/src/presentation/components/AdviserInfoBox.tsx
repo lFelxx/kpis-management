@@ -22,15 +22,15 @@ const AdviserInfoBox: React.FC<AdviserInfoBoxProps> = ({
   goal,
   active,
   upt,
-  salesColor = 'text-emerald-600',
-  goalColor = 'text-emerald-600',
-  stateActiveColor = 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200',
-  stateInactiveColor = 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-  bgColor = 'bg-gray-100',
+  salesColor = 'text-chart-1',
+  goalColor = 'text-chart-2',
+  stateActiveColor = 'bg-chart-1/20 text-chart-1 hover:bg-chart-1/30',
+  stateInactiveColor = 'bg-muted text-muted-foreground hover:bg-muted/80',
+  bgColor = 'bg-card',
   className = '',
   currencySymbol = '$',
-  labelColor = 'text-gray-600',
-  separatorColor = 'from-transparent via-gray-300 to-transparent',
+  labelColor = 'text-muted-foreground',
+  separatorColor = 'from-transparent via-border to-transparent',
 }) => {
   const itemVariants = {
     hidden: { opacity: 0, x: -10 },
@@ -46,7 +46,7 @@ const AdviserInfoBox: React.FC<AdviserInfoBoxProps> = ({
 
   return (
     <div
-      className={`rounded-2xl px-5 py-5 shadow-lg border border-gray-200/50 flex flex-col gap-3 items-center w-full ${bgColor} ${className} transition-all duration-300 hover:shadow-xl`}
+      className={`rounded-2xl px-5 py-5 shadow-md border border-border flex flex-col gap-3 items-center w-full ${bgColor} ${className} transition-all duration-300 hover:shadow-lg`}
     >
       <motion.div 
         custom={0}
@@ -116,7 +116,7 @@ const AdviserInfoBox: React.FC<AdviserInfoBoxProps> = ({
             <span className={`text-sm ${labelColor} font-semibold`}>UPT</span>
             <motion.span 
               whileHover={{ scale: 1.05 }}
-              className="text-lg font-extrabold text-indigo-600 transition-colors"
+              className="text-lg font-extrabold text-accent-foreground transition-colors"
             >
               {upt || ''}
             </motion.span>

@@ -250,28 +250,28 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
   const currentMonthSalesNeto = currentMonthSales / 1.19; // Ventas sin IVA (dividir por 1.19)
 
   return (
-    <div className="lg:col-span-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100 p-8">
+    <div className="lg:col-span-3 bg-gradient-to-r from-chart-1/10 to-chart-1/20 rounded-xl border border-border p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
         <div className="space-y-2">
-          <h3 className="text-2xl font-bold text-emerald-800">Análisis de Ventas</h3>
-          <p className="text-emerald-600">Ventas brutas, netas y comisiones del mes actual</p>
+          <h3 className="text-2xl font-bold text-foreground">Análisis de Ventas</h3>
+          <p className="text-muted-foreground">Ventas brutas, netas y comisiones del mes actual</p>
         </div>
         <div className="text-right">
-          <p className="text-4xl font-bold text-emerald-700 animate-pulse">
+          <p className="text-4xl font-bold text-primary animate-pulse">
             {formatCurrency(animateValue)}
           </p>
-          <p className="text-sm text-emerald-600">Comisión del 1% (sobre ventas netas)</p>
+          <p className="text-sm text-muted-foreground">Comisión del 1% (sobre ventas netas)</p>
         </div>
       </div>  
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Gráfico de línea de crecimiento */}
-        <div className="bg-white/50 p-6 rounded-lg border border-emerald-100">
+        <div className="bg-card/50 p-6 rounded-lg border border-border">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-lg font-medium text-emerald-800">Evolución de Ganancias 2025</h4>
+            <h4 className="text-lg font-medium text-foreground">Evolución de Ganancias 2025</h4>
             <div className="text-right">
-              <p className="text-sm text-emerald-600">Tasa de comisión: 1%</p>
-              <p className="text-xs text-emerald-500">Sobre ventas netas (sin IVA)</p>
+              <p className="text-sm text-muted-foreground">Tasa de comisión: 1%</p>
+              <p className="text-xs text-muted-foreground">Sobre ventas netas (sin IVA)</p>
             </div>
           </div>
           <div className="h-80">
@@ -280,8 +280,8 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
         </div>
 
         {/* Gráfico de barras */}
-        <div className="bg-white/50 p-6 rounded-lg border border-emerald-100">
-          <h4 className="text-lg font-medium text-emerald-800 mb-4">Progreso de Ventas</h4>
+        <div className="bg-card/50 p-6 rounded-lg border border-border">
+          <h4 className="text-lg font-medium text-foreground mb-4">Progreso de Ventas</h4>
           <div className="h-64">
             <Bar key={`bar-chart-${currentAdviser.id}`} data={barData} options={barOptions} />
           </div>
@@ -290,29 +290,29 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
 
       {/* Indicadores de ganancias */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/50 p-6 rounded-lg border border-emerald-100">
-          <h4 className="text-sm font-medium text-emerald-800 mb-2">Ventas del Mes (Brutas)</h4>
-          <p className="text-2xl font-bold text-emerald-700">{formatCurrency(currentMonthSalesBruto)}</p>
-          <p className="text-xs text-emerald-600 mt-1">Con IVA incluido</p>
+        <div className="bg-card/50 p-6 rounded-lg border border-border">
+          <h4 className="text-sm font-medium text-foreground mb-2">Ventas del Mes (Brutas)</h4>
+          <p className="text-2xl font-bold text-primary">{formatCurrency(currentMonthSalesBruto)}</p>
+          <p className="text-xs text-muted-foreground mt-1">Con IVA incluido</p>
         </div>
 
-        <div className="bg-white/50 p-6 rounded-lg border border-emerald-100">
-          <h4 className="text-sm font-medium text-emerald-800 mb-2">Ventas del Mes (Netas)</h4>
-          <p className="text-2xl font-bold text-emerald-700">
+        <div className="bg-card/50 p-6 rounded-lg border border-border">
+          <h4 className="text-sm font-medium text-foreground mb-2">Ventas del Mes (Netas)</h4>
+          <p className="text-2xl font-bold text-primary">
             {formatCurrency(currentMonthSalesNeto)}
           </p>
-          <p className="text-xs text-emerald-600 mt-1">Sin IVA</p>
+          <p className="text-xs text-muted-foreground mt-1">Sin IVA</p>
         </div>
 
-        <div className="bg-white/50 p-6 rounded-lg border border-emerald-100">
-          <h4 className="text-sm font-medium text-emerald-800 mb-2">Progreso de Meta</h4>
-          <div className="w-full bg-emerald-100 rounded-full h-2.5 mb-2">
+        <div className="bg-card/50 p-6 rounded-lg border border-border">
+          <h4 className="text-sm font-medium text-foreground mb-2">Progreso de Meta</h4>
+          <div className="w-full bg-muted rounded-full h-2.5 mb-2">
             <div
-              className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out"
+              className="bg-chart-1 h-2.5 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
-          <p className="text-sm font-medium text-emerald-700">{progress.toFixed(1)}% alcanzado</p>
+          <p className="text-sm font-medium text-primary">{progress.toFixed(1)}% alcanzado</p>
         </div>
       </div>
     </div>

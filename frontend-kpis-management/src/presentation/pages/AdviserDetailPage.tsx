@@ -51,19 +51,19 @@ export const AdviserDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error || !currentAdviser) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-red-600">{error || 'Asesor no encontrado'}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background">
+        <p className="text-destructive">{error || 'Asesor no encontrado'}</p>
         <button
           onClick={() => navigate('/advisers')}
-          className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+          className="px-4 py-2 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-lg transition-colors"
         >
           Volver a la lista
         </button>
@@ -72,30 +72,30 @@ export const AdviserDetailPage = () => {
   }
 
   return (
-    <main className="flex-1 p-8">
+    <main className="flex-1 p-8 bg-background">
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => navigate('/advisers')}
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+          className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors"
         >
           Volver
         </button>
-        <h1 className="text-3xl font-bold text-slate-800">
+        <h1 className="text-3xl font-bold text-foreground">
           {currentAdviser.name} {currentAdviser.lastName}
         </h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Estado</h3>
-          <p className={`text-2xl font-bold ${currentAdviser.active ? 'text-green-500' : 'text-red-500'}`}>
+        <div className="bg-card rounded-xl shadow-md border border-border p-6">
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">Estado</h3>
+          <p className={`text-2xl font-bold ${currentAdviser.active ? 'text-chart-1' : 'text-destructive'}`}>
             {currentAdviser.active ? 'Activo' : 'Inactivo'}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">UPT</h3>
-          <p className="text-2xl font-bold text-slate-700">
+        <div className="bg-card rounded-xl shadow-md border border-border p-6">
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">UPT</h3>
+          <p className="text-2xl font-bold text-foreground">
             {currentAdviser.upt || 'Sin datos registrados aún'}
           </p>
         </div>
