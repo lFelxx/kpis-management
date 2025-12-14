@@ -40,14 +40,13 @@ const menuItems = [
 ];
 
 export const Sidebar = () => {
-  const user = {
-    name: 'Gina Diaz',
-    avatar: 'https://ui-avatars.com/api/?name=Gina+Diaz&background=0D8ABC&color=fff',
-  };
-
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+
+  // Generar avatar dinámicamente basado en el usuario
+  const userName = user?.username || 'Usuario';
+  const userAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D8ABC&color=fff`;
 
   const handleLogout = async () => {
     await logout();
@@ -66,15 +65,15 @@ export const Sidebar = () => {
         <div className="flex items-center gap-4">
           <div className="relative">
             <img 
-              src={user.avatar} 
-              alt="PUMA Logo" 
+              src={userAvatar} 
+              alt={userName} 
               className="w-12 h-12 rounded-xl ring-2 ring-border hover:ring-primary transition-all duration-300 bg-background p-1 object-contain"
             />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-chart-1 rounded-full border-2 border-sidebar"></div>
           </div>
           <div>
             <span className="text-xs text-muted-foreground">Bienvenido,</span>
-            <div className="font-bold text-base text-sidebar-foreground">{user.name}</div>
+            <div className="font-bold text-base text-sidebar-foreground">{userName}</div>
           </div>
         </div>
       </div>
