@@ -42,6 +42,8 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas (sin autenticación)
+                .requestMatchers(HttpMethod.OPTIONS, "/").permitAll()
+                .requestMatchers("/", "/favicon.ico").permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
