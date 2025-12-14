@@ -1,11 +1,8 @@
 import { create } from 'zustand';
-import { Adviser } from '../../../core/domain/Adviser/Adviser';
-
-// Defino el tipo MonthlySummary
-export type MonthlySummary = { id: string; year: number; month: number; totalSales: number };
+import { Adviser} from '../../../core/domain/Adviser/Adviser';
 
 // Extiende el tipo Adviser para incluir previousGoalValue
-export type AdviserForm = Adviser & { previousGoalValue?: number; monthlySummaries?: MonthlySummary[] };
+export type AdviserForm = Adviser & { previousGoalValue?: number };
 
 // Definimos el tipo para el estado del modal
 interface AdviserModalState {
