@@ -26,107 +26,118 @@ export const AdviserTable = ({
 
   return (
     <>
-      <div className="bg-card rounded-xl shadow-lg border border-border">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Asesores</h2>
+      <div className="bg-white/80 dark:bg-black/40 backdrop-blur-3xl rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-xl dark:shadow-none overflow-hidden">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Lista de Asesores</h2>
             {!hideActions && (
               <button
                 onClick={() => setIsUpdateGoalsModalOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow transition-colors text-sm font-medium"
+                className="btn-primary"
               >
-                Establecer Meta
+                Establecer Meta Global
               </button>
             )}
           </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-muted">
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ventas</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Meta</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
-                {!hideActions && <th className="px-6 py-3"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {advisers.map((adviser) => (
-                <tr key={adviser.id} className="hover:bg-accent transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-semibold text-foreground">{adviser.name} {adviser.lastName}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-chart-4 font-medium">
-                      $ {(adviser.currentMonthSales ?? 0).toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-primary font-medium">${(adviser.goalValue ?? 0).toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      adviser.active 
-                        ? 'bg-chart-1/20 text-chart-1 shadow-[0_2px_8px_rgba(16,185,129,0.3)]' 
-                        : 'bg-destructive/20 text-destructive shadow-[0_2px_8px_rgba(239,68,68,0.2)]'
-                      }`}>
-                      {adviser.active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  {!hideActions && (
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => onEdit?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-3/20 text-chart-3 hover:bg-chart-3/30 shadow-[0_2px_8px_rgba(234,179,8,0.3)] hover:shadow-[0_4px_12px_rgba(234,179,8,0.4)] text-xs font-semibold transition"
-                          title="Editar"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => onSum?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-1/20 text-chart-1 hover:bg-chart-1/30 shadow-[0_2px_8px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.4)] text-xs font-semibold transition"
-                          title="Sumar"
-                        >
-                          Sumar
-                        </button>
-                        <button
-                          onClick={() => onEditComparison?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-chart-4/20 text-chart-4 hover:bg-chart-4/30 shadow-[0_2px_8px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.4)] text-xs font-semibold transition"
-                          title="Comparación"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                          Comparación
-                        </button>
-                        <button
-                          onClick={() => onEditUpt?.(adviser)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30 shadow-[0_2px_8px_rgba(168,85,247,0.3)] hover:shadow-[0_4px_12px_rgba(168,85,247,0.4)] text-xs font-semibold transition"
-                          title="UPT"
-                        >
-                          UPT
-                        </button>
-                        <button
-                          onClick={() => onDelete?.(adviser.id)}
-                          className="flex items-center gap-1 px-3 py-1 rounded bg-destructive/20 text-destructive hover:bg-destructive/30 shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:shadow-[0_4px_12px_rgba(239,68,68,0.4)] text-xs font-semibold transition"
-                          title="Eliminar"
-                        >
-                          Eliminar
-                        </button>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-white/5">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-white/5">
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest">Asesor</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest">Ventas</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest">Meta</th>
+                  <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest">Estado</th>
+                  {!hideActions && <th className="px-6 py-4"></th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {advisers.map((adviser) => (
+                  <tr key={adviser.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors duration-200">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                            {adviser.name.charAt(0)}{adviser.lastName.charAt(0)}
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                          {adviser.name} {adviser.lastName}
+                        </span>
                       </div>
                     </td>
-                            )}
-        </tr>
-      ))}
-    </tbody>
-  </table>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="text-sm font-black text-slate-900 dark:text-white">
+                        $ {(adviser.currentMonthSales ?? 0).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="text-sm font-bold text-slate-500 dark:text-white/60">
+                        ${(adviser.goalValue ?? 0).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${adviser.active
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+                        }`}>
+                        {adviser.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                    {!hideActions && (
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
+                        <div className="flex flex-wrap gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={() => onEdit?.(adviser)}
+                            className="px-3 py-1 bg-white dark:bg-white/10 text-slate-600 dark:text-white/60 hover:text-emerald-600 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            title="Editar"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => onSum?.(adviser)}
+                            className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            title="Sumar"
+                          >
+                            Sumar
+                          </button>
+                          <button
+                            onClick={() => onEditComparison?.(adviser)}
+                            className="px-3 py-1 bg-white dark:bg-white/10 text-slate-600 dark:text-white/60 hover:text-cyan-500 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1"
+                            title="Comparación"
+                          >
+                            <PencilIcon className="h-3 w-3" />
+                            Comparación
+                          </button>
+                          <button
+                            onClick={() => onEditUpt?.(adviser)}
+                            className="px-3 py-1 bg-white dark:bg-white/10 text-slate-600 dark:text-white/60 hover:text-cyan-500 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            title="UPT"
+                          >
+                            UPT
+                          </button>
+                          <button
+                            onClick={() => onDelete?.(adviser.id)}
+                            className="px-3 py-1 bg-red-500/5 text-red-500/40 hover:text-red-500 border border-red-500/10 hover:border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                            title="Eliminar"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <UpdateAllGoalsModal 
-      isOpen={isUpdateGoalsModalOpen} 
-      onClose={() => setIsUpdateGoalsModalOpen(false)} 
-    />
-  </>
-);
+      <UpdateAllGoalsModal
+        isOpen={isUpdateGoalsModalOpen}
+        onClose={() => setIsUpdateGoalsModalOpen(false)}
+      />
+    </>
+  );
 };

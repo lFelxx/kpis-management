@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { AuthCredentials } from "../../core/domain/auth/AuthCredentials";
 import { useAuth } from "../../infrastructure/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
+import { IconUserCircle } from '@tabler/icons-react';
+import krumziVideo from '../../assets/media/krumzi-video.mp4';
+import { ShootingStars } from '@/components/ui/shooting-stars';
+import { StarsBackground } from '@/components/ui/stars-background';
 
 export const LoginPage = () => {
   const { login, loading } = useAuth();
@@ -18,24 +21,59 @@ export const LoginPage = () => {
     const user = await login(credentials);
 
     if (user) {
-      navigate('/');
+      navigate('/dashboard');
     } else {
       setErrorMsg('Credenciales incorrectas. Intenta de nuevo.');
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-900 to-emerald-900 overflow-hidden">
-      {/* Glassmorphism shapes */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-700 opacity-30 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-600 opacity-30 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-white opacity-10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 -z-10"></div>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        className="absolute top-0 left-0 w-full h-full object-cover opacity-60 z-0"
+      >
+        <source src={krumziVideo} type="video/mp4" />
+      </video>
+
+      {/* Stars Background */}
+      <StarsBackground
+        starDensity={0.00015}
+        allStarsTwinkle={true}
+        twinkleProbability={0.7}
+        minTwinkleSpeed={0.5}
+        maxTwinkleSpeed={1}
+        className="absolute inset-0 z-[1]"
+      />
+
+      {/* Shooting Stars */}
+      <ShootingStars
+        minSpeed={10}
+        maxSpeed={30}
+        minDelay={1200}
+        maxDelay={4200}
+        starColor="#34d399"
+        trailColor="#2EB9DF"
+        starWidth={15}
+        starHeight={3}
+        className="absolute inset-0 z-[2]"
+      />
+
+      {/* Shapes & Overlay */}
+      <div className="absolute inset-0 bg-black/60 z-[3]"></div>
+
+      {/* Glassmorphism shapes - Emerald/Cyan Palette */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none z-[4]" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none z-[4]" />
 
       <form
         onSubmit={handleSubmit}
         className="relative z-10 bg-black/70 backdrop-blur-lg shadow-2xl rounded-3xl px-10 py-12 w-full max-w-md flex flex-col items-center space-y-6 border border-white/10"
       >
-        <FaUserCircle className="text-emerald-400 text-6xl mb-2 drop-shadow-lg" />
+        <IconUserCircle size={70} className="text-emerald-400 mb-2 drop-shadow-lg" />
         <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Iniciar sesión</h2>
         <p className="text-gray-400 mb-4 text-center">Bienvenido a <span className="font-bold text-emerald-400">KPIs Management</span></p>
 

@@ -10,8 +10,9 @@
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.9911 0 0);
   --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0.5393 0.2713 286.7462);
-  --primary-foreground: oklch(1.0000 0 0);
+  --primary: oklch(0.648 0.15 160);
+  /* Emerald Base */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.9540 0.0063 255.4755);
   --secondary-foreground: oklch(0.1344 0 0);
   --muted: oklch(0.9702 0 0);
@@ -65,8 +66,9 @@
   --card-foreground: oklch(0.9551 0 0);
   --popover: oklch(0.2568 0.0076 274.6528);
   --popover-foreground: oklch(0.9551 0 0);
-  --primary: oklch(0.6132 0.2294 291.7437);
-  --primary-foreground: oklch(1.0000 0 0);
+  --primary: oklch(0.648 0.15 160);
+  /* Emerald Base */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.2940 0.0130 272.9312);
   --secondary-foreground: oklch(0.9551 0 0);
   --muted: oklch(0.2940 0.0130 272.9312);
@@ -109,12 +111,19 @@
   --shadow-lg: 0px 2px 3px 0px hsl(0 0% 0% / 0.16), 0px 4px 6px -1px hsl(0 0% 0% / 0.16);
   --shadow-xl: 0px 2px 3px 0px hsl(0 0% 0% / 0.16), 0px 8px 10px -1px hsl(0 0% 0% / 0.16);
   --shadow-2xl: 0px 2px 3px 0px hsl(0 0% 0% / 0.40);
+  --tracking-normal: -0.025em;
+  --spacing: 0.27rem;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
     margin: 0;
@@ -127,15 +136,29 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  button:not(.sidebar-btn) {
+    @apply transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-300;
+  }
+
+  .btn-glass {
+    @apply bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/10 dark:border-white/5 hover:bg-white/20 dark:hover:bg-black/40 text-foreground font-bold px-6 py-2.5 rounded-xl transition-all duration-300;
+  }
 }
 
 @keyframes float {
   0% {
     transform: rotate(12deg) translateY(0px);
   }
+
   50% {
     transform: rotate(12deg) translateY(-10px);
   }
+
   100% {
     transform: rotate(12deg) translateY(0px);
   }
@@ -146,9 +169,11 @@
     opacity: 0;
     transform: translateX(-150%);
   }
+
   50% {
     opacity: 0.5;
   }
+
   100% {
     opacity: 0;
     transform: translateX(150%);
@@ -160,28 +185,36 @@
     transform: translateY(-300vh) rotate(0deg) scale(0.5);
     opacity: 0;
   }
+
   20% {
     transform: translateY(0) rotate(720deg) scale(1.2);
     opacity: 1;
   }
+
   30% {
     transform: translateY(-40px) rotate(720deg) scale(1.2);
   }
+
   40% {
     transform: translateY(0) rotate(720deg) scale(1.2);
   }
+
   50% {
     transform: translateY(-20px) rotate(720deg) scale(1.2);
   }
+
   60% {
     transform: translateY(0) rotate(720deg) scale(1.2);
   }
+
   70% {
     transform: translateY(-10px) rotate(720deg) scale(1.2);
   }
+
   85% {
     transform: translateY(0) rotate(720deg) scale(1.1);
   }
+
   100% {
     transform: translateY(0) rotate(720deg) scale(1);
   }
@@ -192,10 +225,12 @@
     transform: scale(0) rotate(0deg);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.5) rotate(180deg);
     opacity: 1;
   }
+
   100% {
     transform: scale(0) rotate(360deg);
     opacity: 0;
@@ -206,9 +241,11 @@
   0% {
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   }
+
   50% {
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
   }
+
   100% {
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
   }
@@ -232,4 +269,52 @@
 
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes shooting-star {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.animate-shooting-star {
+  animation: shooting-star linear forwards;
+}
+
+@keyframes scroll {
+  to {
+    transform: translate(calc(-50% - 0.5rem));
+  }
+}
+
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+}
+
+@keyframes warp-line {
+  0% {
+    stroke-dasharray: 0 1000;
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dasharray: 1000 0;
+    stroke-dashoffset: -1000;
+    opacity: 0;
+  }
+}
+
+.animate-warp-line {
+  animation: warp-line linear forwards;
 }

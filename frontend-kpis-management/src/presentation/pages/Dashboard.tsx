@@ -29,11 +29,11 @@ export const Dashboard = () => {
 
   useEffect(() => {
     fetchAdvisers();
-    fetchMetrics(); // Obtener métricas del backend
+    fetchMetrics();
+    window.scrollTo(0, 0);
   }, []);
 
 
-  // Validaciones defensivas para evitar errores
   const safeGoalAchievement = typeof goalAchievement === 'number' ? goalAchievement : 0;
   const safeTotalSales = typeof totalSales === 'number' ? totalSales : 0;
   const safeTotalGoal = typeof totalGoal === 'number' ? totalGoal : 0;
@@ -44,47 +44,43 @@ export const Dashboard = () => {
       icon: FaChartLine,
       title: "Total Ventas",
       value: formatCurrency(safeTotalSales),
-      description: "Ventas totales del equipo",
-      color: "bg-chart-4",
-      trend: { value: 12, isPositive: true }
+      description: "Ventas brutas del equipo",
+      color: "bg-emerald-500"
     },
     {
       icon: FaBullseye,
-      title: "Meta Total",
+      title: "Meta Global",
       value: formatCurrency(safeTotalGoal),
-      description: "Meta establecida",
-      color: "bg-primary",
-      trend: { value: 8, isPositive: true }
+      description: "Meta global del equipo",
+      color: "bg-cyan-500"
     },
     {
       icon: FaTrophy,
-      title: "Asesor con mejor UPT",
-      value: bestUptAdviser ? bestUptAdviser.adviserName : "N/A",
-      description: bestUptAdviser ? `UPT: ${bestUptAdviser.upt || 'N/A'}` : "Sin datos",
-      color: "bg-chart-1"
+      title: "Asesor con Mejor UPT",
+      value: bestUptAdviser ? bestUptAdviser.adviserName : "Cargando...",
+      description: bestUptAdviser ? `UPT: ${bestUptAdviser.upt}` : "Sin datos registrados",
+      color: "bg-amber-500"
     },
     {
       icon: FaCheckCircle,
       title: "Cumplimiento",
       value: `${safeGoalAchievement.toFixed(1)}%`,
-      description: "Porcentaje de meta alcanzada",
-      color: "bg-chart-2",
-      trend: { value: 5, isPositive: safeGoalAchievement > 100 }
+      description: "Progreso hacia el objetivo",
+      color: safeGoalAchievement >= 100 ? "bg-emerald-500" : "bg-orange-500"
     },
     {
       icon: FaChartBar,
       title: "Promedio de Ventas",
       value: formatCurrency(safeAverageSales),
-      description: "Por asesor",
-      color: "bg-chart-3",
-      trend: { value: 3, isPositive: true }
+      description: "Venta media por asesor",
+      color: "bg-slate-700 dark:bg-slate-800"
     },
     {
       icon: FaUserPlus,
-      title: "Mejor Asesor",
-      value: bestAdviser ? bestAdviser.adviserName : "N/A",
-      description: bestAdviser ? `${formatCurrency(bestAdviser.totalSales)} en ventas` : "",
-      color: "bg-accent-foreground"
+      title: "Líder de Ventas",
+      value: bestAdviser ? bestAdviser.adviserName : "Cargando...",
+      description: bestAdviser ? `Liderando con ${formatCurrency(bestAdviser.totalSales)}` : "Analizando...",
+      color: "bg-indigo-500"
     }
   ];
 
@@ -98,40 +94,58 @@ export const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">
-        <p className="text-destructive">{error}</p>
-        <button
-          onClick={() => {
-            fetchAdvisers();
-            fetchMetrics();
-          }}
-          className="px-4 py-2 bg-chart-1/20 hover:bg-chart-1/30 text-chart-1 rounded-lg transition-colors"
-        >
-          Reintentar
-        </button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-6">
+        <div className="bg-red-500/10 p-8 rounded-[2rem] border border-red-500/20 text-center max-w-sm">
+          <p className="text-red-600 dark:text-red-400 font-bold mb-4">{error}</p>
+          <button
+            onClick={() => {
+              fetchAdvisers();
+              fetchMetrics();
+            }}
+            className="btn-primary"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-background">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Visión general del rendimiento del equipo</p>
-      </div>
+    <main className="flex-1 p-8 bg-background min-h-screen">
+      <div className="max-w-[1600px] mx-auto">
+        <header className="mb-10 text-left">
+          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em] mb-2 block">Panel de Control</span>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+            Dashboard
+          </h1>
+          <p className="text-sm font-medium text-slate-500 dark:text-white/30 mt-1 max-w-md">
+            Métricas de rendimiento en tiempo real para la gestión estratégica del equipo.
+          </p>
+        </header>
 
-      {/* Tarjetas del Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {dashboardCards.map((card, index) => (
-          <DashboardCard key={index} {...card} />
-        ))}
-      </div>
+        {/* Tarjetas del Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {dashboardCards.map((card, index) => (
+            <DashboardCard key={index} {...card} />
+          ))}
+        </div>
 
-      {/* Tabla de asesores */}
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold text-foreground mb-4">Resumen de Asesores</h2>
-        <AdviserTable advisers={advisers} hideActions />
+        {/* Tabla de asesores */}
+        <section className="mt-16">
+          <div className="flex items-center justify-between mb-8">
+            <div className="text-left">
+              <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.3em] mb-1 block">Listado General</span>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                Resumen de Asesores
+              </h2>
+            </div>
+          </div>
+          <div className="bg-white/40 dark:bg-black/20 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 dark:border-white/5 overflow-hidden shadow-lg dark:shadow-none">
+            <AdviserTable advisers={advisers} hideActions />
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
-}; 
+};

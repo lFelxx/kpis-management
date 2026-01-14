@@ -11,7 +11,7 @@ type FormErrors = {
     lastName?: string;
     sales?: string;
     goalValue?: string;
-  };
+};
 
 export const AddEditAdviserModal = () => {
     const { isOpen, form, closeModal, updateField, resetForm } = useAdviserModalStore();
@@ -22,25 +22,25 @@ export const AddEditAdviserModal = () => {
     const toastService = new ToastNotificationService();
 
     useEffect(() => {
-      if (form.currentMonthSales !== undefined && form.currentMonthSales !== null) {
-        setTempSales(form.currentMonthSales.toString());
-      } else {
-        setTempSales('');
-      }
-      if (form.goalValue !== undefined && form.goalValue !== null) {
-        setTempGoal(form.goalValue.toString());
-      } else {
-        setTempGoal('');
-      }
+        if (form.currentMonthSales !== undefined && form.currentMonthSales !== null) {
+            setTempSales(form.currentMonthSales.toString());
+        } else {
+            setTempSales('');
+        }
+        if (form.goalValue !== undefined && form.goalValue !== null) {
+            setTempGoal(form.goalValue.toString());
+        } else {
+            setTempGoal('');
+        }
     }, [form.currentMonthSales, form.goalValue, isOpen]);
 
     const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount);
     };
 
     const validate = () => {
@@ -52,7 +52,7 @@ export const AddEditAdviserModal = () => {
         const goalValue = Number(tempGoal) || 0;
         if (goalValue < 0) errors.goalValue = 'La meta no puede ser negativa';
         return errors;
-      }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,7 +71,7 @@ export const AddEditAdviserModal = () => {
             console.log('monthlySummaries:', form.monthlySummaries, 'year:', year, 'month:', month);
 
             if (form.id) {
-               
+
                 // actualiza le venta del mes
                 await updateMonthlySales(form.id, year, month, Number(tempSales) || 0)
                 // Actualiza la meta (goal)
@@ -159,7 +159,7 @@ export const AddEditAdviserModal = () => {
                                             {formErrors.name && <p className="text-sm text-destructive mt-1">{formErrors.name}</p>}
                                         </div>
 
-                                         {/* Apellido */}
+                                        {/* Apellido */}
                                         <div className="text-left">
                                             <label className="block text-sm font-semibold text-foreground mb-2">Apellido</label>
                                             <input
@@ -181,9 +181,9 @@ export const AddEditAdviserModal = () => {
                                                 min="0"
                                                 value={tempSales}
                                                 onChange={(e) => {
-                                                  const value = e.target.value;
-                                                  setTempSales(value);
-                                                  updateField('currentMonthSales', value === '' ? undefined : Number(value));
+                                                    const value = e.target.value;
+                                                    setTempSales(value);
+                                                    updateField('currentMonthSales', value === '' ? undefined : Number(value));
                                                 }}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
                                                 placeholder="Ventas del asesor"
@@ -203,9 +203,9 @@ export const AddEditAdviserModal = () => {
                                                 min="0"
                                                 value={tempGoal}
                                                 onChange={(e) => {
-                                                  const value = e.target.value;
-                                                  setTempGoal(value);
-                                                  updateField('goalValue', value === '' ? undefined : Number(value));
+                                                    const value = e.target.value;
+                                                    setTempGoal(value);
+                                                    updateField('goalValue', value === '' ? undefined : Number(value));
                                                 }}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
                                                 placeholder="Meta del asesor"
@@ -233,13 +233,13 @@ export const AddEditAdviserModal = () => {
                                             <button
                                                 type="button"
                                                 onClick={closeModal}
-                                                className="px-4 py-2 text-foreground bg-muted hover:bg-muted/80 rounded-lg font-semibold transition"
+                                                className="btn-glass"
                                             >
                                                 Cerrar
                                             </button>
                                             <button
                                                 type="submit"
-                                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition"
+                                                className="btn-primary"
                                             >
                                                 {form.id ? 'Actualizar' : 'Agregar'}
                                             </button>
