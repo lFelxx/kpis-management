@@ -52,7 +52,15 @@ export const AdviserTable = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {advisers.map((adviser) => (
+                {advisers.length === 0 ? (
+                  <tr>
+                    <td colSpan={hideActions ? 4 : 5} className="px-6 py-12 text-center">
+                      <p className="text-slate-500 dark:text-white/50 text-sm">No hay asesores registrados.</p>
+                      <p className="text-slate-400 dark:text-white/40 text-xs mt-1">Usa el botón &quot;+ Agregar asesor&quot; para crear el primero.</p>
+                    </td>
+                  </tr>
+                ) : (
+                advisers.map((adviser) => (
                   <tr key={adviser.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors duration-200">
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -127,7 +135,8 @@ export const AdviserTable = ({
                       </td>
                     )}
                   </tr>
-                ))}
+                ))
+                )}
               </tbody>
             </table>
           </div>
