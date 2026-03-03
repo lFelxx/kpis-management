@@ -98,10 +98,9 @@ public class SecurityConfiguration {
             "http://localhost:5173",
             "http://localhost:4173",
             "https://kpis-management.vercel.app",
-            "https://kpis-management.vercel.app",
             "http://84.247.165.126",
+            "http://84.247.165.126:80",
             "http://84.247.165.126:3000"
-
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
