@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useId, useState } from "react";
+import type { ComponentProps } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { SparklesCore } from "@/components/ui/sparkles";
 
@@ -158,7 +158,7 @@ export const Beam = ({
     duration?: number;
     hovered?: boolean;
     width?: number;
-} & React.ComponentProps<typeof motion.svg>) => {
+} & ComponentProps<typeof motion.svg>) => {
     const id = useId();
 
     return (
@@ -223,6 +223,7 @@ export const CircleIcon = ({
                 `pointer-events-none animate-pulse group-hover/cover:hidden group-hover/cover:opacity-100 group h-2 w-2 rounded-full bg-neutral-600 dark:bg-white opacity-20 group-hover/cover:bg-white`,
                 className
             )}
+            style={delay !== undefined ? { animationDelay: `${delay}s` } : undefined}
         ></div>
     );
 };
