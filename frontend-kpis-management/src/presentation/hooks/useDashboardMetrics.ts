@@ -18,6 +18,7 @@ export const useDashboardMetrics = () => {
     averageSales, 
     bestAdviser,
     bestUptAdviser,
+    worstAdviser,
     loading: metricsLoading,
     error: metricsError,
     setMetrics, 
@@ -71,6 +72,7 @@ export const useDashboardMetrics = () => {
     averageSales,
     bestAdviser,
     bestUptAdviser,
+    worstAdviser,
     
     // Estados
     loading: backendLoading || metricsLoading,

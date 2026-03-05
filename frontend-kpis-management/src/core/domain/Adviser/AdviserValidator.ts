@@ -25,13 +25,17 @@ export class AdviserValidator {
       throw new Error('El apellido debe tener al menos 2 caracteres');
     }
 
-    // Validaciones de números
-    if (typeof adviser.sales !== 'number' || adviser.sales < 0) {
-      throw new Error('Las ventas deben ser un número positivo');
+    // Validaciones de números (opcionales; si se envían, deben ser >= 0)
+    if (adviser.sales !== undefined && adviser.sales !== null) {
+      if (typeof adviser.sales !== 'number' || adviser.sales < 0) {
+        throw new Error('Las ventas deben ser un número mayor o igual a 0');
+      }
     }
 
-    if (typeof adviser.goalValue !== 'number' || adviser.goalValue <= 0) {
-      throw new Error('La meta debe ser un número positivo');
+    if (adviser.goalValue !== undefined && adviser.goalValue !== null) {
+      if (typeof adviser.goalValue !== 'number' || adviser.goalValue < 0) {
+        throw new Error('La meta debe ser un número mayor o igual a 0');
+      }
     }
   }
 
@@ -46,11 +50,11 @@ export class AdviserValidator {
     }
 
     if (adviser.sales !== undefined && (typeof adviser.sales !== 'number' || adviser.sales < 0)) {
-      throw new Error('Las ventas deben ser un número positivo');
+      throw new Error('Las ventas deben ser un número mayor o igual a 0');
     }
 
-    if (adviser.goalValue !== undefined && (typeof adviser.goalValue !== 'number' || adviser.goalValue <= 0)) {
-      throw new Error('La meta debe ser un número positivo');
+    if (adviser.goalValue !== undefined && (typeof adviser.goalValue !== 'number' || adviser.goalValue < 0)) {
+      throw new Error('La meta debe ser un número mayor o igual a 0');
     }
 
     if (adviser.name !== undefined) {

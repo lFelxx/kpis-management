@@ -57,8 +57,8 @@ export const Dashboard = () => {
     {
       icon: FaTrophy,
       title: "Asesor con Mejor UPT",
-      value: bestUptAdviser ? bestUptAdviser.adviserName : "Cargando...",
-      description: bestUptAdviser ? `UPT: ${bestUptAdviser.upt}` : "Sin datos registrados",
+      value: bestUptAdviser ? bestUptAdviser.adviserName : "--",
+      description: bestUptAdviser ? `UPT: ${bestUptAdviser.upt}` : "Asigna UPT a los asesores para ver el ranking",
       color: "bg-amber-500"
     },
     {

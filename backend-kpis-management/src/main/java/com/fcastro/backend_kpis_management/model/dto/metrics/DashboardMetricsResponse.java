@@ -7,6 +7,7 @@ public record DashboardMetricsResponse(
     Double goalAchievement,
     Double averageSales,
     BestAdviserInfo bestAdviser,
-    BestAdviserInfo bestUptAdviser
+    BestAdviserInfo bestUptAdviser,
+    BestAdviserInfo worstAdviser
 ) {
 }

@@ -5,6 +5,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import { Dashboard } from "../pages/Dashboard";
 import { AdviserDetailPage } from "../pages/AdviserDetailPage";
 import { AdvisoryTeam } from "../pages/AdvisoryTeam";
+import { ReportPage } from "../pages/ReportPage";
 import { AdviserList } from "../components/AdviserList";
 import { Layout } from "../components/Layout";
 import { PublicRoute } from "./PublicRoute";
@@ -39,6 +40,11 @@ export const AppRouter = () => {
                 <Route path="/advisory-team" element={
                     <Layout>
                         <AdvisoryTeam />
+                    </Layout>
+                } />
+                <Route path="/report" element={
+                    <Layout>
+                        <ReportPage />
                     </Layout>
                 } />
             </Route>

@@ -15,4 +15,5 @@ export interface DashboardMetrics {
   averageSales: number;
   bestAdviser: BestAdviser;
   bestUptAdviser?: BestAdviser;
+  worstAdviser?: BestAdviser;
 }

@@ -9,6 +9,7 @@ export const AdviserList: React.FC = () => {
   const { advisers, loading: advisersLoading, error: advisersError, fetchAdvisers } = useAdvisersStore();
   const { 
     bestAdviser, 
+    worstAdviser,
     loading: metricsLoading, 
     error: metricsError, 
     fetchMetrics 
@@ -23,9 +24,6 @@ export const AdviserList: React.FC = () => {
     return [...advisers].sort((a, b) => b.sales - a.sales);
   }, [advisers]);
 
-  // Usar el worstAdviser calculado localmente (no viene del backend)
-  const worstAdviser = sortedAdvisers.length > 0 ? sortedAdvisers[sortedAdvisers.length - 1] : null;
-
   // Convertir BestAdviser a Adviser para compatibilidad con FeaturedAdvisersSection
   const bestAdviserAsAdviser = bestAdviser ? {
     id: bestAdviser.adviserId.toString(),
@@ -37,6 +35,19 @@ export const AdviserList: React.FC = () => {
     currentMonthSales: bestAdviser.totalSales,
     monthlySummaries: [],
     upt: bestAdviser.upt?.toString() || ''
+  } : null;
+
+  // Peor asesor viene del backend (métricas), convertir a Adviser
+  const worstAdviserAsAdviser = worstAdviser ? {
+    id: worstAdviser.adviserId.toString(),
+    name: worstAdviser.adviserName.split(' ')[0] || worstAdviser.adviserName,
+    lastName: worstAdviser.adviserName.split(' ').slice(1).join(' ') || '',
+    sales: worstAdviser.totalSales,
+    goalValue: worstAdviser.totalGoal,
+    active: true,
+    currentMonthSales: worstAdviser.totalSales,
+    monthlySummaries: [],
+    upt: worstAdviser.upt?.toString() || ''
   } : null;
 
   // Estados combinados
@@ -71,7 +82,7 @@ export const AdviserList: React.FC = () => {
 
   return (
     <div className="p-6 bg-background min-h-screen space-y-8">
-      <FeaturedAdvisersSection bestAdviser={bestAdviserAsAdviser} worstAdviser={worstAdviser}/>
+      <FeaturedAdvisersSection bestAdviser={bestAdviserAsAdviser} worstAdviser={worstAdviserAsAdviser}/>
       <AdvisersPerformanceChart advisers={sortedAdvisers}/>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <AdvisersListSection advisers={sortedAdvisers}/>

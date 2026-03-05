@@ -3,6 +3,7 @@ import { Adviser } from "../../../../core/domain/Adviser/Adviser";
 import { motion } from 'framer-motion';
 import { TrophyIcon, ArrowTrendingUpIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { Target, Zap, TrendingUp } from 'lucide-react';
+import { useAdviserMetricsStore } from "../../../stores/advisers/adviserMetrics.store";
 
 interface FeaturedAdviserCardProps {
     adviser: Adviser | null;
@@ -10,6 +11,7 @@ interface FeaturedAdviserCardProps {
 }
 
 const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type }) => {
+    const { formatCurrency } = useAdviserMetricsStore();
     // Para el tipo 'worst', si no hay asesor, no mostrar nada
     if (!adviser && type === 'worst') {
         return null;
@@ -50,7 +52,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                         <TrophyIcon className="w-10 h-10 text-white" />
                     </motion.div>
 
-                    <h3 className="text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-[0.3em] mb-2">Hall of Fame</h3>
+                    <h3 className="text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-[0.3em] mb-2">Mejor asesor</h3>
 
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-6 tracking-tighter">
                         {adviser?.name} {adviser?.lastName}
@@ -61,7 +63,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                         <p className="text-slate-950/40 dark:text-white/40 text-[10px] font-black uppercase mb-2 tracking-widest text-center">Ventas del Mes</p>
                         <div className="flex flex-col items-center gap-1">
                             <span className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-emerald-600 to-cyan-600 dark:from-white dark:via-emerald-400 dark:to-cyan-400">
-                                ${((adviser?.currentMonthSales ?? 0) / 1000).toFixed(0)}K
+                                {formatCurrency(adviser?.currentMonthSales ?? 0)}
                             </span>
                             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                                 <ArrowTrendingUpIcon className="w-4 h-4" />
@@ -139,7 +141,7 @@ const FeaturedAdviserCard: React.FC<FeaturedAdviserCardProps> = ({ adviser, type
                             <Zap className="w-5 h-5 text-orange-600 dark:text-orange-300 animate-pulse" />
                             <div>
                                 <p className="text-slate-950/40 dark:text-white/40 text-[10px] font-black uppercase tracking-widest">Meta Próximo Paso</p>
-                                <p className="text-lg font-black text-slate-900 dark:text-white">Faltan ${(gapToGoal / 1000).toFixed(0)}K</p>
+                                <p className="text-lg font-black text-slate-900 dark:text-white">Faltan {formatCurrency(gapToGoal)}</p>
                             </div>
                         </div>
                     </div>

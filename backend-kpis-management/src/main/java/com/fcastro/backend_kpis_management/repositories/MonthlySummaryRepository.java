@@ -10,5 +10,5 @@ import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
 public interface MonthlySummaryRepository extends JpaRepository<MonthlySummary, Long> {
     Optional<MonthlySummary> findByAdviserIdAndYearAndMonth(Long adviserId, int year, int month);
 
-    List<MonthlySummary> findByYearAndMonth(int year, int month); 
+    List<MonthlySummary> findByYearAndMonth(int year, int month);
 }

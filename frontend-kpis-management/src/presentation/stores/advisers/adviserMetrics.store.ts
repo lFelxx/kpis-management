@@ -9,6 +9,7 @@ interface AdviserMetricsState {
   averageSales: number;
   bestAdviser: BestAdviser | null;
   bestUptAdviser: BestAdviser | null;
+  worstAdviser: BestAdviser | null;
   loading: boolean;
   error: string | null;
 }
@@ -36,6 +37,7 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
   averageSales: 0,
   bestAdviser: null,
   bestUptAdviser: null,
+  worstAdviser: null,
   loading: false,
   error: null,
 
@@ -48,6 +50,7 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
       averageSales: metrics.averageSales,
       bestAdviser: metrics.bestAdviser,
       bestUptAdviser: metrics.bestUptAdviser || null,
+      worstAdviser: metrics.worstAdviser || null,
       error: null
     });
   },
@@ -61,6 +64,7 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
       averageSales: 0,
       bestAdviser: null,
       bestUptAdviser: null,
+      worstAdviser: null,
       error: null
     });
   },

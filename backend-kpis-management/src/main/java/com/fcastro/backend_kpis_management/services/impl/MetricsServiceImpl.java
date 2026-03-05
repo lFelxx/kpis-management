@@ -34,7 +34,7 @@ public class MetricsServiceImpl implements MetricsService {
         List<Adviser> activeAdviser = adviserRepository.findAllActiveAdvisers();
 
         if (activeAdviser.isEmpty()) {
-            return new DashboardMetricsResponse(0.0, 0.0, 0, 0.0, 0.0, null, null);
+            return new DashboardMetricsResponse(0.0, 0.0, 0, 0.0, 0.0, null, null, null);
         }
 
         // 2. Obtener resumenes mensuales
@@ -62,8 +62,14 @@ public class MetricsServiceImpl implements MetricsService {
         // 5. Obtener mejor asesor por logro de meta
         BestAdviserInfo bestAdviser = getBestAdviser(monthlySummaries);
 
-        // 6. Obtener mejor asesor por UPT
+        // 6. Obtener mejor asesor por UPT (null si nadie tiene UPT > 0)
         BestAdviserInfo bestUptAdviser = getBestAdviserByUpt(monthlySummaries);
+        if (bestUptAdviser != null && (bestUptAdviser.upt() == null || bestUptAdviser.upt() <= 0.0)) {
+            bestUptAdviser = null;
+        }
+
+        // 7. Obtener peor asesor por ventas
+        BestAdviserInfo worstAdviser = getWorstAdviserBySales(monthlySummaries);
 
         return new DashboardMetricsResponse(
                 totalSales,
@@ -72,7 +78,8 @@ public class MetricsServiceImpl implements MetricsService {
                 goalAchievement,
                 averageSales,
                 bestAdviser,
-                bestUptAdviser);
+                bestUptAdviser,
+                worstAdviser);
     }
 
     @Override
@@ -158,6 +165,25 @@ public class MetricsServiceImpl implements MetricsService {
                 
                 return uptComparison;
             })
+            .orElse(null);
+    }
+
+    /** Peor asesor del mes por ventas (menor totalSales). */
+    private BestAdviserInfo getWorstAdviserBySales(List<MonthlySummary> monthlySummaries) {
+        return monthlySummaries.stream()
+            .map(summary -> {
+                Double achievement = calculateGoalAchievementPercentage(summary.getTotalSales(), summary.getGoal());
+                Double upt = summary.getAdviser().getUpt() != null ? summary.getAdviser().getUpt() : 0.0;
+                return new BestAdviserInfo(
+                    summary.getAdviser().getId(),
+                    summary.getAdviser().getName(),
+                    summary.getTotalSales(),
+                    summary.getGoal(),
+                    achievement,
+                    upt
+                );
+            })
+            .min((a, b) -> Double.compare(a.totalSales(), b.totalSales()))
             .orElse(null);
     }
 

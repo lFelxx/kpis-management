@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaChartPie, FaUserTie, FaUsers, FaGift, FaHeart, FaSignOutAlt, FaMoon, FaSun } from 'react-icons/fa';
+import { FaChartPie, FaUserTie, FaUsers, FaGift, FaHeart, FaSignOutAlt, FaMoon, FaSun, FaFileAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../infrastructure/hooks/useAuth';
 import { useTheme } from '../../infrastructure/hooks/useTheme';
@@ -22,6 +22,12 @@ const menuItems = [
     to: '/advisory-team',
     icon: FaUsers,
     description: 'Miembros del equipo',
+  },
+  {
+    label: 'Reporte',
+    to: '/report',
+    icon: FaFileAlt,
+    description: 'Reporte del mes',
   },
   {
     label: 'Recompensas',

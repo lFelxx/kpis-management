@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
+import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
 import com.fcastro.backend_kpis_management.services.MonthlySummaryService;
@@ -20,6 +21,7 @@ public class MonthlySummaryServiceImpl implements MonthlySummaryService {
     
     private final MonthlySummaryRepository monthlySummaryRepository;
     private final GoalRepository goalRepository;
+    private final AdviserRepository adviserRepository;
 
     @Override
     public void addSaleToMonthlySummary(Adviser adviser, LocalDate saleDate, Double amount) {
@@ -75,13 +77,28 @@ public class MonthlySummaryServiceImpl implements MonthlySummaryService {
     @Override
     public void updateTotalSalesByAdviser(Long id,int year, int month, Double totalSales) {
         log.info("Iniciando actualizacion de las ventas para el id {} con un totalSales de: {}", id, totalSales);
-        MonthlySummary summary =  monthlySummaryRepository
+
+        Adviser adviser = adviserRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Asesor no encontrado con id: " + id));
+
+        MonthlySummary summary = monthlySummaryRepository
             .findByAdviserIdAndYearAndMonth(id, year, month)
-            .orElseThrow(() -> new RuntimeException("Resumen mensual no encontrado"));
-        
-            summary.setTotalSales(totalSales);
-            monthlySummaryRepository.save(summary);
-        
+            .orElseGet(() -> {
+                log.info("Creando nuevo resumen mensual para asesor {} (id={}) en {}/{}", adviser.getName(), id, month, year);
+                MonthlySummary newSummary = new MonthlySummary();
+                newSummary.setAdviser(adviser);
+                newSummary.setYear(year);
+                newSummary.setMonth(month);
+                newSummary.setTotalSales(totalSales != null ? totalSales : 0.0);
+                newSummary.setGoal(0.0);
+                goalRepository.findByAdviserIdAndYearAndMonth(id, year, month)
+                    .ifPresent(goal -> newSummary.setGoal(goal.getGoalValue()));
+                return monthlySummaryRepository.save(newSummary);
+            });
+
+        summary.setTotalSales(totalSales != null ? totalSales : 0.0);
+        monthlySummaryRepository.save(summary);
+        log.info("Ventas actualizadas - Asesor id {} {}/{}: totalSales={}", id, month, year, summary.getTotalSales());
     }
 
     @Override

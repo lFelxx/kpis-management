@@ -175,7 +175,7 @@ export const AddEditAdviserModal = () => {
 
                                         {/* Ventas */}
                                         <div className="text-left">
-                                            <label className="block text-sm font-semibold text-foreground mb-2">Ventas</label>
+                                            <label className="block text-sm font-semibold text-foreground mb-2">Ventas (opcional)</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -187,7 +187,6 @@ export const AddEditAdviserModal = () => {
                                                 }}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
                                                 placeholder="Ventas del asesor"
-                                                required
                                             />
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 Formato: <span className="font-semibold text-primary">{formatCurrency(Number(tempSales) || 0)}</span>
@@ -197,7 +196,7 @@ export const AddEditAdviserModal = () => {
 
                                         {/* Meta */}
                                         <div className="text-left">
-                                            <label className="block text-sm font-semibold text-foreground mb-2">Meta</label>
+                                            <label className="block text-sm font-semibold text-foreground mb-2">Meta (opcional)</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -209,7 +208,6 @@ export const AddEditAdviserModal = () => {
                                                 }}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
                                                 placeholder="Meta del asesor"
-                                                required
                                             />
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 Formato: <span className="font-semibold text-primary">{formatCurrency(Number(tempGoal) || 0)}</span>
