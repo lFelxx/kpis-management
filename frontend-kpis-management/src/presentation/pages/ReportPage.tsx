@@ -13,6 +13,8 @@ export const ReportPage = () => {
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const {
     totalGoal,
+    totalSales,
+    goalAchievement,
     bestAdviser,
     worstAdviser,
     loading,
@@ -21,6 +23,7 @@ export const ReportPage = () => {
     formatCurrency,
     calculateAdviserEarnings,
     calculateProgressPercentage,
+    getProgressColor,
   } = useDashboardMetrics();
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export const ReportPage = () => {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const monthLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
+  const currentDateLabel = `${now.getDate()} de ${MONTH_NAMES[currentMonth - 1]} de ${currentYear}`;
 
   const formatAchievement = (value: number) =>
     Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
@@ -117,29 +121,47 @@ export const ReportPage = () => {
           Reporte
         </span>
         <h1 className="text-4xl font-black text-foreground tracking-tighter">
-          Reporte del mes
+          Reporte hasta la fecha
         </h1>
         <p className="text-sm font-medium text-muted-foreground mt-1">
-          {monthLabel} — Meta global, ventas, cumplimiento y comisión por asesor.
+          {currentDateLabel} — Meta global, ventas, cumplimiento y comisión por asesor.
         </p>
       </header>
 
-      {/* Meta total */}
+      {/* Meta total y métricas de la tienda */}
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-card rounded-[2rem] p-6 border border-border shadow-lg dark:shadow-none"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mb-6">
           <div className="p-3 rounded-2xl bg-primary/10 flex items-center justify-center">
             <FaBullseye className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-              Meta total del equipo
+              Meta global
             </h2>
             <p className="text-2xl font-black text-foreground">
               {formatCurrency(totalGoal ?? 0)}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+          <div>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+              Ventas totales
+            </p>
+            <p className="text-xl font-black text-foreground">
+              {formatCurrency(totalSales ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+              Cumplimiento de la tienda
+            </p>
+            <p className={`text-xl font-black ${getProgressColor(goalAchievement ?? 0)}`}>
+              {formatAchievement(goalAchievement ?? 0)}
             </p>
           </div>
         </div>
