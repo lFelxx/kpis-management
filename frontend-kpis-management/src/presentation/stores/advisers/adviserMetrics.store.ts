@@ -78,10 +78,8 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
   },
 
   calculateAdviserEarnings: (sales: number) => {
-    const IVA_RATE = 0.19; // 19%
     const COMMISSION_RATE = 0.01; // 1%
-    const salesWithoutIVA = sales / (1 + IVA_RATE);
-    return salesWithoutIVA * COMMISSION_RATE;
+    return sales * COMMISSION_RATE;
   },
 
   formatCurrency: (amount: number) => {
