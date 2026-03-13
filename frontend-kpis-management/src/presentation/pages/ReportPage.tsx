@@ -22,7 +22,6 @@ export const ReportPage = () => {
     fetchMetrics,
     formatCurrency,
     calculateAdviserEarnings,
-    calculateProgressPercentage,
     getProgressColor,
   } = useDashboardMetrics();
 
