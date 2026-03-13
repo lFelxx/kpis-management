@@ -271,7 +271,7 @@ export const ReportPage = () => {
               {sortedAdvisers.map((adviser) => {
                 const sales = adviser.currentMonthSales ?? adviser.sales ?? 0;
                 const goal = adviser.goalValue ?? 0;
-                const achievement = calculateProgressPercentage(sales, goal);
+                const achievement = goal > 0 ? (sales / goal) * 100 : 0;
                 const commission = calculateAdviserEarnings(sales);
                 const name = `${adviser.name} ${adviser.lastName}`.trim() || '—';
                 return (
