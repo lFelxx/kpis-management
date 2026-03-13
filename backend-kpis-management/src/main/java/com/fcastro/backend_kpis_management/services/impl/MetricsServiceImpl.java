@@ -68,8 +68,8 @@ public class MetricsServiceImpl implements MetricsService {
             bestUptAdviser = null;
         }
 
-        // 7. Obtener peor asesor por ventas
-        BestAdviserInfo worstAdviser = getWorstAdviserBySales(monthlySummaries);
+        // 7. Obtener peor asesor por porcentaje de cumplimiento
+        BestAdviserInfo worstAdviser = getWorstAdviserByGoalAchievement(monthlySummaries);
 
         return new DashboardMetricsResponse(
                 totalSales,
@@ -168,8 +168,8 @@ public class MetricsServiceImpl implements MetricsService {
             .orElse(null);
     }
 
-    /** Peor asesor del mes por ventas (menor totalSales). */
-    private BestAdviserInfo getWorstAdviserBySales(List<MonthlySummary> monthlySummaries) {
+    /** Peor asesor del mes por porcentaje de cumplimiento (menor goalAchievement). */
+    private BestAdviserInfo getWorstAdviserByGoalAchievement(List<MonthlySummary> monthlySummaries) {
         return monthlySummaries.stream()
             .map(summary -> {
                 Double achievement = calculateGoalAchievementPercentage(summary.getTotalSales(), summary.getGoal());
@@ -183,11 +183,28 @@ public class MetricsServiceImpl implements MetricsService {
                     upt
                 );
             })
-            .min((a, b) -> Double.compare(a.totalSales(), b.totalSales()))
+            .min((a, b) -> {
+                int achievementComparison = Double.compare(a.goalAchievement(), b.goalAchievement());
+
+                if (achievementComparison == 0) {
+                    // Si tienen el mismo porcentaje de cumplimiento, considerar peor
+                    // al que tiene menor UPT y, en último caso, menor venta.
+                    int uptComparison = Double.compare(a.upt(), b.upt());
+                    if (uptComparison != 0) {
+                        return uptComparison;
+                    }
+                    return Double.compare(a.totalSales(), b.totalSales());
+                }
+
+                return achievementComparison;
+            })
             .orElse(null);
     }
 
     private Double calculateGoalAchievementPercentage(Double totalSales, Double goal) {
-        return totalSales > 0 ? (totalSales / goal) * 100 : 0.0;
+        if (goal == null || goal <= 0) {
+            return 0.0;
+        }
+        return totalSales != null ? (totalSales / goal) * 100 : 0.0;
     }
 }
