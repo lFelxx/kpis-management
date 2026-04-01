@@ -12,4 +12,5 @@ export interface AdviserRepository {
   updateMonthlySales(id: string, year: number, month: number, totalSales: number ): Promise<void>;
   updateAllGoals(year: number, month: number, goal: number): Promise<void>;
   getDashboardMetrics(year: number, month: number): Promise<DashboardMetrics>;
+  getMonthlyCommissions(adviserId: string, year: number): Promise<number[]>;
 } 

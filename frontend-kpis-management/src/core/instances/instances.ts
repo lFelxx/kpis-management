@@ -11,6 +11,7 @@ import { UpdateGoalUseCase } from "../usecases/adviser/UpdateGoalUseCase";
 import { UpdateMonthlySalesUseCase } from "../usecases/adviser/UpdateMonthlySalesUseCase";
 import { UpdateAllGoalsUseCase } from "../usecases/adviser/UpdateAllGoalsUseCase";
 import { GetDashboardMetricsUseCase } from "../usecases/adviser/GetDashboardMetricsUseCase";
+import { GetMonthlyCommissionsUseCase } from "../usecases/adviser/GetMonthlyCommissionsUseCase";
 
 const adviserRepository = new AdviserApiRepository(config.apiUrl);
 const adviserValidator = new AdviserValidator();
@@ -25,3 +26,4 @@ export const updateGoalUseCase =  new UpdateGoalUseCase(adviserRepository);
 export const updateMonthlySalesUseCase =  new UpdateMonthlySalesUseCase(adviserRepository);
 export const updateAllGoalsUseCase = new UpdateAllGoalsUseCase(adviserRepository);
 export const getDashboardMetricsUseCase = new GetDashboardMetricsUseCase(adviserRepository);
+export const getMonthlyCommissionsUseCase = new GetMonthlyCommissionsUseCase(adviserRepository);

@@ -12,6 +12,7 @@ import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
+import com.fcastro.backend_kpis_management.services.CommissionService;
 import com.fcastro.backend_kpis_management.services.MetricsService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class MetricsServiceImpl implements MetricsService {
     private final AdviserRepository adviserRepository;
     private final MonthlySummaryRepository monthlySummaryRepository;
     private final GoalRepository goalRepository;
+    private final CommissionService commissionService;
 
     @Override
     public DashboardMetricsResponse getDashboardMetrics(int year, int month) {
@@ -55,8 +57,10 @@ public class MetricsServiceImpl implements MetricsService {
                 })
                 .sum();
 
-        // 4. Calcular metricas
-        Double goalAchievement = totalSales > 0 ? (totalSales / totalGoal) * 100 : 0.0;
+        // 4. Cumplimiento tienda (misma fórmula y redondeo que comisiones)
+        Double goalAchievement = totalGoal > 0
+                ? commissionService.computeStoreGoalAchievementPercent(year, month)
+                : 0.0;
         Double averageSales = totalSales / activeAdviser.size();
 
         // 5. Obtener mejor asesor por logro de meta

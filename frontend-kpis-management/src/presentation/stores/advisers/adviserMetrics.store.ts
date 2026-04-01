@@ -19,7 +19,6 @@ interface AdviserMetricsActions {
   clearMetrics: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  calculateAdviserEarnings: (sales: number) => number;
   formatCurrency: (amount: number) => string;
   calculateProgressPercentage: (current: number, goal: number) => number;
   getProgressColor: (percentage: number) => string;
@@ -75,11 +74,6 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
 
   setError: (error: string | null) => {
     set({ error });
-  },
-
-  calculateAdviserEarnings: (sales: number) => {
-    const COMMISSION_RATE = 0.01; // 1%
-    return sales * COMMISSION_RATE;
   },
 
   formatCurrency: (amount: number) => {

@@ -32,6 +32,8 @@ ChartJS.register(
 
 interface EarningsGrowthChartProps {
   monthlySummaries: MonthlySummary[];
+  /** Comisión neta por mes (12 valores, índice 0 = enero), calculada en backend. */
+  monthlyCommissions: number[];
   currentAdviser: {
     id: string | number;
     sales: number;
@@ -43,27 +45,20 @@ interface EarningsGrowthChartProps {
 
 export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
   monthlySummaries,
+  monthlyCommissions,
   currentAdviser,
   animateValue
 }) => {
-  const { calculateAdviserEarnings, formatCurrency } = useAdviserMetricsStore();
+  const { formatCurrency } = useAdviserMetricsStore();
 
   const currentYear = new Date().getFullYear();
 
-  // Datos para la gráfica de crecimiento
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const monthlySales = Array(12).fill(0);
 
-  // Procesar datos mensuales filtrando solo por el año actual
-  monthlySummaries
-    .filter((m: MonthlySummary) => m.year === currentYear)
-    .forEach((m: MonthlySummary) => {
-      if (m.month >= 1 && m.month <= 12) {
-        monthlySales[m.month - 1] = m.totalSales || 0;
-      }
-    });
-
-  const netEarningsByMonth = monthlySales.map((sales) => calculateAdviserEarnings(sales));
+  const netEarningsByMonth = Array.from({ length: 12 }, (_, i) => {
+    const c = monthlyCommissions[i];
+    return typeof c === 'number' && !Number.isNaN(c) ? c : 0;
+  });
   const accumulatedEarnings: number[] = [];
   let sum = 0;
   for (let earning of netEarningsByMonth) {
@@ -231,7 +226,9 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
             <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
               {formatCurrency(animateValue)}
             </p>
-            <p className="text-xs font-medium text-slate-500 dark:text-white/30 mt-1">1% sobre ventas netas (sin IVA)</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-white/30 mt-1">
+              Hasta 1,2% según cumplimiento de la tienda
+            </p>
           </div>
         </div>
 

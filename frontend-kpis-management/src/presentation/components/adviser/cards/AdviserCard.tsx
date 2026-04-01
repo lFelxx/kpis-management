@@ -16,6 +16,8 @@ export const AdviserCard: React.FC<AdviserCardProps> = ({ adviser }) => {
     ? ((adviser.currentMonthSales ?? 0) / adviser.goalValue) * 100
     : 0;
   const progress = Math.min(rawProgress, 100);
+  const uptValue = Number(adviser.upt ?? 0);
+  const hasPositiveUpt = Number.isFinite(uptValue) && uptValue > 0;
 
   const initials = `${adviser.name?.charAt(0) || ''}${adviser.lastName?.charAt(0) || ''}`;
 
@@ -81,15 +83,27 @@ export const AdviserCard: React.FC<AdviserCardProps> = ({ adviser }) => {
           </div>
         </div>
 
-        {/* UPT Badge if exists */}
-        {adviser.upt && (
-          <div className="flex items-center gap-2 mb-6 text-left">
-            <div className="px-3 py-1 bg-emerald-500/10 dark:bg-white/5 border border-emerald-500/20 dark:border-white/10 rounded-full flex items-center gap-1.5">
-              <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">UPT: {adviser.upt}</span>
-            </div>
+        {/* UPT Badge */}
+        <div className="flex items-center gap-2 mb-6 text-left">
+          <div className={`px-3 py-1 rounded-full flex items-center gap-1.5 border ${
+            hasPositiveUpt
+              ? 'bg-emerald-500/10 dark:bg-white/5 border-emerald-500/20 dark:border-white/10'
+              : 'bg-slate-500/10 dark:bg-white/5 border-slate-400/20 dark:border-white/10'
+          }`}>
+            <TrendingUp className={`w-3 h-3 ${
+              hasPositiveUpt
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-slate-500 dark:text-white/60'
+            }`} />
+            <span className={`text-[10px] font-black uppercase tracking-wider ${
+              hasPositiveUpt
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-slate-500 dark:text-white/60'
+            }`}>
+              UPT: {Number.isFinite(uptValue) ? uptValue : 0}
+            </span>
           </div>
-        )}
+        </div>
 
         {/* Action Button */}
         <button

@@ -19,7 +19,8 @@ public interface AdviserMapper {
     @Mapping(target = "sales", expression ="java(calculateTotalSales(adviser))")
     @Mapping(target = "goalValue", expression = "java(getCurrentGoal(adviser))")
     @Mapping(target = "currentMonthSales", expression = "java(getCurrentMonthSales(adviser))")
-    
+    @Mapping(target = "commission", ignore = true)
+    @Mapping(target = "commissionRatePercent", ignore = true)
     AdviserResponse tResponse(Adviser adviser);
 
     @Mapping(source = "lastName", target = "lastname")

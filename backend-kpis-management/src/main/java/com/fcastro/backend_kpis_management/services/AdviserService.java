@@ -22,4 +22,6 @@ public interface AdviserService {
 
     AdviserResponse getAdviserById(Long id);
 
+    List<Double> getMonthlyCommissions(Long adviserId, int year);
+
 }

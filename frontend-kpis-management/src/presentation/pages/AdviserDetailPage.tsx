@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
-import { useAdviserMetricsStore } from '../stores/advisers/adviserMetrics.store';
+import { getMonthlyCommissionsUseCase } from '../../core/instances/instances';
 import { WeeklyComparisonChart } from '../components/adviser/sections/WeeklyComparisonChart';
 import { EarningsGrowthChart } from '../components/adviser/sections/EarningsGrowthChart';
 import { MonthlySummary } from '../../core/domain/Adviser/Adviser';
@@ -12,8 +12,9 @@ export const AdviserDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchAdviserById, currentAdviser, loading, error } = useAdvisersStore();
-  const { calculateAdviserEarnings } = useAdviserMetricsStore();
   const [animateValue, setAnimateValue] = useState(0);
+  const [monthlyCommissions, setMonthlyCommissions] = useState<number[]>(() => Array(12).fill(0));
+  const currentYear = new Date().getFullYear();
 
   // Obtener monthlySummaries directamente del currentAdviser
   const monthlySummaries: MonthlySummary[] = currentAdviser?.monthlySummaries || [];
@@ -25,32 +26,47 @@ export const AdviserDetailPage = () => {
     fetchAdviserById(id);
   }, [id, fetchAdviserById]);
 
-  // Animación de ganancias
   useEffect(() => {
-    if (currentAdviser && monthlySummaries.length > 0) {
-      const currentMonth = new Date().getMonth() + 1;
-      const currentMonthSummary = monthlySummaries.find((m: MonthlySummary) => m.month === currentMonth);
-      const currentMonthSales = currentMonthSummary ? currentMonthSummary.totalSales : 0;
-      const earnings = calculateAdviserEarnings(currentMonthSales);
-
-      const duration = 2000;
-      const steps = 60;
-      const increment = earnings / steps;
-      let current = 0;
-
-      const interval = setInterval(() => {
-        current += increment;
-        if (current >= earnings) {
-          setAnimateValue(earnings);
-          clearInterval(interval);
-        } else {
-          setAnimateValue(current);
+    if (!currentAdviser?.id) return;
+    let cancelled = false;
+    getMonthlyCommissionsUseCase
+      .execute(currentAdviser.id, currentYear)
+      .then((data) => {
+        if (!cancelled && Array.isArray(data) && data.length === 12) {
+          setMonthlyCommissions(data);
         }
-      }, duration / steps);
+      })
+      .catch(() => {
+        if (!cancelled) setMonthlyCommissions(Array(12).fill(0));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentAdviser?.id, currentYear]);
 
-      return () => clearInterval(interval);
+  // Animación de comisión (valor del mes desde el backend)
+  useEffect(() => {
+    if (!currentAdviser) return;
+    const earnings = currentAdviser.commission ?? 0;
+    if (earnings <= 0) {
+      setAnimateValue(0);
+      return;
     }
-  }, [currentAdviser?.id, calculateAdviserEarnings]);
+    const duration = 2000;
+    const steps = 60;
+    const increment = earnings / steps;
+    let current = 0;
+    const interval = setInterval(() => {
+      current += increment;
+      if (current >= earnings) {
+        setAnimateValue(earnings);
+        clearInterval(interval);
+      } else {
+        setAnimateValue(current);
+      }
+    }, duration / steps);
+    return () => clearInterval(interval);
+  }, [currentAdviser?.id, currentAdviser?.commission]);
 
   if (loading) {
     return (
@@ -139,6 +155,7 @@ export const AdviserDetailPage = () => {
 
           <EarningsGrowthChart
             monthlySummaries={monthlySummaries}
+            monthlyCommissions={monthlyCommissions}
             currentAdviser={currentAdviser}
             animateValue={animateValue}
           />

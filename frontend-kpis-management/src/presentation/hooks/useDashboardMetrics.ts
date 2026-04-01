@@ -25,7 +25,6 @@ export const useDashboardMetrics = () => {
     setLoading, 
     setError,
     formatCurrency,
-    calculateAdviserEarnings,
     calculateProgressPercentage,
     getProgressColor,
     calculateWeeklyGrowth,
@@ -84,7 +83,6 @@ export const useDashboardMetrics = () => {
     
     // Utilidades
     formatCurrency,
-    calculateAdviserEarnings,
     calculateProgressPercentage,
     getProgressColor,
     calculateWeeklyGrowth,

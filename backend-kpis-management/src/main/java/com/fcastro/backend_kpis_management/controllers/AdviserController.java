@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RequiredArgsConstructor
 @RestController
@@ -30,9 +31,14 @@ public class AdviserController {
         return adviserService.getAdvisers();
     }
 
+    @GetMapping("{id}/commissions/monthly")
+    public List<Double> getMonthlyCommissions(@PathVariable Long id, @RequestParam int year) {
+        return adviserService.getMonthlyCommissions(id, year);
+    }
+
     @GetMapping("{id}")
     public AdviserResponse getAdviserById(@PathVariable Long id) {
-        return adviserService.getOne(id);
+        return adviserService.getAdviserById(id);
     }  
     
     @PostMapping

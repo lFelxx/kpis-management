@@ -128,4 +128,14 @@ export class AdviserApiRepository implements AdviserRepository {
     }
     return response.json();
   }
+
+  async getMonthlyCommissions(adviserId: string, year: number): Promise<number[]> {
+    const response = await request(
+      `${this.baseUrl}/advisers/${adviserId}/commissions/monthly?year=${year}`
+    );
+    if (!response.ok) {
+      throw new Error('Error al obtener comisiones mensuales');
+    }
+    return response.json();
+  }
 }

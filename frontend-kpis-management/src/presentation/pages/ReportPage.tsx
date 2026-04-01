@@ -21,7 +21,6 @@ export const ReportPage = () => {
     error,
     fetchMetrics,
     formatCurrency,
-    calculateAdviserEarnings,
     getProgressColor,
   } = useDashboardMetrics();
 
@@ -67,6 +66,13 @@ export const ReportPage = () => {
     () => [...advisers].sort((a, b) => (b.currentMonthSales ?? b.sales ?? 0) - (a.currentMonthSales ?? a.sales ?? 0)),
     [advisers]
   );
+
+  const storeCommissionRatePercent = useMemo(() => {
+    const v = sortedAdvisers.find((a) => a.commissionRatePercent != null)?.commissionRatePercent;
+    return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  }, [sortedAdvisers]);
+
+  const formatCommissionRate = (pct: number) => `${pct.toFixed(2)}%`;
 
   if (loading) {
     return (
@@ -146,7 +152,7 @@ export const ReportPage = () => {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border">
           <div>
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
               Ventas totales
@@ -161,6 +167,14 @@ export const ReportPage = () => {
             </p>
             <p className={`text-xl font-black ${getProgressColor(goalAchievement ?? 0)}`}>
               {formatAchievement(goalAchievement ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+              Tasa de comisión aplicable
+            </p>
+            <p className="text-xl font-black text-foreground" title="Sobre ventas del asesor; según cumplimiento global de la tienda (hasta 1,2%).">
+              {storeCommissionRatePercent != null ? formatCommissionRate(storeCommissionRatePercent) : '—'}
             </p>
           </div>
         </div>
@@ -271,7 +285,7 @@ export const ReportPage = () => {
                 const sales = adviser.currentMonthSales ?? adviser.sales ?? 0;
                 const goal = adviser.goalValue ?? 0;
                 const achievement = goal > 0 ? (sales / goal) * 100 : 0;
-                const commission = calculateAdviserEarnings(sales);
+                const commission = adviser.commission ?? 0;
                 const name = `${adviser.name} ${adviser.lastName}`.trim() || '—';
                 return (
                   <tr

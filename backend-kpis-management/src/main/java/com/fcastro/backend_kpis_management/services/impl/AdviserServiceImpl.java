@@ -21,6 +21,7 @@ import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.SaleRepository;
 import com.fcastro.backend_kpis_management.services.AdviserService;
+import com.fcastro.backend_kpis_management.services.CommissionService;
 import com.fcastro.backend_kpis_management.services.SalesCalculator;
 
 import lombok.RequiredArgsConstructor;
@@ -38,13 +39,16 @@ public class AdviserServiceImpl implements AdviserService {
     private final GoalRepository goalRepository;
     private final EntityManager entityManager;
     private final AdviserMapper adviserMapper;
+    private final CommissionService commissionService;
     private static final Logger log = LoggerFactory.getLogger(AdviserServiceImpl.class);
 
     @Override
     public List<AdviserResponse> getAdvisers() {
         log.info("Obteniendo lista de asesores");
         List<Adviser> advisers = adviserRepository.findAll();
-        return adviserMapper.toResponseList(advisers);
+        List<AdviserResponse> responses = adviserMapper.toResponseList(advisers);
+        enrichCommission(responses);
+        return responses;
     }
 
     @Override
@@ -55,7 +59,9 @@ public class AdviserServiceImpl implements AdviserService {
                     log.error("No se encontró el asesor con ID: {}", id);
                     return new AdviserNotFoundException("No se puedo encontrar el asesor");
                 });
-        return adviserMapper.tResponse(adviser);
+        AdviserResponse response = adviserMapper.tResponse(adviser);
+        enrichCommission(response);
+        return response;
     }
 
     @Override
@@ -63,7 +69,43 @@ public class AdviserServiceImpl implements AdviserService {
         Adviser adviser = adviserRepository.findByIdWithMonthlySummaries(id)
             .orElseThrow(() -> new AdviserNotFoundException("Asesor no encontrado"));
         
-        return adviserMapper.tResponse(adviser);
+        AdviserResponse response = adviserMapper.tResponse(adviser);
+        enrichCommission(response);
+        return response;
+    }
+
+    @Override
+    public List<Double> getMonthlyCommissions(Long adviserId, int year) {
+        Adviser adviser = adviserRepository.findByIdWithMonthlySummaries(adviserId)
+                .orElseThrow(() -> new AdviserNotFoundException("Asesor no encontrado"));
+        return commissionService.computeMonthlyCommissionsForAdviser(adviser, year);
+    }
+
+    private void enrichCommission(AdviserResponse response) {
+        if (response == null) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        double ach = commissionService.computeStoreGoalAchievementPercent(today.getYear(), today.getMonthValue());
+        double sales = response.getCurrentMonthSales() != null ? response.getCurrentMonthSales() : 0.0;
+        response.setCommission(commissionService.computeCommission(sales, ach));
+        response.setCommissionRatePercent(commissionService.computeEffectiveCommissionRatePercent(ach));
+    }
+
+    private void enrichCommission(List<AdviserResponse> responses) {
+        if (responses == null || responses.isEmpty()) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        int y = today.getYear();
+        int m = today.getMonthValue();
+        double ach = commissionService.computeStoreGoalAchievementPercent(y, m);
+        double rate = commissionService.computeEffectiveCommissionRatePercent(ach);
+        for (AdviserResponse r : responses) {
+            double sales = r.getCurrentMonthSales() != null ? r.getCurrentMonthSales() : 0.0;
+            r.setCommission(commissionService.computeCommission(sales, ach));
+            r.setCommissionRatePercent(rate);
+        }
     }
 
     @Override
@@ -90,7 +132,9 @@ public class AdviserServiceImpl implements AdviserService {
             .orElse(newAdviser);
         System.out.println("Goals loaded: " + adviserWithGoals.getGoals().size());
         log.info("Asesor creado exitosamente con ID: {}", newAdviser.getId());
-        return adviserMapper.tResponse(adviserWithGoals);
+        AdviserResponse created = adviserMapper.tResponse(adviserWithGoals);
+        enrichCommission(created);
+        return created;
     }
 
     @Override
@@ -112,7 +156,9 @@ public class AdviserServiceImpl implements AdviserService {
 
         Adviser updated = adviserRepository.save(entity);
         log.info("Asesor actualizado exitosamente con ID: {}", id);
-        return adviserMapper.tResponse(updated);
+        AdviserResponse updatedResponse = adviserMapper.tResponse(updated);
+        enrichCommission(updatedResponse);
+        return updatedResponse;
     }
 
     @Override
