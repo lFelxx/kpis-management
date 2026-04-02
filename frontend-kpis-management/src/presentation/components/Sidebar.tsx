@@ -70,7 +70,7 @@ export const Sidebar = () => {
       <div className="absolute top-1/2 -right-20 w-40 h-40 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none" />
 
       {/* Brand Header */}
-      <div className="p-8 pb-4">
+      <div className="p-6 pb-2">
         <motion.div
           whileHover={{ scale: 1.02 }}
           className="flex flex-col gap-1 cursor-default text-left"
@@ -78,13 +78,15 @@ export const Sidebar = () => {
           <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-cyan-700 dark:from-emerald-400 dark:to-cyan-500 tracking-tighter">
             KPIs Management
           </span>
-          <div className="h-[2px] w-12 bg-gradient-to-r from-emerald-500 to-transparent rounded-full" />
+          <div className="flex items-center justify-between">
+            <div className="h-[2px] w-12 bg-gradient-to-r from-emerald-500 to-transparent rounded-full" />
+          </div>
         </motion.div>
       </div>
 
       {/* User Status Card */}
-      <div className="px-6 py-6">
-        <div className="bg-slate-900/5 dark:bg-white/5 rounded-[1.5rem] p-4 border border-slate-900/5 dark:border-white/5 flex items-center gap-4 group hover:bg-slate-900/10 dark:hover:bg-white/10 transition-colors duration-500">
+      <div className="px-6 py-2">
+        <div className="bg-slate-900/5 dark:bg-white/5 rounded-[1.2rem] p-3 border border-slate-900/5 dark:border-white/5 flex items-center gap-3 group hover:bg-slate-900/10 dark:hover:bg-white/10 transition-colors duration-500">
           <div className="relative">
             <motion.div
               animate={{ rotate: 360 }}
@@ -106,13 +108,13 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto scrollbar-hide">
         {menuItems.map((item) => (
           <NavLink
             key={item.label}
             to={item.to}
             className={({ isActive }) =>
-              `group relative flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-500
+              `group relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-500
               ${isActive
                 ? 'bg-emerald-500/10 dark:bg-white/10 text-emerald-700 dark:text-white shadow-sm dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                 : 'text-slate-950/40 dark:text-white/40 hover:text-emerald-700 dark:hover:text-white hover:bg-emerald-500/5 dark:hover:bg-white/5'
@@ -150,13 +152,13 @@ export const Sidebar = () => {
       </nav>
 
       {/* Compact Utility Footer */}
-      <div className="p-6 mb-2 mt-auto">
-        <div className="bg-slate-900/5 dark:bg-white/5 rounded-3xl p-2 border border-slate-900/5 dark:border-white/5 flex gap-2">
+      <div className="p-4 mb-2 mt-auto flex flex-col gap-3">
+        <div className="bg-slate-900/5 dark:bg-white/5 rounded-2xl p-1.5 border border-slate-900/5 dark:border-white/5 flex gap-2">
           <motion.button
             onClick={toggleTheme}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex-1 py-3 flex items-center justify-center rounded-2xl bg-white/50 dark:bg-white/5 shadow-sm dark:shadow-none hover:bg-white dark:hover:bg-white/10 transition-colors text-slate-900/60 dark:text-white/60 hover:text-emerald-600 dark:hover:text-white cursor-pointer"
+            className="flex-1 py-2 flex items-center justify-center rounded-xl bg-white/50 dark:bg-white/5 shadow-sm dark:shadow-none hover:bg-white dark:hover:bg-white/10 transition-colors text-slate-900/60 dark:text-white/60 hover:text-emerald-600 dark:hover:text-white cursor-pointer"
             title={theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
           >
             {theme === 'dark' ? <FaSun size={16} /> : <FaMoon size={16} />}
@@ -166,12 +168,24 @@ export const Sidebar = () => {
             onClick={handleLogout}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex-1 py-3 flex items-center justify-center rounded-2xl bg-white/50 dark:bg-white/5 shadow-sm dark:shadow-none hover:bg-red-500/10 dark:hover:bg-red-500/20 transition-all text-slate-900/60 dark:text-white/60 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
+            className="flex-1 py-2 flex items-center justify-center rounded-xl bg-white/50 dark:bg-white/5 shadow-sm dark:shadow-none hover:bg-red-500/10 dark:hover:bg-red-500/20 transition-all text-slate-900/60 dark:text-white/60 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
             title="Cerrar sesión"
           >
             <FaSignOutAlt size={16} />
           </motion.button>
         </div>
+        
+        {/* Version */}
+        {import.meta.env.VITE_APP_VERSION && (
+          <div className="flex justify-center mt-1">
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/30 to-cyan-500/30 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500"></div>
+              <span className="relative px-3 py-1 bg-white/80 dark:bg-black/40 backdrop-blur-md border border-emerald-500/30 rounded-full text-[10px] font-black text-emerald-600 dark:text-emerald-400 tracking-widest uppercase shadow-sm flex items-center justify-center">
+                v{import.meta.env.VITE_APP_VERSION}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </motion.aside>
   );
