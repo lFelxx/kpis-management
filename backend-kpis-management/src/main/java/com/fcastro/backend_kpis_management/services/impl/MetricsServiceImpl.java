@@ -63,17 +63,22 @@ public class MetricsServiceImpl implements MetricsService {
                 : 0.0;
         Double averageSales = totalSales / activeAdviser.size();
 
-        // 5. Obtener mejor asesor por logro de meta
-        BestAdviserInfo bestAdviser = getBestAdviser(monthlySummaries);
+        // 5. Filtrar resúmenes solo de asesores activos para los cálculos de mejor/peor
+        List<MonthlySummary> activeAdviserSummaries = monthlySummaries.stream()
+                .filter(summary -> summary.getAdviser() != null && Boolean.TRUE.equals(summary.getAdviser().getActive()))
+                .toList();
 
-        // 6. Obtener mejor asesor por UPT (null si nadie tiene UPT > 0)
-        BestAdviserInfo bestUptAdviser = getBestAdviserByUpt(monthlySummaries);
+        // 6. Obtener mejor asesor por logro de meta
+        BestAdviserInfo bestAdviser = getBestAdviser(activeAdviserSummaries);
+
+        // 7. Obtener mejor asesor por UPT (null si nadie tiene UPT > 0)
+        BestAdviserInfo bestUptAdviser = getBestAdviserByUpt(activeAdviserSummaries);
         if (bestUptAdviser != null && (bestUptAdviser.upt() == null || bestUptAdviser.upt() <= 0.0)) {
             bestUptAdviser = null;
         }
 
-        // 7. Obtener peor asesor por porcentaje de cumplimiento
-        BestAdviserInfo worstAdviser = getWorstAdviserByGoalAchievement(monthlySummaries);
+        // 8. Obtener peor asesor por porcentaje de cumplimiento
+        BestAdviserInfo worstAdviser = getWorstAdviserByGoalAchievement(activeAdviserSummaries);
 
         return new DashboardMetricsResponse(
                 totalSales,
