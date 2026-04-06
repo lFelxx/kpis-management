@@ -72,7 +72,7 @@ export const ReportPage = () => {
     return typeof v === 'number' && Number.isFinite(v) ? v : null;
   }, [sortedAdvisers]);
 
-  const formatCommissionRate = (pct: number) => `${pct.toFixed(2)}%`;
+  const formatCommissionRate = (pct: number) => `${pct}%`;
 
   if (loading) {
     return (
