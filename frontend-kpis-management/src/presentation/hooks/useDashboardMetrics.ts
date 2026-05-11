@@ -62,6 +62,9 @@ export const useDashboardMetrics = () => {
     return fetchDashboardMetrics(year, month);
   };
 
+  const storePartialWeekGrowthPercent = backendMetrics?.storePartialWeekGrowthPercent;
+  const adviserPartialWeekGrowth = backendMetrics?.adviserPartialWeekGrowth;
+
   return {
     // Métricas calculadas
     totalSales,
@@ -72,6 +75,8 @@ export const useDashboardMetrics = () => {
     bestAdviser,
     bestUptAdviser,
     worstAdviser,
+    storePartialWeekGrowthPercent,
+    adviserPartialWeekGrowth,
     
     // Estados
     loading: backendLoading || metricsLoading,

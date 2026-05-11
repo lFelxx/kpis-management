@@ -1,5 +1,7 @@
 package com.fcastro.backend_kpis_management.model.dto.metrics;
 
+import java.util.List;
+
 public record DashboardMetricsResponse(
     Double totalSales,
     Double totalGoal,
@@ -8,6 +10,10 @@ public record DashboardMetricsResponse(
     Double averageSales,
     BestAdviserInfo bestAdviser,
     BestAdviserInfo bestUptAdviser,
-    BestAdviserInfo worstAdviser
+    BestAdviserInfo worstAdviser,
+    Double storeCurrentPartialWeekSales,
+    Double storePreviousPartialWeekSales,
+    Double storePartialWeekGrowthPercent,
+    List<AdviserPartialWeekGrowthInfo> adviserPartialWeekGrowth
 ) {
 }

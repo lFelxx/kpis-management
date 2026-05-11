@@ -10,6 +10,8 @@ const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Jul
 export const ReportPage = () => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  /** Fuera del ref del PNG: no se incluye en “Descargar como imagen”. */
+  const [showGrowthPercentages, setShowGrowthPercentages] = useState(true);
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const {
     totalGoal,
@@ -22,6 +24,8 @@ export const ReportPage = () => {
     fetchMetrics,
     formatCurrency,
     getProgressColor,
+    storePartialWeekGrowthPercent,
+    adviserPartialWeekGrowth,
   } = useDashboardMetrics();
 
   useEffect(() => {
@@ -67,6 +71,24 @@ export const ReportPage = () => {
     [advisers]
   );
 
+  const partialWeekByAdviserId = useMemo(() => {
+    const list = adviserPartialWeekGrowth ?? [];
+    return new Map(list.map((row) => [String(row.adviserId), row]));
+  }, [adviserPartialWeekGrowth]);
+
+  const formatWeekOverWeek = (pct: number | null | undefined) => {
+    if (pct == null || !Number.isFinite(pct)) return '—';
+    const sign = pct > 0 ? '+' : '';
+    return `${sign}${pct.toFixed(1)}%`;
+  };
+
+  const weekOverWeekClass = (pct: number | null | undefined) => {
+    if (pct == null || !Number.isFinite(pct)) return 'text-muted-foreground font-bold';
+    if (pct > 0) return 'text-chart-1 font-bold';
+    if (pct < 0) return 'text-destructive font-bold';
+    return 'text-muted-foreground font-bold';
+  };
+
   const storeCommissionRatePercent = useMemo(() => {
     const v = sortedAdvisers.find((a) => a.commissionRatePercent != null)?.commissionRatePercent;
     return typeof v === 'number' && Number.isFinite(v) ? v : null;
@@ -103,12 +125,21 @@ export const ReportPage = () => {
 
   return (
     <div className="max-w-[1200px] mx-auto">
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end mb-4">
+        <label className="inline-flex cursor-pointer select-none items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/40">
+          <input
+            type="checkbox"
+            className="h-4 w-4 cursor-pointer rounded border-border accent-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/45 focus:ring-offset-2 focus:ring-offset-background"
+            checked={showGrowthPercentages}
+            onChange={(e) => setShowGrowthPercentages(e.target.checked)}
+          />
+          Ver porcentaje de crecimiento
+        </label>
         <button
           type="button"
           onClick={handleDownloadImage}
           disabled={downloading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 disabled:opacity-60 transition-opacity"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 disabled:opacity-60 transition-opacity"
         >
           {downloading ? (
             <>
@@ -152,7 +183,11 @@ export const ReportPage = () => {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border">
+        <div
+          className={`grid grid-cols-1 gap-4 pt-4 border-t border-border sm:grid-cols-2 ${
+            showGrowthPercentages ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+          }`}
+        >
           <div>
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
               Ventas totales
@@ -177,6 +212,16 @@ export const ReportPage = () => {
               {storeCommissionRatePercent != null ? formatCommissionRate(storeCommissionRatePercent) : '—'}
             </p>
           </div>
+          {showGrowthPercentages && (
+            <div title="Ventas de la semana (lun–hoy) vs la misma franja de la semana pasada, sumando todos los asesores activos.">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                Crecimiento porcentual
+              </p>
+              <p className={`text-xl font-black ${weekOverWeekClass(storePartialWeekGrowthPercent)}`}>
+                {formatWeekOverWeek(storePartialWeekGrowthPercent)}
+              </p>
+            </div>
+          )}
         </div>
       </motion.section>
 
@@ -272,6 +317,14 @@ export const ReportPage = () => {
                 <th className="px-6 py-4">Meta</th>
                 <th className="px-6 py-4">Ventas</th>
                 <th className="px-6 py-4">Cumplimiento</th>
+                {showGrowthPercentages && (
+                  <th
+                    className="px-6 py-4 max-w-[140px]"
+                    title="Variación % de ventas lun–hoy vs misma franja la semana pasada."
+                  >
+                    Crecimiento
+                  </th>
+                )}
                 <th className="px-6 py-4">
                   <span className="inline-flex items-center gap-1.5 text-chart-1">
                     <FaCoins className="w-3.5 h-3.5" />
@@ -287,6 +340,8 @@ export const ReportPage = () => {
                 const achievement = goal > 0 ? (sales / goal) * 100 : 0;
                 const commission = adviser.commission ?? 0;
                 const name = `${adviser.name} ${adviser.lastName}`.trim() || '—';
+                const wow = partialWeekByAdviserId.get(String(adviser.id));
+                const wowPct = wow?.growthPercentage;
                 return (
                   <tr
                     key={adviser.id}
@@ -308,6 +363,20 @@ export const ReportPage = () => {
                         {achievement.toFixed(1)}%
                       </span>
                     </td>
+                    {showGrowthPercentages && (
+                      <td className="px-6 py-4">
+                        <span
+                          className={weekOverWeekClass(wowPct)}
+                          title={
+                            wow != null
+                              ? `Esta franja: ${formatCurrency(wow.currentPartialWeekSales)} · Misma franja sem. pasada: ${formatCurrency(wow.previousPartialWeekSales)}`
+                              : undefined
+                          }
+                        >
+                          {formatWeekOverWeek(wowPct)}
+                        </span>
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-chart-1/15 px-3 py-1.5 text-base font-black text-chart-1">
                         <FaCoins className="w-4 h-4 opacity-90" />

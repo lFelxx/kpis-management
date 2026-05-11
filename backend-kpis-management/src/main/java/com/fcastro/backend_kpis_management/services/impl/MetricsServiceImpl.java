@@ -1,17 +1,24 @@
 package com.fcastro.backend_kpis_management.services.impl;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserMetricsResponse;
+import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserPartialWeekGrowthInfo;
 import com.fcastro.backend_kpis_management.model.dto.metrics.BestAdviserInfo;
 import com.fcastro.backend_kpis_management.model.dto.metrics.DashboardMetricsResponse;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
+import com.fcastro.backend_kpis_management.model.entities.Sale;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
+import com.fcastro.backend_kpis_management.repositories.SaleRepository;
 import com.fcastro.backend_kpis_management.services.CommissionService;
 import com.fcastro.backend_kpis_management.services.MetricsService;
 
@@ -27,6 +34,7 @@ public class MetricsServiceImpl implements MetricsService {
     private final MonthlySummaryRepository monthlySummaryRepository;
     private final GoalRepository goalRepository;
     private final CommissionService commissionService;
+    private final SaleRepository saleRepository;
 
     @Override
     public DashboardMetricsResponse getDashboardMetrics(int year, int month) {
@@ -36,7 +44,9 @@ public class MetricsServiceImpl implements MetricsService {
         List<Adviser> activeAdviser = adviserRepository.findAllActiveAdvisers();
 
         if (activeAdviser.isEmpty()) {
-            return new DashboardMetricsResponse(0.0, 0.0, 0, 0.0, 0.0, null, null, null);
+            return new DashboardMetricsResponse(
+                    0.0, 0.0, 0, 0.0, 0.0, null, null, null,
+                    0.0, 0.0, 0.0, List.of());
         }
 
         // 2. Obtener resumenes mensuales
@@ -80,6 +90,8 @@ public class MetricsServiceImpl implements MetricsService {
         // 8. Obtener peor asesor por porcentaje de cumplimiento
         BestAdviserInfo worstAdviser = getWorstAdviserByGoalAchievement(activeAdviserSummaries);
 
+        PartialWeekTotals partialWeek = computePartialWeekComparisons(activeAdviser);
+
         return new DashboardMetricsResponse(
                 totalSales,
                 totalGoal,
@@ -88,7 +100,11 @@ public class MetricsServiceImpl implements MetricsService {
                 averageSales,
                 bestAdviser,
                 bestUptAdviser,
-                worstAdviser);
+                worstAdviser,
+                partialWeek.storeCurrent(),
+                partialWeek.storePrevious(),
+                partialWeek.storeGrowthPercent(),
+                partialWeek.adviserRows());
     }
 
     @Override
@@ -215,5 +231,54 @@ public class MetricsServiceImpl implements MetricsService {
             return 0.0;
         }
         return totalSales != null ? (totalSales / goal) * 100 : 0.0;
+    }
+
+    /**
+     * Suma ventas ({@link Sale}) del asesor entre fechas inclusive (ISO local date del servidor).
+     */
+    private double sumSalesInRange(Adviser adviser, LocalDate startInclusive, LocalDate endInclusive) {
+        List<Sale> sales = saleRepository.findByAdviserAndSaleDateBetween(adviser, startInclusive, endInclusive);
+        return sales.stream().mapToDouble(s -> s.getAmount() != null ? s.getAmount() : 0.0).sum();
+    }
+
+    private static double growthPercent(double previous, double current) {
+        if (previous == 0.0) {
+            return current > 0.0 ? 100.0 : 0.0;
+        }
+        return ((current - previous) / previous) * 100.0;
+    }
+
+    private PartialWeekTotals computePartialWeekComparisons(List<Adviser> activeAdvisers) {
+        LocalDate asOf = LocalDate.now();
+        LocalDate weekStart = asOf.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate prevWeekStart = weekStart.minusWeeks(1);
+        LocalDate prevEnd = asOf.minusWeeks(1);
+
+        double storeCurrent = 0.0;
+        double storePrevious = 0.0;
+        List<AdviserPartialWeekGrowthInfo> rows = new ArrayList<>();
+
+        for (Adviser adviser : activeAdvisers) {
+            double cur = sumSalesInRange(adviser, weekStart, asOf);
+            double prev = sumSalesInRange(adviser, prevWeekStart, prevEnd);
+            storeCurrent += cur;
+            storePrevious += prev;
+            rows.add(new AdviserPartialWeekGrowthInfo(
+                    adviser.getId(),
+                    cur,
+                    prev,
+                    growthPercent(prev, cur)));
+        }
+
+        double storeGrowth = growthPercent(storePrevious, storeCurrent);
+        return new PartialWeekTotals(storeCurrent, storePrevious, storeGrowth, List.copyOf(rows));
+    }
+
+    private record PartialWeekTotals(
+            double storeCurrent,
+            double storePrevious,
+            double storeGrowthPercent,
+            List<AdviserPartialWeekGrowthInfo> adviserRows
+    ) {
     }
 }
