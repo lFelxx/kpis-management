@@ -202,7 +202,6 @@ El backend expone una API REST con los siguientes endpoints principales:
 ## 👥 Autores
 
 - **Autor**: Felix Castro
-- **Coautor**: Elkin Chaparro
 
 
 ## 📄 Licencia
