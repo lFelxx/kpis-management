@@ -42,7 +42,7 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas (sin autenticación)
-                .requestMatchers(HttpMethod.OPTIONS, "/").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/favicon.ico").permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
@@ -104,7 +104,8 @@ public class SecurityConfiguration {
             "http://84.247.165.126",
             "http://84.247.165.126:80",
             "http://84.247.165.126:3000",
-            "https://kpis-management.online"
+            "https://kpis-management.online",
+            "https://www.kpis-management.online"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
