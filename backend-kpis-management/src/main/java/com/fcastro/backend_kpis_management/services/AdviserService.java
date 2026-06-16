@@ -1,5 +1,6 @@
 package com.fcastro.backend_kpis_management.services;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.fcastro.backend_kpis_management.model.dto.adviser.AdviserRequest;
@@ -8,7 +9,7 @@ import com.fcastro.backend_kpis_management.model.dto.sale.SaleRequest;
 import com.fcastro.backend_kpis_management.model.dto.sale.WeekSale;
 
 public interface AdviserService {
-    List<AdviserResponse> getAdvisers();
+    List<AdviserResponse> getAdvisers(LocalDate cutoffDate);
 
     AdviserResponse create(AdviserRequest adviser);
 

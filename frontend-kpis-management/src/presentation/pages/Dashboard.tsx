@@ -2,10 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useBudgetStore } from '../stores/budget/budget.store';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 import { formatCurrency } from '../lib/format';
 import { DashboardCard } from '../components/DashboardCard';
 import { DashboardCardSkeleton, AdviserTableSkeleton } from '../components/skeletons/SkeletonLoader';
 import { AtRiskBanner } from '../components/AtRiskBanner';
+import { CutoffDateSelector } from '../components/CutoffDateSelector';
 import { useAtRiskAdvisers } from '../hooks/useAtRiskAdvisers';
 import {
   FaChartLine,
@@ -30,32 +32,32 @@ export const Dashboard = () => {
     fetchMetrics,
   } = useDashboardMetrics();
 
-  const now          = useMemo(() => new Date(), []);
-  const currentYear  = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const daysElapsed  = now.getDate();
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+
+  const cutoff    = useMemo(() => new Date(cutoffDate + 'T00:00:00'), [cutoffDate]);
+  const currentYear  = cutoff.getFullYear();
+  const currentMonth = cutoff.getMonth() + 1;
+  const daysElapsed  = cutoff.getDate();
   const daysInMonth  = new Date(currentYear, currentMonth, 0).getDate();
 
   const { template, fetchTemplate } = useBudgetStore();
 
   useEffect(() => {
-    fetchAdvisers();
+    fetchAdvisers(cutoffDate);
     fetchMetrics();
     fetchTemplate(currentYear, currentMonth);
     window.scrollTo(0, 0);
-  }, [fetchAdvisers, fetchMetrics, fetchTemplate, currentYear, currentMonth]);
+  }, [fetchAdvisers, fetchMetrics, fetchTemplate, cutoffDate, currentYear, currentMonth]);
 
   const paf = useMemo(() => {
     if (!template?.days) return null;
-    const today = new Date().toISOString().slice(0, 10);
     return template.days
-      .filter((d) => d.date <= today)
+      .filter((d) => d.date <= cutoffDate)
       .reduce((sum, d) => sum + d.dailyAmount, 0);
-  }, [template]);
+  }, [template, cutoffDate]);
 
   const totalBudget = template?.totalBudget ?? null;
 
-  // Proyección al cierre usando el presupuesto total como meta
   const projection = useMemo(() => {
     if (!totalBudget || !totalSales || daysElapsed === 0) return null;
     const projectedSales = (totalSales / daysElapsed) * daysInMonth;
@@ -121,7 +123,7 @@ export const Dashboard = () => {
         <div className="bg-red-500/10 p-8 rounded-[2rem] border border-red-500/20 text-center max-w-sm">
           <p className="text-red-600 dark:text-red-400 font-bold mb-4">{error}</p>
           <button
-            onClick={() => { fetchAdvisers(); fetchMetrics(); }}
+            onClick={() => { fetchAdvisers(cutoffDate); fetchMetrics(); }}
             className="btn-primary"
           >
             Reintentar
@@ -136,9 +138,12 @@ export const Dashboard = () => {
       <div className="max-w-[1600px] mx-auto">
         <header className="mb-6 md:mb-10 text-left">
           <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em] mb-2 block">Panel de Control</span>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-            Dashboard
-          </h1>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+              Dashboard
+            </h1>
+            <CutoffDateSelector />
+          </div>
           <p className="text-sm font-medium text-slate-500 dark:text-white/30 mt-1 max-w-md">
             Métricas de rendimiento en tiempo real para la gestión estratégica del equipo.
           </p>
@@ -146,7 +151,6 @@ export const Dashboard = () => {
 
         <AtRiskBanner advisers={atRisk} loading={atRiskLoading} />
 
-        {/* Tarjetas del Dashboard */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
           {loading
             ? Array.from({ length: 6 }, (_, i) => <DashboardCardSkeleton key={i} index={i} />)
@@ -154,7 +158,6 @@ export const Dashboard = () => {
           }
         </div>
 
-        {/* Tabla de asesores */}
         <section className="mt-8 md:mt-12 lg:mt-16">
           {loading
             ? <AdviserTableSkeleton rows={6} hideActions />

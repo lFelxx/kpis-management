@@ -21,7 +21,7 @@ export class UpdateAdviser {
         }
         
         // 3. Validar duplicidad
-        const existingAdvisers = await this.adviserRepository.getAll();
+        const existingAdvisers = await this.adviserRepository.getAll(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
         this.validator.validateDuplicate(adviser, existingAdvisers, id);
 
         // 4. Validar datos usando el validador

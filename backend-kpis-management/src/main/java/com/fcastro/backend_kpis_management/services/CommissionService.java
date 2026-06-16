@@ -1,5 +1,6 @@
 package com.fcastro.backend_kpis_management.services;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
@@ -10,9 +11,9 @@ import com.fcastro.backend_kpis_management.model.entities.Adviser;
 public interface CommissionService {
 
     /**
-     * % cumplimiento de la tienda: ventas totales / meta total de asesores activos (mismo año/mes).
+     * % cumplimiento de la tienda: ventas totales / meta acumulada hasta cutoffDate (mismo año/mes).
      */
-    double computeStoreGoalAchievementPercent(int year, int month);
+    double computeStoreGoalAchievementPercent(int year, int month, LocalDate cutoffDate);
 
     /**
      * Tasa efectiva aplicada sobre las ventas del asesor (porcentaje, ej. 1,2 para 1,2%).

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 
 export const useDashboardMetrics = () => {
     const {
@@ -9,10 +10,12 @@ export const useDashboardMetrics = () => {
         fetchDashboardMetrics,
     } = useAdvisersStore();
 
+    const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+
     const fetchMetrics = useCallback(() => {
-        const now = new Date();
-        return fetchDashboardMetrics(now.getFullYear(), now.getMonth() + 1);
-    }, [fetchDashboardMetrics]);
+        const date = new Date(cutoffDate + 'T00:00:00');
+        return fetchDashboardMetrics(date.getFullYear(), date.getMonth() + 1, cutoffDate);
+    }, [fetchDashboardMetrics, cutoffDate]);
 
     return {
         totalSales:                    backendMetrics?.totalSales        ?? 0,
@@ -28,6 +31,5 @@ export const useDashboardMetrics = () => {
         loading,
         error,
         fetchMetrics,
-        fetchMetricsForDate: fetchDashboardMetrics,
     };
 };

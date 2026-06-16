@@ -4,13 +4,14 @@ import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserMetricsRespo
 import com.fcastro.backend_kpis_management.model.dto.metrics.AtRiskAdviserInfo;
 import com.fcastro.backend_kpis_management.model.dto.metrics.DashboardMetricsResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface MetricsService {
 
-    DashboardMetricsResponse getDashboardMetrics(int year, int month);
+    DashboardMetricsResponse getDashboardMetrics(int year, int month, LocalDate cutoffDate);
 
     AdviserMetricsResponse getAdviserMetrics(Long adviserId, int year, int month);
 
-    List<AtRiskAdviserInfo> getAtRiskAdvisers();
+    List<AtRiskAdviserInfo> getAtRiskAdvisers(LocalDate cutoffDate);
 }

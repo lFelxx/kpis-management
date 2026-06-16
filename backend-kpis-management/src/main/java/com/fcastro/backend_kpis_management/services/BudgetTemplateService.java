@@ -15,9 +15,9 @@ public interface BudgetTemplateService {
 
     void resetManualOverride(int year, int month, LocalDate date);
 
-    double calculatePafUpToToday(int year, int month);
+    double calculatePafUpToDate(int year, int month, LocalDate cutoffDate);
 
-    double calculateGoalUpToToday(int year, int month);
+    double calculateGoalUpToDate(int year, int month, LocalDate cutoffDate);
 
     double calculateTotalMonthGoalPerAdviser(int year, int month);
 }

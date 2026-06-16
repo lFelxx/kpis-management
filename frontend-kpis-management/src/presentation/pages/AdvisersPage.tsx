@@ -17,7 +17,7 @@ export const AdvisersPage: React.FC = () => {
   } = useDashboardMetrics();
 
   useEffect(() => {
-    fetchAdvisers();
+    fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
     fetchMetrics();
   }, [fetchAdvisers]);
 
@@ -59,7 +59,7 @@ export const AdvisersPage: React.FC = () => {
         <p className="text-destructive/80">{error}</p>
         <button
           onClick={() => {
-            fetchAdvisers();
+            fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
             fetchMetrics();
           }}
           className="mt-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"

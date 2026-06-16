@@ -45,7 +45,7 @@ public class MetricsServiceImpl implements MetricsService {
     private final BudgetTemplateService budgetTemplateService;
 
     @Override
-    public DashboardMetricsResponse getDashboardMetrics(int year, int month) {
+    public DashboardMetricsResponse getDashboardMetrics(int year, int month, LocalDate cutoffDate) {
         List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
 
         if (activeAdvisers.isEmpty()) {
@@ -58,10 +58,10 @@ public class MetricsServiceImpl implements MetricsService {
         Map<Long, Double> uptByAdviserId = buildUptMap(year, month);
 
         Double totalSales = monthlySummaries.stream().mapToDouble(MonthlySummary::getTotalSales).sum();
-        double goalPerAdviser = resolveGoalPerAdviser(year, month);
+        double goalPerAdviser = resolveGoalPerAdviser(year, month, cutoffDate);
         Double totalGoal = goalPerAdviser * activeAdvisers.size();
         Double goalAchievement = totalGoal > 0
-                ? commissionService.computeStoreGoalAchievementPercent(year, month)
+                ? commissionService.computeStoreGoalAchievementPercent(year, month, cutoffDate)
                 : 0.0;
         Double averageSales = totalSales / activeAdvisers.size();
 
@@ -69,7 +69,7 @@ public class MetricsServiceImpl implements MetricsService {
                 .filter(s -> s.getAdviser() != null && Boolean.TRUE.equals(s.getAdviser().getActive()))
                 .toList();
 
-        BestAdviserInfo bestAdviser  = findBestByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
+        BestAdviserInfo bestAdviser = findBestByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
         BestAdviserInfo bestUptAdviser = findBestByUpt(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
         BestAdviserInfo worstAdviser = findWorstByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
 
@@ -92,7 +92,7 @@ public class MetricsServiceImpl implements MetricsService {
         Adviser adviser = adviserRepository.findById(adviserId)
                 .orElseThrow(() -> new RuntimeException("Asesor no encontrado"));
 
-        double resolvedGoal = resolveGoalPerAdviser(year, month);
+        double resolvedGoal = resolveGoalPerAdviser(year, month, LocalDate.now().minusDays(1));
 
         Double goalAchievement = calculateGoalAchievement(monthlySummary.getTotalSales(), resolvedGoal);
 
@@ -103,13 +103,12 @@ public class MetricsServiceImpl implements MetricsService {
     // ─── Asesores en riesgo ──────────────────────────────────────────────────
 
     @Override
-    public List<AtRiskAdviserInfo> getAtRiskAdvisers() {
-        LocalDate today   = LocalDate.now();
-        int year          = today.getYear();
-        int month         = today.getMonthValue();
-        int daysElapsed   = today.getDayOfMonth();
-        int daysInMonth   = today.lengthOfMonth();
-        double monthGoal  = resolveFullMonthGoalPerAdviser(year, month);
+    public List<AtRiskAdviserInfo> getAtRiskAdvisers(LocalDate cutoffDate) {
+        int year        = cutoffDate.getYear();
+        int month       = cutoffDate.getMonthValue();
+        int daysElapsed = cutoffDate.getDayOfMonth();
+        int daysInMonth = cutoffDate.lengthOfMonth();
+        double monthGoal = resolveFullMonthGoalPerAdviser(year, month);
 
         if (daysElapsed == 0 || monthGoal <= 0) return List.of();
 
@@ -241,9 +240,9 @@ public class MetricsServiceImpl implements MetricsService {
 
     // ─── Utilidades ──────────────────────────────────────────────────────────
 
-    private double resolveGoalPerAdviser(int year, int month) {
+    private double resolveGoalPerAdviser(int year, int month, LocalDate cutoffDate) {
         if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
-            return budgetTemplateService.calculateGoalUpToToday(year, month);
+            return budgetTemplateService.calculateGoalUpToDate(year, month, cutoffDate);
         }
         return adviserRepository.findAllActiveAdvisers().stream()
                 .mapToDouble(adviser -> goalRepository

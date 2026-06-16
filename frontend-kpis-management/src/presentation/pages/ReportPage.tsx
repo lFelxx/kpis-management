@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 import { notificationService } from '../../core/instances/instances';
 import { motion } from 'framer-motion';
 import { FaBullseye, FaBoxOpen, FaChartLine, FaCoins, FaFileInvoiceDollar, FaStar, FaTrophy, FaUserMinus } from 'react-icons/fa';
 import { toPng } from 'html-to-image';
 import { formatCurrency, getProgressColor } from '../lib/format';
 import { MONTH_NAMES } from '../lib/constants';
+import { CutoffDateSelector } from '../components/CutoffDateSelector';
 
 export const ReportPage = () => {
   const reportRef = useRef<HTMLDivElement>(null);
@@ -27,18 +29,19 @@ export const ReportPage = () => {
 
   const { reports: salesReports, fetchReports } = useSalesReportStore();
 
-  const now = new Date();
-  const currentYear  = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+  const cutoff       = useMemo(() => new Date(cutoffDate + 'T00:00:00'), [cutoffDate]);
+  const currentYear  = cutoff.getFullYear();
+  const currentMonth = cutoff.getMonth() + 1;
   const monthLabel       = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
-  const currentDateLabel = `${now.getDate()} de ${MONTH_NAMES[currentMonth]} de ${currentYear}`;
+  const currentDateLabel = `${cutoff.getDate()} de ${MONTH_NAMES[currentMonth]} de ${currentYear}`;
 
   useEffect(() => {
-    fetchAdvisers();
+    fetchAdvisers(cutoffDate);
     fetchMetrics();
     fetchReports(currentYear, currentMonth);
     window.scrollTo(0, 0);
-  }, [fetchAdvisers, fetchMetrics, fetchReports, currentYear, currentMonth]);
+  }, [fetchAdvisers, fetchMetrics, fetchReports, cutoffDate, currentYear, currentMonth]);
 
   const formatAchievement = (value: number) =>
     Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
@@ -47,14 +50,24 @@ export const ReportPage = () => {
     const node = reportRef.current;
     if (!node) return;
     setDownloading(true);
+
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const originalViewport = viewportMeta?.getAttribute('content') ?? '';
+
     try {
       const isDark = document.documentElement.classList.contains('dark');
       const backgroundColor = isDark ? '#0a0a0a' : '#fafafa';
+
+      // Forzar viewport desktop para que Tailwind aplique breakpoints de pantalla grande
+      viewportMeta?.setAttribute('content', 'width=1280');
+      await new Promise((r) => setTimeout(r, 280));
+
       const dataUrl = await toPng(node, {
         backgroundColor,
         pixelRatio: 2,
         cacheBust: true,
       });
+
       const link = document.createElement('a');
       link.download = `reporte-${monthLabel.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
@@ -62,6 +75,7 @@ export const ReportPage = () => {
     } catch {
       notificationService.showError('Error al generar la imagen');
     } finally {
+      viewportMeta?.setAttribute('content', originalViewport);
       setDownloading(false);
     }
   };
@@ -139,7 +153,7 @@ export const ReportPage = () => {
           <p className="text-destructive font-bold mb-4">{error}</p>
           <button
             onClick={() => {
-              fetchAdvisers();
+              fetchAdvisers(cutoffDate);
               fetchMetrics();
             }}
             className="btn-primary"
@@ -153,7 +167,9 @@ export const ReportPage = () => {
 
   return (
     <div className="max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end mb-4">
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-4">
+        <CutoffDateSelector />
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
         <label className="inline-flex cursor-pointer select-none items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/40">
           <input
             type="checkbox"
@@ -178,6 +194,7 @@ export const ReportPage = () => {
             <>Descargar reporte como imagen</>
           )}
         </button>
+        </div>
       </div>
       <div ref={reportRef} className="space-y-8 bg-background rounded-2xl p-6">
         <header className="text-left">

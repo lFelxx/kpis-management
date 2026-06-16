@@ -13,7 +13,7 @@ export function useAdviserUI() {
         if (!adviser) return;
         try {
             await handleSumUseCase.execute(adviser, Number(value));
-            await advisersStore.fetchAdvisers();
+            await advisersStore.fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
             actionModalStore.closeSumModal();
             notificationService.showSuccess('Suma aplicada exitosamente');
         } catch {
@@ -38,7 +38,7 @@ export function useAdviserUI() {
         if (!adviser) return;
         try {
             await advisersStore.updateAdviser(adviser.id, { ...adviser, upt: value });
-            await advisersStore.fetchAdvisers();
+            await advisersStore.fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
             actionModalStore.closeUptModal();
             notificationService.showSuccess('UPT actualizado exitosamente');
         } catch {

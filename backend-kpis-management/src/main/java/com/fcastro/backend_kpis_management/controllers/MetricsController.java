@@ -10,7 +10,9 @@ import com.fcastro.backend_kpis_management.services.MetricsService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,24 +25,26 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class MetricsController {
 
     private final MetricsService metricsService;
-    
+
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardMetricsResponse> getDashboardMetrics(
-        @RequestParam int year, 
-        @RequestParam int month) {
-        return ResponseEntity.ok(metricsService.getDashboardMetrics(year, month));
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cutoffDate) {
+        return ResponseEntity.ok(metricsService.getDashboardMetrics(year, month, cutoffDate));
     }
-    
+
     @GetMapping("/adviser/{adviserId}")
     public ResponseEntity<AdviserMetricsResponse> getAdviserMetrics(
-        @PathVariable Long adviserId,
-        @RequestParam int year,
-        @RequestParam int month) {
+            @PathVariable Long adviserId,
+            @RequestParam int year,
+            @RequestParam int month) {
         return ResponseEntity.ok(metricsService.getAdviserMetrics(adviserId, year, month));
     }
 
     @GetMapping("/at-risk")
-    public ResponseEntity<List<AtRiskAdviserInfo>> getAtRiskAdvisers() {
-        return ResponseEntity.ok(metricsService.getAtRiskAdvisers());
+    public ResponseEntity<List<AtRiskAdviserInfo>> getAtRiskAdvisers(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cutoffDate) {
+        return ResponseEntity.ok(metricsService.getAtRiskAdvisers(cutoffDate));
     }
 }

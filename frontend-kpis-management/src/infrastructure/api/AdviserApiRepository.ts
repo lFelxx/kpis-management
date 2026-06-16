@@ -7,8 +7,8 @@ export class AdviserApiRepository implements AdviserRepository {
 
   constructor(private readonly baseUrl: string) {}
 
-  async getAll(): Promise<Adviser[]> {
-    const response = await request(`${this.baseUrl}/advisers`);
+  async getAll(cutoffDate: string): Promise<Adviser[]> {
+    const response = await request(`${this.baseUrl}/advisers?cutoffDate=${cutoffDate}`);
     if (!response.ok) {
       throw new Error('Error al obtener los asesores');
     }
@@ -119,9 +119,9 @@ export class AdviserApiRepository implements AdviserRepository {
     }
   }
 
-  async getDashboardMetrics(year: number, month: number): Promise<DashboardMetrics> {
+  async getDashboardMetrics(year: number, month: number, cutoffDate: string): Promise<DashboardMetrics> {
     const response = await request(
-      `${this.baseUrl}/metrics/dashboard?year=${year}&month=${month}`
+      `${this.baseUrl}/metrics/dashboard?year=${year}&month=${month}&cutoffDate=${cutoffDate}`
     );
     if (!response.ok) {
       throw new Error('Error al obtener las métricas');

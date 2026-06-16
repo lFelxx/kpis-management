@@ -2,6 +2,8 @@ package com.fcastro.backend_kpis_management.services.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +38,13 @@ public class CommissionServiceImpl implements CommissionService {
     private final BudgetTemplateService budgetTemplateService;
 
     @Override
-    public double computeStoreGoalAchievementPercent(int year, int month) {
+    public double computeStoreGoalAchievementPercent(int year, int month, LocalDate cutoffDate) {
         List<Adviser> active = adviserRepository.findAllActiveAdvisers();
         if (active.isEmpty()) return 0.0;
 
         List<MonthlySummary> summaries = monthlySummaryRepository.findByYearAndMonth(year, month);
         double totalSales = summaries.stream().mapToDouble(MonthlySummary::getTotalSales).sum();
-        double totalGoal = resolveStoreGoal(year, month, active);
+        double totalGoal = resolveStoreGoal(year, month, active, cutoffDate);
 
         if (totalGoal <= 0) return 0.0;
         return round((totalSales / totalGoal) * 100.0, STORE_ACHIEVEMENT_SCALE);
@@ -73,7 +75,8 @@ public class CommissionServiceImpl implements CommissionService {
     public List<Double> computeMonthlyCommissionsForAdviser(Adviser adviser, int year) {
         List<Double> out = new ArrayList<>(12);
         for (int month = 1; month <= 12; month++) {
-            double storeAch = computeStoreGoalAchievementPercent(year, month);
+            LocalDate lastDay = LocalDate.of(year, month, 1).with(TemporalAdjusters.lastDayOfMonth());
+            double storeAch = computeStoreGoalAchievementPercent(year, month, lastDay);
             double sales = monthSales(adviser, year, month);
             out.add(computeCommission(sales, storeAch));
         }
@@ -82,9 +85,9 @@ public class CommissionServiceImpl implements CommissionService {
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private double resolveStoreGoal(int year, int month, List<Adviser> active) {
+    private double resolveStoreGoal(int year, int month, List<Adviser> active, LocalDate cutoffDate) {
         if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
-            return budgetTemplateService.calculatePafUpToToday(year, month);
+            return budgetTemplateService.calculatePafUpToDate(year, month, cutoffDate);
         }
         return active.stream()
                 .mapToDouble(adviser -> goalRepository

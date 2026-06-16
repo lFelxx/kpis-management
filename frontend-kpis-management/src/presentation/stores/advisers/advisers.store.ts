@@ -24,7 +24,7 @@ interface AdvisersState {
 }
 
 interface AdvisersActions {
-    fetchAdvisers: () => Promise<void>;
+    fetchAdvisers: (cutoffDate: string) => Promise<void>;
     fetchAdviserById: (id: string) => Promise<Adviser | null>;
     createAdviser: (adviser: Omit<Adviser, 'id'>) => Promise<Adviser>;
     updateAdviser: (id: string, data: Partial<Adviser>) => Promise<Adviser>;
@@ -36,7 +36,7 @@ interface AdvisersActions {
     updateAdviserInStore: (adviser: Adviser) => void;
     selectAdviser: (id: string) => void;
     clearSelectAdviser: () => void;
-    fetchDashboardMetrics: (year: number, month: number) => Promise<void>;
+    fetchDashboardMetrics: (year: number, month: number, cutoffDate: string) => Promise<void>;
 }
 
 type AdvisersStore = AdvisersState & AdvisersActions;
@@ -48,10 +48,10 @@ export const useAdvisersStore = create<AdvisersStore>((set, get) => ({
     loading: false,
     error: null,
 
-    fetchAdvisers: async () => {
+    fetchAdvisers: async (cutoffDate: string) => {
         set({ loading: true, error: null });
         try {
-            const data = await getAllAdvisersUseCase.execute();
+            const data = await getAllAdvisersUseCase.execute(cutoffDate);
             set({ advisers: data, loading: false });
         } catch (error) {
             const errorMessage = (error as Error).message;
@@ -127,7 +127,7 @@ export const useAdvisersStore = create<AdvisersStore>((set, get) => ({
         set({ loading: true, error: null });
         try {
             await handleSumUseCase.execute(adviser, value);
-            await get().fetchAdvisers();
+            await get().fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
             set({ loading: false });
         } catch (error) {
             const errorMessage = (error as Error).message;
@@ -180,10 +180,10 @@ export const useAdvisersStore = create<AdvisersStore>((set, get) => ({
         }
     },
 
-    fetchDashboardMetrics: async (year: number, month: number) => {
+    fetchDashboardMetrics: async (year: number, month: number, cutoffDate: string) => {
         set({ loading: true, error: null });
         try {
-            const data = await getDashboardMetricsUseCase.execute(year, month);
+            const data = await getDashboardMetricsUseCase.execute(year, month, cutoffDate);
             set({ metrics: data, loading: false });
         } catch (error) {
             const errorMessage = (error as Error).message;

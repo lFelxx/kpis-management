@@ -1,5 +1,7 @@
 package com.fcastro.backend_kpis_management.services.impl;
 
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,7 +118,7 @@ public class StoreMetricsServiceImpl implements StoreMetricsService {
         int month = storeMetrics.getMonth();
 
         if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
-            return budgetTemplateService.calculatePafUpToToday(year, month);
+            return budgetTemplateService.calculatePafUpToDate(year, month, LocalDate.now().minusDays(1));
         }
         return storeMetrics.getPaf();
     }

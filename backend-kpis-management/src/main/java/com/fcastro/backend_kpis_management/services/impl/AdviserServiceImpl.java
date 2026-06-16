@@ -49,12 +49,12 @@ public class AdviserServiceImpl implements AdviserService {
     private final CommissionService commissionService;
 
     @Override
-    public List<AdviserResponse> getAdvisers() {
+    public List<AdviserResponse> getAdvisers(LocalDate cutoffDate) {
         log.info("Obteniendo lista de asesores");
         List<Adviser> advisers = adviserRepository.findAll();
         List<AdviserResponse> responses = adviserMapper.toResponseList(advisers);
-        enrichGoal(responses);
-        enrichCommission(responses);
+        enrichGoal(responses, cutoffDate);
+        enrichCommission(responses, cutoffDate);
         return responses;
     }
 
@@ -63,8 +63,9 @@ public class AdviserServiceImpl implements AdviserService {
         Adviser adviser = adviserRepository.findByIdWithMonthlySummaries(id)
             .orElseThrow(() -> new AdviserNotFoundException(ADVISER_NOT_FOUND));
         AdviserResponse response = adviserMapper.tResponse(adviser);
-        enrichGoal(response);
-        enrichCommission(response);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        enrichGoal(response, yesterday);
+        enrichCommission(response, yesterday);
         return response;
     }
 
@@ -95,8 +96,9 @@ public class AdviserServiceImpl implements AdviserService {
         entity.setUpt(adviser.getUpt());
 
         AdviserResponse response = adviserMapper.tResponse(adviserRepository.save(entity));
-        enrichGoal(response);
-        enrichCommission(response);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        enrichGoal(response, yesterday);
+        enrichCommission(response, yesterday);
         return response;
     }
 
@@ -142,33 +144,32 @@ public class AdviserServiceImpl implements AdviserService {
         Adviser adviser = adviserRepository.findByIdWithGoals(adviserId)
             .orElseThrow(() -> new AdviserNotFoundException(ADVISER_NOT_FOUND));
         AdviserResponse response = adviserMapper.tResponse(adviser);
-        enrichGoal(response);
-        enrichCommission(response);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        enrichGoal(response, yesterday);
+        enrichCommission(response, yesterday);
         return response;
     }
 
-    private void enrichGoal(AdviserResponse response) {
-        enrichGoal(List.of(response));
+    private void enrichGoal(AdviserResponse response, LocalDate cutoffDate) {
+        enrichGoal(List.of(response), cutoffDate);
     }
 
-    private void enrichGoal(List<AdviserResponse> responses) {
+    private void enrichGoal(List<AdviserResponse> responses, LocalDate cutoffDate) {
         if (responses == null || responses.isEmpty()) return;
-        LocalDate today = LocalDate.now();
-        int year = today.getYear();
-        int month = today.getMonthValue();
+        int year  = cutoffDate.getYear();
+        int month = cutoffDate.getMonthValue();
         if (!budgetTemplateRepository.existsByYearAndMonth(year, month)) return;
-        double dynamicGoal = budgetTemplateService.calculateGoalUpToToday(year, month);
+        double dynamicGoal = budgetTemplateService.calculateGoalUpToDate(year, month, cutoffDate);
         responses.forEach(r -> r.setGoalValue(dynamicGoal));
     }
 
-    private void enrichCommission(AdviserResponse response) {
-        enrichCommission(List.of(response));
+    private void enrichCommission(AdviserResponse response, LocalDate cutoffDate) {
+        enrichCommission(List.of(response), cutoffDate);
     }
 
-    private void enrichCommission(List<AdviserResponse> responses) {
+    private void enrichCommission(List<AdviserResponse> responses, LocalDate cutoffDate) {
         if (responses == null || responses.isEmpty()) return;
-        LocalDate today = LocalDate.now();
-        double ach  = commissionService.computeStoreGoalAchievementPercent(today.getYear(), today.getMonthValue());
+        double ach  = commissionService.computeStoreGoalAchievementPercent(cutoffDate.getYear(), cutoffDate.getMonthValue(), cutoffDate);
         double rate = commissionService.computeEffectiveCommissionRatePercent(ach);
         for (AdviserResponse r : responses) {
             double sales = r.getCurrentMonthSales() != null ? r.getCurrentMonthSales() : 0.0;

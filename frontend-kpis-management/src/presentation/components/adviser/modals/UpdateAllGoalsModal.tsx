@@ -35,7 +35,7 @@ export const UpdateAllGoalsModal = ({ isOpen, onClose }: UpdateAllGoalsModalProp
       await updateAllGoals(currentYear, currentMonth, goalNumber);
       
       // Recargar la lista de asesores para reflejar los cambios
-      await fetchAdvisers();
+      await fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
       
       notificationService.showSuccess(`Meta establecida: ${formatCurrency(goalNumber)} para todos los asesores`);
       setGoal('');

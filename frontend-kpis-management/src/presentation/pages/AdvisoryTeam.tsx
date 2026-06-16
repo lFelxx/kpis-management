@@ -25,7 +25,7 @@ export const AdvisoryTeam = () => {
   const { openDeleteModal, openSumModal, openUptModal } = useAdviserUI();
 
   useEffect(() => {
-    fetchAdvisers();
+    fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
   }, [fetchAdvisers]);
 
   const openAddModal = () => {

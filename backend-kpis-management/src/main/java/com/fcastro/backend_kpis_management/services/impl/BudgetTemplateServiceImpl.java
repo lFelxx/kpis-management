@@ -95,20 +95,20 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
     }
 
     @Override
-    public double calculatePafUpToToday(int year, int month) {
+    public double calculatePafUpToDate(int year, int month, LocalDate cutoffDate) {
         BudgetTemplate template = findTemplateOrThrow(year, month);
         return dailyDistributionRepository
-                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), LocalDate.now())
+                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), cutoffDate)
                 .stream()
                 .mapToDouble(DailyBudgetDistribution::getDailyAmount)
                 .sum();
     }
 
     @Override
-    public double calculateGoalUpToToday(int year, int month) {
+    public double calculateGoalUpToDate(int year, int month, LocalDate cutoffDate) {
         BudgetTemplate template = findTemplateOrThrow(year, month);
         return dailyDistributionRepository
-                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), LocalDate.now())
+                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), cutoffDate)
                 .stream()
                 .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
                 .sum();
@@ -190,13 +190,13 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
      * a cada asesor activo via GoalService.
      */
     private void distributeGoalsToAdvisers(BudgetTemplate template, int year, int month) {
-        double goalUpToToday = template.getDailyDistributions().stream()
-                .filter(d -> !d.getDate().isAfter(LocalDate.now()))
+        double goalUpToYesterday = template.getDailyDistributions().stream()
+                .filter(d -> !d.getDate().isAfter(LocalDate.now().minusDays(1)))
                 .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
                 .sum();
 
-        log.info("Distribuyendo meta acumulada hasta hoy ${} a asesores activos para {}/{}", goalUpToToday, month, year);
-        goalService.updateGoalsForAllActiveAdvisers(goalUpToToday, year, month);
+        log.info("Distribuyendo meta acumulada hasta ayer ${} a asesores activos para {}/{}", goalUpToYesterday, month, year);
+        goalService.updateGoalsForAllActiveAdvisers(goalUpToYesterday, year, month);
     }
 
     private BudgetTemplate findTemplateOrThrow(int year, int month) {

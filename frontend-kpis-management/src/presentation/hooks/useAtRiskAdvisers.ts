@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../../infrastructure/api/apiClient';
 import { config } from '../../config/environment';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 
 export interface AtRiskAdviser {
   adviserId:             number;
@@ -15,10 +16,16 @@ export function useAtRiskAdvisers() {
   const [atRisk, setAtRisk]   = useState<AtRiskAdviser[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+
   const fetch_ = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await apiClient.request(`${config.apiUrl}/metrics/at-risk`, {}, { requireAuth: true });
+      const res  = await apiClient.request(
+        `${config.apiUrl}/metrics/at-risk?cutoffDate=${cutoffDate}`,
+        {},
+        { requireAuth: true }
+      );
       const data = await res.json();
       setAtRisk(Array.isArray(data) ? data : []);
     } catch {
@@ -26,7 +33,7 @@ export function useAtRiskAdvisers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cutoffDate]);
 
   useEffect(() => { fetch_(); }, [fetch_]);
 
