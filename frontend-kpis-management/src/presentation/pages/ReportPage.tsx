@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
+import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
+import { notificationService } from '../../core/instances/instances';
 import { motion } from 'framer-motion';
-import { FaBullseye, FaChartLine, FaCoins, FaTrophy, FaUserMinus } from 'react-icons/fa';
+import { FaBullseye, FaBoxOpen, FaChartLine, FaCoins, FaFileInvoiceDollar, FaStar, FaTrophy, FaUserMinus } from 'react-icons/fa';
 import { toPng } from 'html-to-image';
-
-const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+import { formatCurrency, getProgressColor } from '../lib/format';
+import { MONTH_NAMES } from '../lib/constants';
 
 export const ReportPage = () => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
-  /** Fuera del ref del PNG: no se incluye en “Descargar como imagen”. */
-  const [showGrowthPercentages, setShowGrowthPercentages] = useState(true);
+  const [showGrowthPercentages, setShowGrowthPercentages] = useState(false);
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const {
     totalGoal,
@@ -22,23 +23,22 @@ export const ReportPage = () => {
     loading,
     error,
     fetchMetrics,
-    formatCurrency,
-    getProgressColor,
-    storePartialWeekGrowthPercent,
-    adviserPartialWeekGrowth,
   } = useDashboardMetrics();
+
+  const { reports: salesReports, fetchReports } = useSalesReportStore();
+
+  const now = new Date();
+  const currentYear  = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const monthLabel       = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+  const currentDateLabel = `${now.getDate()} de ${MONTH_NAMES[currentMonth]} de ${currentYear}`;
 
   useEffect(() => {
     fetchAdvisers();
     fetchMetrics();
+    fetchReports(currentYear, currentMonth);
     window.scrollTo(0, 0);
-  }, []);
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const monthLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
-  const currentDateLabel = `${now.getDate()} de ${MONTH_NAMES[currentMonth - 1]} de ${currentYear}`;
+  }, [fetchAdvisers, fetchMetrics, fetchReports, currentYear, currentMonth]);
 
   const formatAchievement = (value: number) =>
     Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
@@ -59,8 +59,8 @@ export const ReportPage = () => {
       link.download = `reporte-${monthLabel.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (e) {
-      console.error('Error al generar la imagen:', e);
+    } catch {
+      notificationService.showError('Error al generar la imagen');
     } finally {
       setDownloading(false);
     }
@@ -71,10 +71,13 @@ export const ReportPage = () => {
     [advisers]
   );
 
-  const partialWeekByAdviserId = useMemo(() => {
-    const list = adviserPartialWeekGrowth ?? [];
-    return new Map(list.map((row) => [String(row.adviserId), row]));
-  }, [adviserPartialWeekGrowth]);
+  const storeWowPercent = useMemo(() => {
+    if (salesReports.length === 0) return null;
+    const current  = salesReports.reduce((s, r) => s + (r.wowCurrentWeekSales ?? 0), 0);
+    const previous = salesReports.reduce((s, r) => s + (r.wowPreviousWeekSales ?? 0), 0);
+    if (previous === 0) return current > 0 ? 100 : null;
+    return ((current - previous) / previous) * 100;
+  }, [salesReports]);
 
   const formatWeekOverWeek = (pct: number | null | undefined) => {
     if (pct == null || !Number.isFinite(pct)) return '—';
@@ -89,12 +92,37 @@ export const ReportPage = () => {
     return 'text-muted-foreground font-bold';
   };
 
+  const salesReportByAdviserId = useMemo(
+    () => new Map(salesReports.map((r) => [r.adviserId, r])),
+    [salesReports]
+  );
+
   const storeCommissionRatePercent = useMemo(() => {
     const v = sortedAdvisers.find((a) => a.commissionRatePercent != null)?.commissionRatePercent;
     return typeof v === 'number' && Number.isFinite(v) ? v : null;
   }, [sortedAdvisers]);
 
   const formatCommissionRate = (pct: number) => `${pct}%`;
+
+  const salesKpis = useMemo(() => {
+    if (salesReports.length === 0) return null;
+    const totalInvoices = salesReports.reduce((s, r) => s + r.invoiceCount, 0);
+    const totalUnits = salesReports.reduce((s, r) => s + r.unitsSold, 0);
+    const totalGross = salesReports.reduce((s, r) => s + r.grossSales, 0);
+    const generalUpt = totalInvoices > 0 ? totalUnits / totalInvoices : 0;
+    const storeAtv = totalInvoices > 0 ? totalGross / totalInvoices : 0;
+    const bestUptReport = [...salesReports].sort((a, b) => b.upt - a.upt)[0];
+    // Precio promedio por unidad = ventas netas / unidades vendidas
+    const withAvgPrice = salesReports
+      .filter((r) => r.unitsSold > 0)
+      .map((r) => ({ ...r, avgUnitPrice: r.grossSales / r.unitsSold }));
+    const bestAvgPriceReport = withAvgPrice.sort((a, b) => b.avgUnitPrice - a.avgUnitPrice)[0] ?? null;
+    const withAtv = salesReports
+      .filter((r) => r.invoiceCount > 0)
+      .map((r) => ({ ...r, atv: r.grossSales / r.invoiceCount }));
+    const bestAtvReport = withAtv.sort((a, b) => b.atv - a.atv)[0] ?? null;
+    return { totalInvoices, totalUnits, generalUpt, storeAtv, bestUptReport, bestAvgPriceReport, bestAtvReport };
+  }, [salesReports]);
 
   if (loading) {
     return (
@@ -124,7 +152,7 @@ export const ReportPage = () => {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto">
+    <div className="max-w-[1200px] mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end mb-4">
         <label className="inline-flex cursor-pointer select-none items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/40">
           <input
@@ -133,7 +161,7 @@ export const ReportPage = () => {
             checked={showGrowthPercentages}
             onChange={(e) => setShowGrowthPercentages(e.target.checked)}
           />
-          Ver porcentaje de crecimiento
+          Ver WoW (semana a semana)
         </label>
         <button
           type="button"
@@ -156,7 +184,7 @@ export const ReportPage = () => {
         <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-2 block">
           Reporte
         </span>
-        <h1 className="text-4xl font-black text-foreground tracking-tighter">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tighter">
           Reporte hasta la fecha
         </h1>
         <p className="text-sm font-medium text-muted-foreground mt-1">
@@ -168,6 +196,7 @@ export const ReportPage = () => {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0 }}
         className="bg-card rounded-[2rem] p-6 border border-border shadow-lg dark:shadow-none"
       >
         <div className="flex items-center gap-4 mb-6">
@@ -213,17 +242,116 @@ export const ReportPage = () => {
             </p>
           </div>
           {showGrowthPercentages && (
-            <div title="Ventas de la semana (lun–hoy) vs la misma franja de la semana pasada, sumando todos los asesores activos.">
+            <div title="Última semana vs semana anterior según datos del CSV de ventas.">
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-                Crecimiento porcentual
+                WoW Tienda
               </p>
-              <p className={`text-xl font-black ${weekOverWeekClass(storePartialWeekGrowthPercent)}`}>
-                {formatWeekOverWeek(storePartialWeekGrowthPercent)}
+              <p className={`text-xl font-black ${weekOverWeekClass(storeWowPercent)}`}>
+                {formatWeekOverWeek(storeWowPercent)}
               </p>
             </div>
           )}
         </div>
       </motion.section>
+
+      {/* KPIs de ventas CSV */}
+      {salesKpis && (
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-card rounded-[2rem] p-6 border border-border shadow-lg dark:shadow-none"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+              <FaFileInvoiceDollar className="w-5 h-5 text-cyan-500" />
+            </div>
+            <h2 className="text-sm font-black text-foreground uppercase tracking-widest">
+              KPIs de ventas
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-6">
+            {/* Columna izquierda: métricas numéricas */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                  UPT General
+                </p>
+                <p className="text-xl font-black text-cyan-500">
+                  {salesKpis.generalUpt.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                  ATV Tienda
+                </p>
+                <p className="text-xl font-black text-foreground">
+                  {formatCurrency(salesKpis.storeAtv)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                  Facturas
+                </p>
+                <p className="text-xl font-black text-foreground">
+                  {salesKpis.totalInvoices}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
+                  Unidades vendidas
+                </p>
+                <p className="text-xl font-black text-foreground">
+                  {salesKpis.totalUnits}
+                </p>
+              </div>
+            </div>
+            {/* Columna derecha: KPIs dinámicos por asesor */}
+            <div className="flex flex-row gap-6 border-t border-border pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6">
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                  <FaStar className="w-3 h-3 text-amber-500" />
+                  Mejor UPT
+                </p>
+                <p className="text-lg font-black text-foreground">
+                  {salesKpis.bestUptReport.adviserName.split(' ').slice(0, 2).join(' ')}
+                </p>
+                <p className="text-sm font-bold text-cyan-500 mt-0.5">
+                  {salesKpis.bestUptReport.upt.toFixed(2)} upt
+                </p>
+              </div>
+              {salesKpis.bestAvgPriceReport && (
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                    <FaBoxOpen className="w-3 h-3 text-amber-400" />
+                    Artículos más caros por factura (AVG)
+                  </p>
+                  <p className="text-lg font-black text-foreground">
+                    {salesKpis.bestAvgPriceReport.adviserName.split(' ').slice(0, 2).join(' ')}
+                  </p>
+                  <p className="text-sm font-bold text-amber-500 mt-0.5">
+                    {formatCurrency(salesKpis.bestAvgPriceReport.avgUnitPrice)} / unidad
+                  </p>
+                </div>
+              )}
+              {salesKpis.bestAtvReport && (
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                    <FaFileInvoiceDollar className="w-3 h-3 text-emerald-500" />
+                    Mejor ATV
+                  </p>
+                  <p className="text-lg font-black text-foreground">
+                    {salesKpis.bestAtvReport.adviserName.split(' ').slice(0, 2).join(' ')}
+                  </p>
+                  <p className="text-sm font-bold text-emerald-500 mt-0.5">
+                    {formatCurrency(salesKpis.bestAtvReport.atv)} / factura
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Mejor y peor asesor */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -231,6 +359,7 @@ export const ReportPage = () => {
           <motion.section
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
             className="bg-card rounded-[2rem] p-6 border border-border shadow-lg dark:shadow-none"
           >
             <div className="flex items-center gap-3 mb-4">
@@ -265,6 +394,7 @@ export const ReportPage = () => {
           <motion.section
             initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
             className="bg-card rounded-[2rem] p-6 border border-border shadow-lg dark:shadow-none"
           >
             <div className="flex items-center gap-3 mb-4">
@@ -300,7 +430,7 @@ export const ReportPage = () => {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.3 }}
         className="bg-card rounded-[2rem] border border-border shadow-lg dark:shadow-none overflow-hidden"
       >
         <div className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -322,9 +452,12 @@ export const ReportPage = () => {
                     className="px-6 py-4 max-w-[140px]"
                     title="Variación % de ventas lun–hoy vs misma franja la semana pasada."
                   >
-                    Crecimiento
+                    WoW
                   </th>
                 )}
+                <th className="px-4 py-4 text-cyan-500">UPT</th>
+                <th className="px-4 py-4">Facturas</th>
+                <th className="px-4 py-4">Artículos</th>
                 <th className="px-6 py-4">
                   <span className="inline-flex items-center gap-1.5 text-chart-1">
                     <FaCoins className="w-3.5 h-3.5" />
@@ -335,13 +468,18 @@ export const ReportPage = () => {
             </thead>
             <tbody>
               {sortedAdvisers.map((adviser) => {
-                const sales = adviser.currentMonthSales ?? adviser.sales ?? 0;
-                const goal = adviser.goalValue ?? 0;
+                const sales       = adviser.currentMonthSales ?? adviser.sales ?? 0;
+                const goal        = adviser.goalValue ?? 0;
                 const achievement = goal > 0 ? (sales / goal) * 100 : 0;
-                const commission = adviser.commission ?? 0;
-                const name = `${adviser.name} ${adviser.lastName}`.trim() || '—';
-                const wow = partialWeekByAdviserId.get(String(adviser.id));
-                const wowPct = wow?.growthPercentage;
+                const commission  = adviser.commission ?? 0;
+                const name        = `${adviser.name} ${adviser.lastName}`.trim() || '—';
+                const sr          = salesReportByAdviserId.get(Number(adviser.id));
+
+                const achievementColor =
+                  achievement >= 100 ? 'text-chart-1 font-bold'
+                  : achievement >= 60 ? 'text-orange-600 dark:text-orange-400 font-bold'
+                  : 'text-destructive font-bold';
+
                 return (
                   <tr
                     key={adviser.id}
@@ -351,32 +489,31 @@ export const ReportPage = () => {
                     <td className="px-6 py-4 text-foreground">{formatCurrency(goal)}</td>
                     <td className="px-6 py-4 text-foreground">{formatCurrency(sales)}</td>
                     <td className="px-6 py-4">
-                      <span
-                        className={
-                          achievement >= 100
-                            ? 'text-chart-1 font-bold'
-                            : achievement >= 60
-                              ? 'text-orange-600 dark:text-orange-400 font-bold'
-                              : 'text-destructive font-bold'
-                        }
-                      >
+                      <span className={achievementColor}>
                         {achievement.toFixed(1)}%
                       </span>
                     </td>
                     {showGrowthPercentages && (
                       <td className="px-6 py-4">
                         <span
-                          className={weekOverWeekClass(wowPct)}
-                          title={
-                            wow != null
-                              ? `Esta franja: ${formatCurrency(wow.currentPartialWeekSales)} · Misma franja sem. pasada: ${formatCurrency(wow.previousPartialWeekSales)}`
-                              : undefined
-                          }
+                          className={weekOverWeekClass(sr?.wowGrowthPercentage)}
+                          title={sr?.wowCurrentWeekSales != null
+                            ? `Última semana: ${formatCurrency(sr.wowCurrentWeekSales)} · Semana anterior: ${formatCurrency(sr.wowPreviousWeekSales ?? 0)}`
+                            : undefined}
                         >
-                          {formatWeekOverWeek(wowPct)}
+                          {formatWeekOverWeek(sr?.wowGrowthPercentage)}
                         </span>
                       </td>
                     )}
+                    <td className="px-4 py-4 font-bold text-cyan-500">
+                      {sr ? sr.upt.toFixed(2) : '—'}
+                    </td>
+                    <td className="px-4 py-4 text-foreground">
+                      {sr ? sr.invoiceCount : '—'}
+                    </td>
+                    <td className="px-4 py-4 text-foreground">
+                      {sr ? sr.unitsSold : '—'}
+                    </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1.5 rounded-lg bg-chart-1/15 px-3 py-1.5 text-base font-black text-chart-1">
                         <FaCoins className="w-4 h-4 opacity-90" />

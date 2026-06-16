@@ -12,12 +12,11 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { useAdviserMetricsStore } from '../../../stores/advisers/adviserMetrics.store';
+import { formatCurrency } from '../../../lib/format';
 import { MonthlySummary } from '../../../../core/domain/Adviser/Adviser';
 import { motion } from 'framer-motion';
 import { Zap, TrendingUp, DollarSign } from 'lucide-react';
 
-// Registrar componentes de Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -30,9 +29,10 @@ ChartJS.register(
   Filler
 );
 
+import { EMERALD, CYAN } from '../../../lib/colors';
+
 interface EarningsGrowthChartProps {
   monthlySummaries: MonthlySummary[];
-  /** Comisión neta por mes (12 valores, índice 0 = enero), calculada en backend. */
   monthlyCommissions: number[];
   currentAdviser: {
     id: string | number;
@@ -43,42 +43,41 @@ interface EarningsGrowthChartProps {
   animateValue: number;
 }
 
+const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || v;
+
 export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
   monthlySummaries,
   monthlyCommissions,
   currentAdviser,
-  animateValue
+  animateValue,
 }) => {
-  const { formatCurrency } = useAdviserMetricsStore();
-
   const currentYear = new Date().getFullYear();
-
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
   const netEarningsByMonth = Array.from({ length: 12 }, (_, i) => {
     const c = monthlyCommissions[i];
     return typeof c === 'number' && !Number.isNaN(c) ? c : 0;
   });
+
   const accumulatedEarnings: number[] = [];
   let sum = 0;
-  for (let earning of netEarningsByMonth) {
+  for (const earning of netEarningsByMonth) {
     sum += earning;
     accumulatedEarnings.push(Math.round(sum));
   }
 
-  // Configuración del gráfico de líneas
   const lineData = {
     labels: months,
     datasets: [
       {
         label: 'Ganancias Mensuales',
         data: netEarningsByMonth,
-        borderColor: '#10b981', // Emerald 500
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: EMERALD,
+        backgroundColor: `${EMERALD}1a`,
         fill: true,
         tension: 0.4,
         pointRadius: 6,
-        pointBackgroundColor: '#10b981',
+        pointBackgroundColor: EMERALD,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         yAxisID: 'y',
@@ -86,27 +85,24 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
       {
         label: 'Ganancias Acumuladas',
         data: accumulatedEarnings,
-        borderColor: '#06b6d4', // Cyan 500
-        backgroundColor: 'rgba(6, 181, 212, 0.1)',
+        borderColor: CYAN,
+        backgroundColor: `${CYAN}0d`,
         fill: false,
         tension: 0.4,
         pointRadius: 4,
-        pointBackgroundColor: '#06b6d4',
+        pointBackgroundColor: CYAN,
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         borderDash: [5, 5],
         yAxisID: 'y',
-      }
-    ]
+      },
+    ],
   };
 
   const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
-    },
+    interaction: { mode: 'index' as const, intersect: false },
     plugins: {
       legend: {
         display: true,
@@ -114,91 +110,75 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
         labels: {
           usePointStyle: true,
           padding: 20,
-          color: 'rgba(156, 163, 175, 1)', // Gray 400
-          font: {
-            size: 11,
-            weight: 'bold' as const
-          }
-        }
+          color: css('--t-muted'),
+          font: { size: 11, weight: 'bold' as const },
+        },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: css('--s-sidebar'),
+        titleColor: css('--t-primary'),
+        bodyColor: css('--t-secondary'),
+        borderColor: css('--b-line'),
         borderWidth: 1,
         padding: 12,
         displayColors: true,
         callbacks: {
-          label: function (context: any) {
+          label: (context: any) => {
             const label = context.dataset.label;
             const value = formatCurrency(context.raw);
             return `${label}: ${value}`;
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
         ticks: {
           callback: (value: any) => `$${(value / 1000).toFixed(0)}k`,
-          color: 'rgba(156, 163, 175, 0.5)',
-          font: { size: 10 }
+          color: css('--t-micro'),
+          font: { size: 10 },
         },
-        grid: {
-          color: 'rgba(156, 163, 175, 0.1)',
-          drawBorder: false
-        }
+        grid: { color: css('--b-subtle'), drawBorder: false },
+        border: { display: false },
       },
       x: {
-        ticks: {
-          color: 'rgba(156, 163, 175, 0.5)',
-          font: { size: 10 }
-        },
-        grid: { display: false }
-      }
-    }
+        ticks: { color: css('--t-muted'), font: { size: 10 } },
+        grid: { display: false },
+        border: { display: false },
+      },
+    },
   };
 
-  // Datos para el gráfico de barras
   const barData = {
     labels: ['Ventas', 'Meta'],
-    datasets: [{
-      label: 'Valor',
-      data: [currentAdviser.currentMonthSales ?? 0, currentAdviser.goalValue],
-      backgroundColor: [
-        'rgba(16, 185, 129, 0.6)',
-        'rgba(255, 255, 255, 0.05)',
-      ],
-      borderColor: [
-        '#10b981',
-        'rgba(156, 163, 175, 0.2)',
-      ],
-      borderWidth: 1,
-      borderRadius: 12,
-    }],
+    datasets: [
+      {
+        label: 'Valor',
+        data: [currentAdviser.currentMonthSales ?? 0, currentAdviser.goalValue],
+        backgroundColor: [`${EMERALD}55`, css('--s-subtle')],
+        borderColor: [EMERALD, css('--b-subtle')],
+        borderWidth: 1,
+        borderRadius: 12,
+      },
+    ],
   };
 
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-    },
+    plugins: { legend: { display: false } },
     scales: {
-      y: {
-        beginAtZero: true,
-        display: false
-      },
+      y: { beginAtZero: true, display: false },
       x: {
         grid: { display: false },
+        border: { display: false },
         ticks: {
-          color: 'rgba(156, 163, 175, 0.5)',
-          font: { size: 10, weight: 'bold' as const }
-        }
-      }
-    }
+          color: css('--t-muted'),
+          font: { size: 10, weight: 'bold' as const },
+        },
+      },
+    },
   };
 
   const currentMonth = new Date().getMonth() + 1;
@@ -213,43 +193,70 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-transparent rounded-[2rem] border border-emerald-500/20 p-8 flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl dark:shadow-none bg-white/40 dark:bg-black/40 backdrop-blur-2xl"
+        className="relative overflow-hidden rounded-[2rem] border p-8 flex flex-col md:flex-row justify-between items-center gap-8"
+        style={{
+          background: `linear-gradient(135deg, ${EMERALD}0f 0%, var(--s-card) 55%, var(--s-card) 100%)`,
+          border: `1px solid ${EMERALD}25`,
+        }}
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] pointer-events-none"
+          style={{ background: `${EMERALD}12` }} />
 
         <div className="flex items-center gap-6 text-left w-full md:w-auto">
-          <div className="bg-emerald-500 p-4 rounded-3xl shadow-lg shadow-emerald-500/40">
+          <div className="p-4 rounded-3xl shadow-lg"
+            style={{
+              background: EMERALD,
+              boxShadow: `0 8px 24px ${EMERALD}40`,
+            }}>
             <DollarSign className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h3 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-1">Comisión Generada</h3>
-            <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] mb-1"
+              style={{ color: EMERALD }}>
+              Comisión Generada
+            </h3>
+            <p className="text-4xl font-black tracking-tighter" style={{ color: 'var(--t-primary)' }}>
               {formatCurrency(animateValue)}
             </p>
-            <p className="text-xs font-medium text-slate-500 dark:text-white/30 mt-1">
+            <p className="text-xs font-medium mt-1" style={{ color: 'var(--t-muted)' }}>
               Hasta 1,2% según cumplimiento de la tienda
             </p>
           </div>
         </div>
 
         <div className="hidden lg:flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+          <div className="flex items-center gap-2" style={{ color: EMERALD }}>
             <Zap className="w-4 h-4 fill-current" />
             <span className="text-sm font-black uppercase tracking-widest">Rendimiento</span>
           </div>
-          <p className="text-xs text-slate-400 dark:text-white/20">Calculado automáticamente cada mes</p>
+          <p className="text-xs" style={{ color: 'var(--t-micro)' }}>
+            Calculado automáticamente cada mes
+          </p>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Chart Section */}
-        <div className="lg:col-span-8 bg-white/70 dark:bg-black/40 backdrop-blur-2xl rounded-[2rem] border border-slate-200/50 dark:border-white/10 p-8 shadow-xl dark:shadow-none">
+        <div className="lg:col-span-8 rounded-[2rem] border p-8"
+          style={{
+            background: 'var(--s-card)',
+            border: '1px solid var(--b-line)',
+          }}>
           <div className="flex justify-between items-center mb-10">
             <div className="text-left">
-              <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">Evolución Anual</h4>
-              <p className="text-xs font-medium text-slate-500 dark:text-white/30">Crecimiento mensual vs acumulado</p>
+              <h4 className="text-lg font-black tracking-tight uppercase" style={{ color: 'var(--t-primary)' }}>
+                Evolución Anual
+              </h4>
+              <p className="text-xs font-medium" style={{ color: 'var(--t-muted)' }}>
+                Crecimiento mensual vs acumulado
+              </p>
             </div>
-            <div className="px-3 py-1 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-black text-slate-500 dark:text-white/40 uppercase tracking-widest">
+            <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+              style={{
+                background: 'var(--s-subtle)',
+                border: '1px solid var(--b-line)',
+                color: 'var(--t-muted)',
+              }}>
               FY {currentYear}
             </div>
           </div>
@@ -260,20 +267,33 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
 
         {/* Sidebar Metric Items */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          {/* Sales Progress Ring/Bar */}
-          <div className="bg-white/70 dark:bg-black/40 backdrop-blur-2xl rounded-[2rem] border border-slate-200/50 dark:border-white/10 p-6 flex flex-col items-center justify-between shadow-xl dark:shadow-none min-h-[220px]">
+          {/* Sales Progress */}
+          <div className="rounded-[2rem] border p-6 flex flex-col items-center justify-between min-h-[220px]"
+            style={{
+              background: 'var(--s-card)',
+              border: '1px solid var(--b-line)',
+            }}>
             <div className="w-full flex justify-between items-center mb-6">
-              <span className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-[0.2em]">Progreso Meta</span>
-              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{progress.toFixed(1)}%</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]"
+                style={{ color: 'var(--t-muted)' }}>
+                Progreso Meta
+              </span>
+              <span className="text-sm font-black" style={{ color: EMERALD }}>
+                {progress.toFixed(1)}%
+              </span>
             </div>
 
             <div className="h-32 w-full relative -mt-4">
               <Bar data={barData} options={barOptions} />
             </div>
 
-            <div className="w-full mt-4 pt-4 border-t border-slate-900/5 dark:border-white/5 flex flex-col gap-1 items-start">
-              <span className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">Estado Actual</span>
-              <p className="text-sm font-black text-slate-900 dark:text-white">
+            <div className="w-full mt-4 pt-4 flex flex-col gap-1 items-start"
+              style={{ borderTop: '1px solid var(--b-subtle)' }}>
+              <span className="text-[10px] font-black uppercase tracking-widest"
+                style={{ color: 'var(--t-muted)' }}>
+                Estado Actual
+              </span>
+              <p className="text-sm font-black" style={{ color: 'var(--t-secondary)' }}>
                 {progress >= 100 ? '✅ OBJETIVO COMPLETADO' : '⚡ EN CAMINO AL ÉXITO'}
               </p>
             </div>
@@ -281,24 +301,44 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-white/70 dark:bg-black/40 backdrop-blur-2xl rounded-[1.5rem] border border-slate-200/50 dark:border-white/10 p-5 shadow-xl dark:shadow-none">
+            <div className="rounded-[1.5rem] border p-5"
+              style={{
+                background: 'var(--s-card)',
+                border: '1px solid var(--b-line)',
+              }}>
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-emerald-500/10 rounded-xl">
-                  <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <div className="p-2 rounded-xl"
+                  style={{ background: `${EMERALD}12`, border: `1px solid ${EMERALD}20` }}>
+                  <TrendingUp className="w-4 h-4" style={{ color: EMERALD }} />
                 </div>
-                <span className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">Ventas Brutas</span>
+                <span className="text-[10px] font-black uppercase tracking-widest"
+                  style={{ color: 'var(--t-muted)' }}>
+                  Ventas Brutas
+                </span>
               </div>
-              <p className="text-xl font-black text-slate-900 dark:text-white text-left">{formatCurrency(currentMonthSales)}</p>
+              <p className="text-xl font-black text-left" style={{ color: 'var(--t-primary)' }}>
+                {formatCurrency(currentMonthSales)}
+              </p>
             </div>
 
-            <div className="bg-white/70 dark:bg-black/40 backdrop-blur-2xl rounded-[1.5rem] border border-slate-200/50 dark:border-white/10 p-5 shadow-xl dark:shadow-none">
+            <div className="rounded-[1.5rem] border p-5"
+              style={{
+                background: 'var(--s-card)',
+                border: '1px solid var(--b-line)',
+              }}>
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-cyan-500/10 rounded-xl">
-                  <Zap className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                <div className="p-2 rounded-xl"
+                  style={{ background: `${CYAN}12`, border: `1px solid ${CYAN}20` }}>
+                  <Zap className="w-4 h-4" style={{ color: CYAN }} />
                 </div>
-                <span className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">Ventas Netas</span>
+                <span className="text-[10px] font-black uppercase tracking-widest"
+                  style={{ color: 'var(--t-muted)' }}>
+                  Ventas Netas
+                </span>
               </div>
-              <p className="text-xl font-black text-slate-900 dark:text-white text-left">{formatCurrency(currentMonthSales / 1.19)}</p>
+              <p className="text-xl font-black text-left" style={{ color: 'var(--t-primary)' }}>
+                {formatCurrency(currentMonthSales / 1.19)}
+              </p>
             </div>
           </div>
         </div>

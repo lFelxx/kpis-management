@@ -1,7 +1,8 @@
 import { Dialog, DialogTitle } from "@headlessui/react";
 import { useState } from 'react';
 import { useAdvisersStore } from "../../../stores/advisers/advisers.store";
-import { ToastNotificationService } from "../../../../infrastructure/services/ToastNotificationService";
+import { notificationService } from "../../../../core/instances/instances";
+import { formatCurrency } from '../../../lib/format';
 
 interface UpdateAllGoalsModalProps {
   isOpen: boolean;
@@ -11,27 +12,17 @@ interface UpdateAllGoalsModalProps {
 export const UpdateAllGoalsModal = ({ isOpen, onClose }: UpdateAllGoalsModalProps) => {
   const [goal, setGoal] = useState('');
   const { updateAllGoals, fetchAdvisers, loading } = useAdvisersStore();
-  const toastService = new ToastNotificationService();
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const handleSetGoal = async () => {
     // Validaciones básicas de UI
     if (!goal.trim()) {
-      toastService.showError('Por favor ingresa un valor para la meta');
+      notificationService.showError('Por favor ingresa un valor para la meta');
       return;
     }
 
     const goalNumber = Number(goal);
     if (isNaN(goalNumber)) {
-      toastService.showError('Por favor ingresa un número válido');
+      notificationService.showError('Por favor ingresa un número válido');
       return;
     }
 
@@ -46,13 +37,13 @@ export const UpdateAllGoalsModal = ({ isOpen, onClose }: UpdateAllGoalsModalProp
       // Recargar la lista de asesores para reflejar los cambios
       await fetchAdvisers();
       
-      toastService.showSuccess(`Meta establecida: ${formatCurrency(goalNumber)} para todos los asesores`);
+      notificationService.showSuccess(`Meta establecida: ${formatCurrency(goalNumber)} para todos los asesores`);
       setGoal('');
       onClose();
     } catch (error) {
       // El caso de uso maneja las validaciones específicas de negocio
       const errorMessage = error instanceof Error ? error.message : 'Error al establecer la meta';
-      toastService.showError(errorMessage);
+      notificationService.showError(errorMessage);
     }
   };
 

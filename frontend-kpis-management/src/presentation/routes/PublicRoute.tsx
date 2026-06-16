@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../infrastructure/hooks/useAuth"
+import { useAuth } from "../hooks/useAuth"
 import { Navigate, Outlet } from "react-router-dom";
 
 export const PublicRoute = () => {

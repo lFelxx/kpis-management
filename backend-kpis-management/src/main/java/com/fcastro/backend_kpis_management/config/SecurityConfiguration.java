@@ -49,11 +49,6 @@ public class SecurityConfiguration {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/metrics/**").permitAll()
 
-                // Rutas de comparaciones semanales - Publicas
-                .requestMatchers(HttpMethod.GET, "/api/v1/weekly-comparisons/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/weekly-comparisons/**").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/weekly-comparisons/**").permitAll()
-                
                 // Rutas de asesores - GET público, otros métodos requieren autenticación
                 .requestMatchers(HttpMethod.GET, "/api/advisers/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
@@ -61,8 +56,16 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
                 
+                // Rutas de presupuesto - GET público, modificaciones solo ADMIN/MANAGER
+                .requestMatchers(HttpMethod.GET, "/api/v1/budget-template/**").permitAll()
+                .requestMatchers("/api/v1/budget-template/**").hasAnyRole("ADMIN", "MANAGER")
+
                 // Rutas de ventas - Requieren autenticación
                 .requestMatchers("/api/v1/sales/**").hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
+
+                // Rutas de reporte de ventas CSV
+                .requestMatchers(HttpMethod.POST, "/api/v1/adviser-sales-report/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.GET, "/api/v1/adviser-sales-report/**").hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
                 
                 
                 // Cualquier otra ruta requiere autenticación

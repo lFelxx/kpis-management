@@ -1,29 +1,34 @@
 package com.fcastro.backend_kpis_management.services.impl;
 
+import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserMetricsResponse;
+import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserPartialWeekGrowthInfo;
+import com.fcastro.backend_kpis_management.model.dto.metrics.AtRiskAdviserInfo;
+import com.fcastro.backend_kpis_management.model.dto.metrics.BestAdviserInfo;
+import com.fcastro.backend_kpis_management.model.dto.metrics.DashboardMetricsResponse;
+import com.fcastro.backend_kpis_management.model.entities.Adviser;
+import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
+import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
+import com.fcastro.backend_kpis_management.model.entities.Sale;
+import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
+import com.fcastro.backend_kpis_management.repositories.AdviserSalesReportRepository;
+import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
+import com.fcastro.backend_kpis_management.repositories.GoalRepository;
+import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
+import com.fcastro.backend_kpis_management.repositories.SaleRepository;
+import com.fcastro.backend_kpis_management.services.BudgetTemplateService;
+import com.fcastro.backend_kpis_management.services.CommissionService;
+import com.fcastro.backend_kpis_management.services.MetricsService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.stereotype.Service;
-
-import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserMetricsResponse;
-import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserPartialWeekGrowthInfo;
-import com.fcastro.backend_kpis_management.model.dto.metrics.BestAdviserInfo;
-import com.fcastro.backend_kpis_management.model.dto.metrics.DashboardMetricsResponse;
-import com.fcastro.backend_kpis_management.model.entities.Adviser;
-import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
-import com.fcastro.backend_kpis_management.model.entities.Sale;
-import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
-import com.fcastro.backend_kpis_management.repositories.GoalRepository;
-import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
-import com.fcastro.backend_kpis_management.repositories.SaleRepository;
-import com.fcastro.backend_kpis_management.services.CommissionService;
-import com.fcastro.backend_kpis_management.services.MetricsService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -31,254 +36,237 @@ import lombok.extern.slf4j.Slf4j;
 public class MetricsServiceImpl implements MetricsService {
 
     private final AdviserRepository adviserRepository;
+    private final AdviserSalesReportRepository adviserSalesReportRepository;
     private final MonthlySummaryRepository monthlySummaryRepository;
     private final GoalRepository goalRepository;
     private final CommissionService commissionService;
     private final SaleRepository saleRepository;
+    private final BudgetTemplateRepository budgetTemplateRepository;
+    private final BudgetTemplateService budgetTemplateService;
 
     @Override
     public DashboardMetricsResponse getDashboardMetrics(int year, int month) {
-        log.info("Calculando metricas del dashboard para: {}/{}", year, month);
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
 
-        // 1. Obtener asesores activos
-        List<Adviser> activeAdviser = adviserRepository.findAllActiveAdvisers();
-
-        if (activeAdviser.isEmpty()) {
+        if (activeAdvisers.isEmpty()) {
             return new DashboardMetricsResponse(
                     0.0, 0.0, 0, 0.0, 0.0, null, null, null,
                     0.0, 0.0, 0.0, List.of());
         }
 
-        // 2. Obtener resumenes mensuales
         List<MonthlySummary> monthlySummaries = monthlySummaryRepository.findByYearAndMonth(year, month);
+        Map<Long, Double> uptByAdviserId = buildUptMap(year, month);
 
-        // 3. Calcular totales
-        Double totalSales = monthlySummaries.stream()
-                .mapToDouble(MonthlySummary::getTotalSales)
-                .sum();
-
-        // Calcular meta total de TODOS los asesores activos desde la tabla Goal
-        Double totalGoal = activeAdviser.stream()
-                .mapToDouble(adviser -> {
-                    return goalRepository
-                            .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
-                            .map(goal -> goal.getGoalValue())
-                            .orElse(0.0); // Meta por defecto si no existe Goal
-                })
-                .sum();
-
-        // 4. Cumplimiento tienda (misma fórmula y redondeo que comisiones)
+        Double totalSales = monthlySummaries.stream().mapToDouble(MonthlySummary::getTotalSales).sum();
+        double goalPerAdviser = resolveGoalPerAdviser(year, month);
+        Double totalGoal = goalPerAdviser * activeAdvisers.size();
         Double goalAchievement = totalGoal > 0
                 ? commissionService.computeStoreGoalAchievementPercent(year, month)
                 : 0.0;
-        Double averageSales = totalSales / activeAdviser.size();
+        Double averageSales = totalSales / activeAdvisers.size();
 
-        // 5. Filtrar resúmenes solo de asesores activos para los cálculos de mejor/peor
         List<MonthlySummary> activeAdviserSummaries = monthlySummaries.stream()
-                .filter(summary -> summary.getAdviser() != null && Boolean.TRUE.equals(summary.getAdviser().getActive()))
+                .filter(s -> s.getAdviser() != null && Boolean.TRUE.equals(s.getAdviser().getActive()))
                 .toList();
 
-        // 6. Obtener mejor asesor por logro de meta
-        BestAdviserInfo bestAdviser = getBestAdviser(activeAdviserSummaries);
+        BestAdviserInfo bestAdviser  = findBestByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
+        BestAdviserInfo bestUptAdviser = findBestByUpt(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
+        BestAdviserInfo worstAdviser = findWorstByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
 
-        // 7. Obtener mejor asesor por UPT (null si nadie tiene UPT > 0)
-        BestAdviserInfo bestUptAdviser = getBestAdviserByUpt(activeAdviserSummaries);
-        if (bestUptAdviser != null && (bestUptAdviser.upt() == null || bestUptAdviser.upt() <= 0.0)) {
-            bestUptAdviser = null;
-        }
-
-        // 8. Obtener peor asesor por porcentaje de cumplimiento
-        BestAdviserInfo worstAdviser = getWorstAdviserByGoalAchievement(activeAdviserSummaries);
-
-        PartialWeekTotals partialWeek = computePartialWeekComparisons(activeAdviser);
+        PartialWeekTotals partialWeek = computePartialWeekComparisons(activeAdvisers);
 
         return new DashboardMetricsResponse(
-                totalSales,
-                totalGoal,
-                activeAdviser.size(),
-                goalAchievement,
-                averageSales,
-                bestAdviser,
-                bestUptAdviser,
-                worstAdviser,
-                partialWeek.storeCurrent(),
-                partialWeek.storePrevious(),
-                partialWeek.storeGrowthPercent(),
-                partialWeek.adviserRows());
+                totalSales, totalGoal, activeAdvisers.size(),
+                goalAchievement, averageSales,
+                bestAdviser, bestUptAdviser, worstAdviser,
+                partialWeek.storeCurrent(), partialWeek.storePrevious(),
+                partialWeek.storeGrowthPercent(), partialWeek.adviserRows());
     }
 
     @Override
     public AdviserMetricsResponse getAdviserMetrics(Long adviserId, int year, int month) {
-        log.info("Obteniendo métricas para asesor {} en {}/{}", adviserId, month, year);
-
-        // Obtener resumen mensual
         MonthlySummary monthlySummary = monthlySummaryRepository
                 .findByAdviserIdAndYearAndMonth(adviserId, year, month)
                 .orElseThrow(() -> new RuntimeException("Resumen mensual no encontrado"));
 
-        // Obtener asesor
         Adviser adviser = adviserRepository.findById(adviserId)
                 .orElseThrow(() -> new RuntimeException("Asesor no encontrado"));
 
-        // Calcular metricas
-        Double goalAchievementPercentage = calculateGoalAchievementPercentage(
-                monthlySummary.getTotalSales(), monthlySummary.getGoal());
+        double resolvedGoal = resolveGoalPerAdviser(year, month);
 
-        return new AdviserMetricsResponse(
-                adviserId,
-                adviser.getName(),
-                monthlySummary.getTotalSales(),
-                monthlySummary.getGoal(),
-                goalAchievementPercentage);
+        Double goalAchievement = calculateGoalAchievement(monthlySummary.getTotalSales(), resolvedGoal);
+
+        return new AdviserMetricsResponse(adviserId, adviser.getName(), monthlySummary.getTotalSales(),
+                resolvedGoal, goalAchievement);
     }
 
-    // Metodos auxiliares
-    private BestAdviserInfo getBestAdviser(List<MonthlySummary> monthlySummaries) {
-        return monthlySummaries.stream()
-            .map(summary -> {
-                Double achievement = calculateGoalAchievementPercentage(summary.getTotalSales(), summary.getGoal());
-                Double upt = summary.getAdviser().getUpt() != null ? summary.getAdviser().getUpt() : 0.0;
-                return new BestAdviserInfo(
-                    summary.getAdviser().getId(),
-                    summary.getAdviser().getName(),
-                    summary.getTotalSales(),
-                    summary.getGoal(),
-                    achievement,
-                    upt
-                );
-            })
-            .max((a, b) -> {
-                // Comparar primero por logro de meta (goalAchievement)
-                int achievementComparison = Double.compare(a.goalAchievement(), b.goalAchievement());
-                
-                // Si tienen el mismo logro de meta (o muy cercano), comparar por UPT
-                if (Math.abs(a.goalAchievement() - b.goalAchievement()) < 0.01) {
-                    log.debug("Asesores con logro similar: {} ({}%) vs {} ({}%) - Desempatando por UPT: {} vs {}", 
-                            a.adviserName(), a.goalAchievement(), 
-                            b.adviserName(), b.goalAchievement(),
-                            a.upt(), b.upt());
-                    return Double.compare(a.upt(), b.upt());
-                }
-                
-                return achievementComparison;
-            })
-            .orElse(null);
+    // ─── Asesores en riesgo ──────────────────────────────────────────────────
+
+    @Override
+    public List<AtRiskAdviserInfo> getAtRiskAdvisers() {
+        LocalDate today   = LocalDate.now();
+        int year          = today.getYear();
+        int month         = today.getMonthValue();
+        int daysElapsed   = today.getDayOfMonth();
+        int daysInMonth   = today.lengthOfMonth();
+        double monthGoal  = resolveFullMonthGoalPerAdviser(year, month);
+
+        if (daysElapsed == 0 || monthGoal <= 0) return List.of();
+
+        return monthlySummaryRepository.findByYearAndMonth(year, month).stream()
+                .filter(s -> s.getAdviser() != null && Boolean.TRUE.equals(s.getAdviser().getActive()))
+                .map(s -> toAtRiskInfo(s, daysElapsed, daysInMonth, monthGoal))
+                .filter(a -> a.projectedAchievement() < 80.0)
+                .sorted((a, b) -> Double.compare(a.projectedAchievement(), b.projectedAchievement()))
+                .toList();
     }
 
-    private BestAdviserInfo getBestAdviserByUpt(List<MonthlySummary> monthlySummaries) {
-        return monthlySummaries.stream()
-            .map(summary -> {
-                Double achievement = calculateGoalAchievementPercentage(summary.getTotalSales(), summary.getGoal());
-                Double upt = summary.getAdviser().getUpt() != null ? summary.getAdviser().getUpt() : 0.0;
-                return new BestAdviserInfo(
-                    summary.getAdviser().getId(),
-                    summary.getAdviser().getName(),
-                    summary.getTotalSales(),
-                    summary.getGoal(),
-                    achievement,
-                    upt
-                );
-            })
-            .max((a, b) -> {
-                // Comparar por UPT
-                int uptComparison = Double.compare(a.upt(), b.upt());
-                
-                if (uptComparison == 0) {
-                    // Si tienen el mismo UPT, desempatar por logro de meta
-                    return Double.compare(a.goalAchievement(), b.goalAchievement());
-                }
-                
-                return uptComparison;
-            })
-            .orElse(null);
+    private AtRiskAdviserInfo toAtRiskInfo(MonthlySummary s, int daysElapsed, int daysInMonth, double monthGoal) {
+        double currentSales   = s.getTotalSales() != null ? s.getTotalSales() : 0.0;
+        double projectedSales = (currentSales / daysElapsed) * daysInMonth;
+        double projectedPct   = (projectedSales / monthGoal) * 100.0;
+        return new AtRiskAdviserInfo(
+                s.getAdviser().getId(),
+                s.getAdviser().getName() + " " + s.getAdviser().getLastname(),
+                currentSales,
+                monthGoal,
+                projectedSales,
+                projectedPct
+        );
     }
 
-    /** Peor asesor del mes por porcentaje de cumplimiento (menor goalAchievement). */
-    private BestAdviserInfo getWorstAdviserByGoalAchievement(List<MonthlySummary> monthlySummaries) {
-        return monthlySummaries.stream()
-            .map(summary -> {
-                Double achievement = calculateGoalAchievementPercentage(summary.getTotalSales(), summary.getGoal());
-                Double upt = summary.getAdviser().getUpt() != null ? summary.getAdviser().getUpt() : 0.0;
-                return new BestAdviserInfo(
-                    summary.getAdviser().getId(),
-                    summary.getAdviser().getName(),
-                    summary.getTotalSales(),
-                    summary.getGoal(),
-                    achievement,
-                    upt
-                );
-            })
-            .min((a, b) -> {
-                int achievementComparison = Double.compare(a.goalAchievement(), b.goalAchievement());
+    private double resolveFullMonthGoalPerAdviser(int year, int month) {
+        if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
+            return budgetTemplateService.calculateTotalMonthGoalPerAdviser(year, month);
+        }
+        return adviserRepository.findAllActiveAdvisers().stream()
+                .mapToDouble(adviser -> goalRepository
+                        .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
+                        .map(g -> g.getGoalValue())
+                        .orElse(0.0))
+                .average()
+                .orElse(0.0);
+    }
 
-                if (achievementComparison == 0) {
-                    // Si tienen el mismo porcentaje de cumplimiento, considerar peor
-                    // al que tiene menor UPT y, en último caso, menor venta.
-                    int uptComparison = Double.compare(a.upt(), b.upt());
-                    if (uptComparison != 0) {
-                        return uptComparison;
+    // ─── Ranking de asesores ─────────────────────────────────────────────────
+
+    private BestAdviserInfo findBestByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+        return summaries.stream()
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .max((a, b) -> {
+                    int cmp = Double.compare(a.goalAchievement(), b.goalAchievement());
+                    if (Math.abs(a.goalAchievement() - b.goalAchievement()) < 0.01) {
+                        return Double.compare(a.upt(), b.upt());
                     }
-                    return Double.compare(a.totalSales(), b.totalSales());
-                }
-
-                return achievementComparison;
-            })
-            .orElse(null);
+                    return cmp;
+                })
+                .orElse(null);
     }
 
-    private Double calculateGoalAchievementPercentage(Double totalSales, Double goal) {
-        if (goal == null || goal <= 0) {
-            return 0.0;
-        }
-        return totalSales != null ? (totalSales / goal) * 100 : 0.0;
+    private BestAdviserInfo findBestByUpt(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+        return summaries.stream()
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .filter(info -> info.upt() > 0.0)
+                .max((a, b) -> {
+                    int cmp = Double.compare(a.upt(), b.upt());
+                    return cmp != 0 ? cmp : Double.compare(a.goalAchievement(), b.goalAchievement());
+                })
+                .orElse(null);
     }
 
-    /**
-     * Suma ventas ({@link Sale}) del asesor entre fechas inclusive (ISO local date del servidor).
-     */
-    private double sumSalesInRange(Adviser adviser, LocalDate startInclusive, LocalDate endInclusive) {
-        List<Sale> sales = saleRepository.findByAdviserAndSaleDateBetween(adviser, startInclusive, endInclusive);
-        return sales.stream().mapToDouble(s -> s.getAmount() != null ? s.getAmount() : 0.0).sum();
+    private BestAdviserInfo findWorstByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+        return summaries.stream()
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .min((a, b) -> {
+                    int cmp = Double.compare(a.goalAchievement(), b.goalAchievement());
+                    if (cmp != 0) return cmp;
+                    int uptCmp = Double.compare(a.upt(), b.upt());
+                    return uptCmp != 0 ? uptCmp : Double.compare(a.totalSales(), b.totalSales());
+                })
+                .orElse(null);
     }
 
-    private static double growthPercent(double previous, double current) {
-        if (previous == 0.0) {
-            return current > 0.0 ? 100.0 : 0.0;
-        }
-        return ((current - previous) / previous) * 100.0;
+    private BestAdviserInfo toAdviserInfo(MonthlySummary summary, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+        Long adviserId = summary.getAdviser().getId();
+        Double manualUpt = summary.getAdviser().getUpt();
+        Double upt = uptByAdviserId.getOrDefault(adviserId, manualUpt != null ? manualUpt : 0.0);
+        double goal = goalPerAdviser;
+        Double achievement = calculateGoalAchievement(summary.getTotalSales(), goal);
+        return new BestAdviserInfo(
+                adviserId,
+                summary.getAdviser().getName(),
+                summary.getTotalSales(),
+                goal,
+                achievement,
+                upt);
     }
+
+    // ─── UPT desde CSV ───────────────────────────────────────────────────────
+
+    private Map<Long, Double> buildUptMap(int year, int month) {
+        return adviserSalesReportRepository.findByYearAndMonth(year, month).stream()
+                .collect(Collectors.toMap(
+                        r -> r.getAdviser().getId(),
+                        AdviserSalesReport::getUpt,
+                        (a, b) -> a));
+    }
+
+    // ─── Crecimiento parcial de semana (desde Sale) ──────────────────────────
 
     private PartialWeekTotals computePartialWeekComparisons(List<Adviser> activeAdvisers) {
-        LocalDate asOf = LocalDate.now();
-        LocalDate weekStart = asOf.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate prevWeekStart = weekStart.minusWeeks(1);
-        LocalDate prevEnd = asOf.minusWeeks(1);
+        LocalDate today      = LocalDate.now();
+        LocalDate weekStart  = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate prevStart  = weekStart.minusWeeks(1);
+        LocalDate prevEnd    = today.minusWeeks(1);
 
-        double storeCurrent = 0.0;
+        double storeCurrent  = 0.0;
         double storePrevious = 0.0;
         List<AdviserPartialWeekGrowthInfo> rows = new ArrayList<>();
 
         for (Adviser adviser : activeAdvisers) {
-            double cur = sumSalesInRange(adviser, weekStart, asOf);
-            double prev = sumSalesInRange(adviser, prevWeekStart, prevEnd);
-            storeCurrent += cur;
+            double cur  = sumSalesInRange(adviser, weekStart, today);
+            double prev = sumSalesInRange(adviser, prevStart, prevEnd);
+            storeCurrent  += cur;
             storePrevious += prev;
-            rows.add(new AdviserPartialWeekGrowthInfo(
-                    adviser.getId(),
-                    cur,
-                    prev,
-                    growthPercent(prev, cur)));
+            rows.add(new AdviserPartialWeekGrowthInfo(adviser.getId(), cur, prev, growthPercent(prev, cur)));
         }
 
-        double storeGrowth = growthPercent(storePrevious, storeCurrent);
-        return new PartialWeekTotals(storeCurrent, storePrevious, storeGrowth, List.copyOf(rows));
+        return new PartialWeekTotals(storeCurrent, storePrevious, growthPercent(storePrevious, storeCurrent), List.copyOf(rows));
+    }
+
+    private double sumSalesInRange(Adviser adviser, LocalDate from, LocalDate to) {
+        List<Sale> sales = saleRepository.findByAdviserAndSaleDateBetween(adviser, from, to);
+        return sales.stream().mapToDouble(s -> s.getAmount() != null ? s.getAmount() : 0.0).sum();
+    }
+
+    // ─── Utilidades ──────────────────────────────────────────────────────────
+
+    private double resolveGoalPerAdviser(int year, int month) {
+        if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
+            return budgetTemplateService.calculateGoalUpToToday(year, month);
+        }
+        return adviserRepository.findAllActiveAdvisers().stream()
+                .mapToDouble(adviser -> goalRepository
+                        .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
+                        .map(g -> g.getGoalValue())
+                        .orElse(0.0))
+                .average()
+                .orElse(0.0);
+    }
+
+    private Double calculateGoalAchievement(Double totalSales, Double goal) {
+        if (goal == null || goal <= 0) return 0.0;
+        return totalSales != null ? (totalSales / goal) * 100 : 0.0;
+    }
+
+    private static double growthPercent(double previous, double current) {
+        if (previous == 0.0) return current > 0.0 ? 100.0 : 0.0;
+        return ((current - previous) / previous) * 100.0;
     }
 
     private record PartialWeekTotals(
             double storeCurrent,
             double storePrevious,
             double storeGrowthPercent,
-            List<AdviserPartialWeekGrowthInfo> adviserRows
-    ) {
-    }
+            List<AdviserPartialWeekGrowthInfo> adviserRows) {}
 }

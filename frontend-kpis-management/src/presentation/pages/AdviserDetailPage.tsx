@@ -8,23 +8,24 @@ import { MonthlySummary } from '../../core/domain/Adviser/Adviser';
 import { ChevronLeft, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { EMERALD, CYAN } from '../lib/colors';
+
 export const AdviserDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchAdviserById, currentAdviser, loading, error } = useAdvisersStore();
+  const { fetchAdviserById, clearSelectAdviser, currentAdviser, loading, error } = useAdvisersStore();
   const [animateValue, setAnimateValue] = useState(0);
   const [monthlyCommissions, setMonthlyCommissions] = useState<number[]>(() => Array(12).fill(0));
   const currentYear = new Date().getFullYear();
 
-  // Obtener monthlySummaries directamente del currentAdviser
   const monthlySummaries: MonthlySummary[] = currentAdviser?.monthlySummaries || [];
 
-  // Fetch datos del asesor y resetear scroll
   useEffect(() => {
-    window.scrollTo(0, 0); // Reset scroll to top
+    window.scrollTo(0, 0);
     if (!id) return;
+    clearSelectAdviser();
     fetchAdviserById(id);
-  }, [id, fetchAdviserById]);
+  }, [id, fetchAdviserById, clearSelectAdviser]);
 
   useEffect(() => {
     if (!currentAdviser?.id) return;
@@ -39,19 +40,13 @@ export const AdviserDetailPage = () => {
       .catch(() => {
         if (!cancelled) setMonthlyCommissions(Array(12).fill(0));
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [currentAdviser?.id, currentYear]);
 
-  // Animación de comisión (valor del mes desde el backend)
   useEffect(() => {
     if (!currentAdviser) return;
     const earnings = currentAdviser.commission ?? 0;
-    if (earnings <= 0) {
-      setAnimateValue(0);
-      return;
-    }
+    if (earnings <= 0) { setAnimateValue(0); return; }
     const duration = 2000;
     const steps = 60;
     const increment = earnings / steps;
@@ -71,7 +66,7 @@ export const AdviserDetailPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
       </div>
     );
   }
@@ -79,12 +74,13 @@ export const AdviserDetailPage = () => {
   if (error || !currentAdviser) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-background">
-        <div className="bg-red-500/10 p-6 rounded-[2rem] border border-red-500/20 text-center max-w-sm">
-          <p className="text-red-600 dark:text-red-400 font-bold mb-4">{error || 'Asesor no encontrado'}</p>
-          <button
-            onClick={() => navigate('/advisers')}
-            className="btn-primary"
-          >
+        <div className="p-6 rounded-[2rem] text-center max-w-sm"
+          style={{
+            background: 'rgba(248,113,113,0.08)',
+            border: '1px solid rgba(248,113,113,0.2)',
+          }}>
+          <p className="text-red-400 font-bold mb-4">{error || 'Asesor no encontrado'}</p>
+          <button onClick={() => navigate('/advisers')} className="btn-primary">
             Volver a la lista
           </button>
         </div>
@@ -95,30 +91,47 @@ export const AdviserDetailPage = () => {
   const initials = `${currentAdviser.name?.charAt(0) || ''}${currentAdviser.lastName?.charAt(0) || ''}`;
 
   return (
-    <main className="flex-1 p-8 bg-background relative overflow-hidden min-h-screen">
-      {/* Background Ornaments */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
+    <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background relative min-h-screen">
+      {/* Background Ornaments — isolated overflow-hidden wrapper avoids backdrop-filter compositor bug */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute top-0 right-0 w-[200px] sm:w-[350px] lg:w-[500px] h-[200px] sm:h-[350px] lg:h-[500px] rounded-full blur-[120px]"
+          style={{ background: `${EMERALD}0d` }} />
+        <div className="absolute bottom-0 left-0 w-[200px] sm:w-[350px] lg:w-[500px] h-[200px] sm:h-[350px] lg:h-[500px] rounded-full blur-[120px]"
+          style={{ background: `${CYAN}0d` }} />
+      </div>
 
       <div className="relative z-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-10 gap-4 md:gap-6">
           <div className="flex items-center gap-6">
             <button
               onClick={() => navigate('/advisers')}
-              className="btn-glass p-3 flex items-center justify-center rounded-2xl group"
+              className="p-3 flex items-center justify-center rounded-2xl group transition-all duration-300 cursor-pointer"
+              style={{
+                background: 'var(--s-subtle)',
+                border: '1px solid var(--b-subtle)',
+              }}
             >
-              <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+              <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-all" style={{ color: 'var(--t-muted)' }} />
             </button>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-emerald-400 to-cyan-600 p-[2px] shadow-lg shadow-emerald-500/20">
-                <div className="w-full h-full rounded-[1.4rem] bg-white dark:bg-black flex items-center justify-center border-2 border-white dark:border-black">
-                  <span className="text-2xl font-black text-slate-900 dark:text-white">{initials}</span>
-                </div>
+              <div
+                className="w-16 h-16 rounded-3xl flex items-center justify-center text-2xl font-black shrink-0"
+                style={{
+                  background: `${EMERALD}15`,
+                  border: `2px solid ${EMERALD}40`,
+                  color: EMERALD,
+                  boxShadow: `0 0 20px ${EMERALD}20`,
+                }}
+              >
+                {initials}
               </div>
               <div className="text-left">
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-1 block">Perfil de Asesor</span>
-                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                <span className="text-xs font-black uppercase tracking-[0.3em] mb-1 block"
+                  style={{ color: EMERALD }}>
+                  Perfil de Asesor
+                </span>
+                <h1 className="text-4xl font-black tracking-tighter" style={{ color: 'var(--t-primary)' }}>
                   {currentAdviser.name} {currentAdviser.lastName}
                 </h1>
               </div>
@@ -126,9 +139,17 @@ export const AdviserDetailPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="px-5 py-2.5 bg-white/50 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${currentAdviser.active ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
-              <span className="text-xs font-black uppercase tracking-widest text-slate-600 dark:text-white/60">
+            <div
+              className="px-5 py-2.5 rounded-2xl flex items-center gap-2"
+              style={{
+                background: 'var(--s-subtle)',
+                border: '1px solid var(--b-subtle)',
+              }}
+            >
+              <div className={`w-2 h-2 rounded-full ${currentAdviser.active ? 'animate-pulse' : ''}`}
+                style={{ background: currentAdviser.active ? EMERALD : '#f87171' }} />
+              <span className="text-xs font-black uppercase tracking-widest"
+                style={{ color: 'var(--t-secondary)' }}>
                 {currentAdviser.active ? 'Activo' : 'Inactivo'}
               </span>
             </div>
@@ -140,15 +161,28 @@ export const AdviserDetailPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/70 dark:bg-black/40 backdrop-blur-2xl rounded-[2rem] border border-slate-200/50 dark:border-white/10 p-8 flex items-center gap-6 shadow-xl dark:shadow-none"
+            className="rounded-[2rem] p-8 flex items-center gap-6"
+            style={{
+              background: 'var(--s-card)',
+              border: '1px solid var(--b-line)',
+            }}
           >
-            <div className="bg-cyan-500/10 p-4 rounded-2xl border border-cyan-500/20">
-              <TrendingUp className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+            <div
+              className="p-4 rounded-2xl"
+              style={{
+                background: `${CYAN}12`,
+                border: `1px solid ${CYAN}25`,
+              }}
+            >
+              <TrendingUp className="w-8 h-8" style={{ color: CYAN }} />
             </div>
             <div className="text-left">
-              <p className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-[0.2em] mb-1">Unidades por Ticket</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">
-                {currentAdviser.upt || '0.00'}
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1"
+                style={{ color: 'var(--t-muted)' }}>
+                Unidades por Ticket
+              </p>
+              <p className="text-2xl font-black" style={{ color: 'var(--t-primary)' }}>
+                {currentAdviser.upt ? Number(currentAdviser.upt).toFixed(2) : '0.00'}
               </p>
             </div>
           </motion.div>
@@ -168,9 +202,7 @@ export const AdviserDetailPage = () => {
           transition={{ delay: 0.2 }}
           className="mt-8"
         >
-          <WeeklyComparisonChart
-            adviserId={currentAdviser.id}
-          />
+          <WeeklyComparisonChart adviserId={currentAdviser.id} />
         </motion.div>
       </div>
     </main>

@@ -12,12 +12,12 @@ import {
     FaCheckCircle,
     FaTrophy
 } from 'react-icons/fa';
-import { Cover } from '@/components/ui/cover';
-import { ShootingStars } from '@/components/ui/shooting-stars';
-import { StarsBackground } from '@/components/ui/stars-background';
-import { FeatureHoverEffect } from '@/components/ui/feature-hover-effect';
-import { InfiniteMovingCards } from '@/components/ui/infinite-moving-cards';
-import { WarpSpeed } from '@/components/ui/warp-speed';
+import { Cover } from '@/presentation/components/ui/cover';
+import { ShootingStars } from '@/presentation/components/ui/shooting-stars';
+import { StarsBackground } from '@/presentation/components/ui/stars-background';
+import { FeatureHoverEffect } from '@/presentation/components/ui/feature-hover-effect';
+import { InfiniteMovingCards } from '@/presentation/components/ui/infinite-moving-cards';
+import { WarpSpeed } from '@/presentation/components/ui/warp-speed';
 
 // Main Features Data
 const mainFeatures = [

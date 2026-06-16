@@ -10,9 +10,11 @@ import com.fcastro.backend_kpis_management.model.dto.store.StoreMetricsRequest;
 import com.fcastro.backend_kpis_management.model.dto.store.StoreMetricsResponse;
 import com.fcastro.backend_kpis_management.model.entities.StoreMetrics;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
+import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
 import com.fcastro.backend_kpis_management.repositories.StoreMetricsRepository;
+import com.fcastro.backend_kpis_management.services.BudgetTemplateService;
 import com.fcastro.backend_kpis_management.services.StoreMetricsService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,8 @@ public class StoreMetricsServiceImpl implements StoreMetricsService {
     private final MonthlySummaryRepository monthlySummaryRepository;
     private final GoalRepository goalRepository;
     private final StoreMetricsMapper storeMetricsMapper;
+    private final BudgetTemplateRepository budgetTemplateRepository;
+    private final BudgetTemplateService budgetTemplateService;
 
     @Override
     @Transactional
@@ -87,28 +91,34 @@ public class StoreMetricsServiceImpl implements StoreMetricsService {
         log.info("Porcentajes recalculados exitosamente");
     }
 
-    /**
-     * Calcula los porcentajes P.A.F y P.R reutilizando la lógica de cálculo existente
-     */
     private void calculatePercentages(StoreMetrics storeMetrics) {
         int year = storeMetrics.getYear();
         int month = storeMetrics.getMonth();
-        
-        // Reutilizar lógica de MetricsService para obtener ventas totales y meta total
+
         Double totalSales = calculateTotalSales(year, month);
         Double totalGoal = calculateTotalGoal(year, month);
-        Double paf = storeMetrics.getPaf();
-        
-        // Calcular % P.A.F: (venta acumulada / meta total) * 100
-        Double percentagePaf = calculatePercentagePaf(totalSales, totalGoal);
-        storeMetrics.setPercentagePaf(percentagePaf);
-        
-        // Calcular % P.R: (venta total / P.A.F) * 100
-        Double percentagePr = calculatePercentagePr(totalSales, paf);
-        storeMetrics.setPercentagePr(percentagePr);
-        
-        log.debug("Métricas calculadas - Ventas: {}, Meta: {}, P.A.F: {}, % P.A.F: {}, % P.R: {}", 
-                totalSales, totalGoal, paf, percentagePaf, percentagePr);
+        Double paf = resolvePaf(storeMetrics);
+
+        storeMetrics.setPaf(paf);
+        storeMetrics.setPercentagePaf(calculatePercentagePaf(totalSales, totalGoal));
+        storeMetrics.setPercentagePr(calculatePercentagePr(totalSales, paf));
+
+        log.debug("Métricas calculadas - Ventas: {}, Meta: {}, P.A.F: {}, % P.A.F: {}, % P.R: {}",
+                totalSales, totalGoal, paf, storeMetrics.getPercentagePaf(), storeMetrics.getPercentagePr());
+    }
+
+    /**
+     * Si existe un BudgetTemplate para el mes, calcula el paf sumando los dailyAmounts
+     * hasta el día de hoy. Si no existe, usa el valor ingresado manualmente.
+     */
+    private Double resolvePaf(StoreMetrics storeMetrics) {
+        int year = storeMetrics.getYear();
+        int month = storeMetrics.getMonth();
+
+        if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
+            return budgetTemplateService.calculatePafUpToToday(year, month);
+        }
+        return storeMetrics.getPaf();
     }
 
     /**

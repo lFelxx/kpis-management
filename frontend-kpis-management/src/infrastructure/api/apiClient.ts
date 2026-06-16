@@ -32,7 +32,7 @@ export async function request(url: string, init: RequestInit = {}, options: { re
   }
 
   const headers = new Headers(init.headers as HeadersInit);
-  if (!headers.has('Content-Type') && (init.body !== undefined && init.body !== null)) {
+  if (!headers.has('Content-Type') && init.body != null && !(init.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
   if (token) {

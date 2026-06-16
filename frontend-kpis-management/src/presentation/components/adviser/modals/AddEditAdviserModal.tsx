@@ -3,7 +3,8 @@ import { Fragment } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Transition } from '@headlessui/react';
 import { useAdviserModalStore } from '../../../stores/modals/AdviserModalStore';
 import { useAdvisersStore } from '../../../stores/advisers/advisers.store';
-import { ToastNotificationService } from '../../../../infrastructure/services/ToastNotificationService';
+import { notificationService } from '../../../../core/instances/instances';
+import { formatCurrency } from '../../../lib/format';
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 type FormErrors = {
@@ -19,7 +20,6 @@ export const AddEditAdviserModal = () => {
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [tempSales, setTempSales] = useState<string>('');
     const [tempGoal, setTempGoal] = useState<string>('');
-    const toastService = new ToastNotificationService();
 
     useEffect(() => {
         if (form.currentMonthSales !== undefined && form.currentMonthSales !== null) {
@@ -34,14 +34,6 @@ export const AddEditAdviserModal = () => {
         }
     }, [form.currentMonthSales, form.goalValue, isOpen]);
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
 
     const validate = () => {
         const errors: FormErrors = {};
@@ -68,8 +60,6 @@ export const AddEditAdviserModal = () => {
             const year = now.getFullYear();
             const month = now.getMonth() + 1;
 
-            console.log('monthlySummaries:', form.monthlySummaries, 'year:', year, 'month:', month);
-
             if (form.id) {
 
                 // actualiza le venta del mes
@@ -80,7 +70,7 @@ export const AddEditAdviserModal = () => {
                 // Actualiza los datos básicos del asesor
                 await updateAdviser(form.id, form);
 
-                toastService.showSuccess('Asesor actualizado exitosamente');
+                notificationService.showSuccess('Asesor actualizado exitosamente');
             } else {
                 await createAdviser({
                     ...form,
@@ -88,13 +78,13 @@ export const AddEditAdviserModal = () => {
                     goalValue: Number(tempGoal) || 0,
                     currentMonthSales: Number(tempSales) || 0
                 });
-                toastService.showSuccess('Asesor creado exitosamente');
+                notificationService.showSuccess('Asesor creado exitosamente');
             }
             closeModal();
             resetForm();
             setFormErrors({});
         } catch (error) {
-            toastService.showError((error as Error).message);
+            notificationService.showError((error as Error).message);
         }
     };
 

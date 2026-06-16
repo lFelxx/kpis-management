@@ -13,19 +13,15 @@ import {
   Legend,
 } from 'chart.js';
 
-// Registrar componentes de Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+import { EMERALD, CYAN } from '../../../lib/colors';
 
 interface Props {
   advisers: Adviser[];
 }
+
+const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim() || v;
 
 const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) => {
   const chartData = useMemo(() => ({
@@ -34,16 +30,16 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) => {
       {
         label: 'Ventas',
         data: advisers.map(a => a.currentMonthSales ?? 0),
-        backgroundColor: '#10b981', // Emerald 500
-        borderRadius: 4,
-        barThickness: 12,
+        backgroundColor: EMERALD,
+        borderRadius: 6,
+        barThickness: 10,
       },
       {
         label: 'Meta',
         data: advisers.map(a => a.goalValue),
-        backgroundColor: 'rgba(156, 163, 175, 0.2)', // Gray 400 with opacity
-        borderRadius: 4,
-        barThickness: 12,
+        backgroundColor: css('--s-subtle'),
+        borderRadius: 6,
+        barThickness: 10,
       },
     ],
   }), [advisers]);
@@ -56,21 +52,19 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) => {
       legend: {
         position: 'top',
         labels: {
-          color: 'rgba(156, 163, 175, 0.8)',
-          font: { size: 11, weight: 'bold', family: "'Inter', sans-serif" },
+          color: css('--t-muted'),
+          font: { size: 11, weight: 'bold' },
           pointStyle: 'circle',
           usePointStyle: true,
-          padding: 20
-        }
+          padding: 20,
+        },
       },
-      title: {
-        display: false
-      },
+      title: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: css('--s-sidebar'),
+        titleColor: css('--t-primary'),
+        bodyColor: css('--t-secondary'),
+        borderColor: css('--b-line'),
         borderWidth: 1,
         cornerRadius: 12,
         padding: 12,
@@ -79,56 +73,76 @@ const AdvisersPerformanceChart: React.FC<Props> = ({ advisers }) => {
           label: context => {
             const value = context.raw as number;
             return ` ${context.dataset.label}: $${value.toLocaleString()}`;
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       x: {
         beginAtZero: true,
         ticks: {
-          color: 'rgba(156, 163, 175, 0.5)',
+          color: css('--t-micro'),
           font: { size: 10 },
-          callback: val => `$${Number(val).toLocaleString()}`
+          callback: val => `$${Number(val).toLocaleString()}`,
         },
-        grid: {
-          color: 'rgba(156, 163, 175, 0.05)',
-        },
-        border: { display: false }
+        grid: { color: css('--b-subtle') },
+        border: { display: false },
       },
       y: {
         ticks: {
-          color: 'rgba(156, 163, 175, 0.8)',
-          font: { size: 10, weight: 'bold' }
+          color: css('--t-muted'),
+          font: { size: 10, weight: 'bold' },
         },
         grid: { display: false },
-        border: { display: false }
-      }
+        border: { display: false },
+      },
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeInOutQuart'
-    }
+    animation: { duration: 900, easing: 'easeInOutQuart' },
   };
 
   return (
     <motion.div
-      className="bg-white/70 dark:bg-black/40 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-white/10 shadow-xl dark:shadow-none"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition={{ duration: 0.45, delay: 0.1 }}
+      className="relative overflow-hidden rounded-[1.4rem]"
+      style={{
+        background: 'var(--s-card)',
+        border: '1px solid var(--b-line)',
+      }}
     >
-      <div className="flex justify-between items-center mb-8">
-        <div className="text-left">
-          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-1 block">Rendimiento Global</span>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Ventas vs Metas</h2>
+      {/* Aurora bloom decorativo */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 50% 40% at 0% 100%, ${EMERALD}0d 0%, transparent 60%)`,
+        }}
+      />
+
+      {/* Header */}
+      <div
+        className="relative z-10 px-7 pt-6 pb-4 flex items-center justify-between"
+        style={{ borderBottom: '1px solid var(--b-subtle)' }}
+      >
+        <div>
+          <span
+            className="text-xs font-black uppercase tracking-[0.28em] block mb-0.5"
+            style={{ color: `${CYAN}80` }}
+          >
+            Rendimiento Global
+          </span>
+          <h2 className="text-lg font-black tracking-tighter" style={{ color: 'var(--t-primary)' }}>
+            Ventas vs Metas
+          </h2>
         </div>
       </div>
-      <div style={{ height: '400px' }}>
+
+      {/* Chart */}
+      <div className="relative z-10 p-7" style={{ height: 420 }}>
         <Bar key="advisers-performance-chart" data={chartData} options={chartOptions} />
       </div>
     </motion.div>
   );
-}
+};
 
 export default AdvisersPerformanceChart;

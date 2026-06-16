@@ -8,9 +8,7 @@ import { useAdviserUI } from "../hooks/useAdviserUI";
 import { AdviserTable } from "../components/adviser/AdviserTable";
 import { DeleteAdviserModal } from "../components/adviser/modals/DeleteAdviserModal";
 import { SumSalesModal } from "../components/adviser/modals/SumSalesModal";
-import { EditWeeklyComparisonModal } from "../components/adviser/modals/EditWeeklyComparisonModal";
 import { EditUptModal } from "../components/adviser/modals/EditUptModal";
-import { openEditComparisonModal } from "../hooks/useWeeklyComparisons";
 
 const emptyAdviser: Adviser = {
   id: '',
@@ -25,7 +23,6 @@ export const AdvisoryTeam = () => {
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const { openModal } = useAdviserModalStore();
   const { openDeleteModal, openSumModal, openUptModal } = useAdviserUI();
-  // openEditComparisonModal es ahora una función independiente
 
   useEffect(() => {
     fetchAdvisers();
@@ -40,7 +37,7 @@ export const AdvisoryTeam = () => {
   };
 
   return (
-    <div className="p-6 bg-background">
+    <div className="p-4 sm:p-6 bg-background">
       <Toaster position="top-right" />
       <AddEditAdviserModal />
 
@@ -50,22 +47,19 @@ export const AdvisoryTeam = () => {
       {/* Modal Sumar Ventas */}
       <SumSalesModal />
 
-      {/* Modal Editar Comparación Semanal */}
-      <EditWeeklyComparisonModal />
-
       {/* Modal Editar UPT */}
       <EditUptModal />
 
       {/* Contenido principal */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Miembros del equipo</h1>
-            <p className="text-muted-foreground mt-2">Gestiona los miembros del equipo</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Miembros del equipo</h1>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm">Gestiona los miembros del equipo</p>
           </div>
           <button
             onClick={openAddModal}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-md transition-colors"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-md transition-colors text-sm self-start sm:self-auto"
           >
             + Agregar asesor
           </button>
@@ -77,7 +71,6 @@ export const AdvisoryTeam = () => {
           onEdit={openEditModal}
           onSum={openSumModal}
           onDelete={openDeleteModal}
-          onEditComparison={openEditComparisonModal}
           onEditUpt={openUptModal}
         />
       </div>

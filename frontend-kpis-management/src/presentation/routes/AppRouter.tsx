@@ -6,7 +6,9 @@ import { Dashboard } from "../pages/Dashboard";
 import { AdviserDetailPage } from "../pages/AdviserDetailPage";
 import { AdvisoryTeam } from "../pages/AdvisoryTeam";
 import { ReportPage } from "../pages/ReportPage";
-import { AdviserList } from "../components/AdviserList";
+import { AdvisersPage } from "../pages/AdvisersPage";
+import { BudgetTemplatePage } from "../pages/BudgetTemplatePage";
+import { SalesReportUploadPage } from "../pages/SalesReportUploadPage";
 import { Layout } from "../components/Layout";
 import { PublicRoute } from "./PublicRoute";
 
@@ -29,7 +31,7 @@ export const AppRouter = () => {
 
                 <Route path="/advisers" element={
                     <Layout>
-                        <AdviserList />
+                        <AdvisersPage />
                     </Layout>
                 } />
                 <Route path="/advisers/:id" element={
@@ -45,6 +47,16 @@ export const AppRouter = () => {
                 <Route path="/report" element={
                     <Layout>
                         <ReportPage />
+                    </Layout>
+                } />
+<Route path="/budget" element={
+                    <Layout>
+                        <BudgetTemplatePage />
+                    </Layout>
+                } />
+                <Route path="/sales-report" element={
+                    <Layout>
+                        <SalesReportUploadPage />
                     </Layout>
                 } />
             </Route>

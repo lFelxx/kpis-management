@@ -10,8 +10,6 @@ import com.fcastro.backend_kpis_management.model.dto.sale.WeekSale;
 public interface AdviserService {
     List<AdviserResponse> getAdvisers();
 
-    AdviserResponse getOne(Long id);
-
     AdviserResponse create(AdviserRequest adviser);
 
     AdviserResponse update(Long id, AdviserRequest adviser);

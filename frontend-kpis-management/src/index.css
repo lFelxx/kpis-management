@@ -4,8 +4,30 @@
 
 /* Custom Theme Variables */
 :root {
-  --background: oklch(0.9940 0 0);
-  --foreground: oklch(0 0 0);
+  --background: oklch(0.965 0.012 155);
+  --foreground: oklch(0.14 0.025 155);
+
+  /* ─── Surface system ─────────────────────────── */
+  --s-page:        oklch(0.965 0.012 155);
+  --s-sidebar:     oklch(0.990 0.014 155);
+  --s-card:        oklch(1 0 0);
+  --s-card-raised: oklch(0.978 0.010 155);
+  --s-subtle:      oklch(0.958 0.018 155);
+
+  /* ─── Text system ────────────────────────────── */
+  --t-primary:   oklch(0.13 0.022 155);
+  --t-secondary: oklch(0.33 0.018 155);
+  --t-muted:     oklch(0.50 0.013 155);
+  --t-micro:     oklch(0.63 0.009 155);
+
+  /* ─── Border system ──────────────────────────── */
+  --b-line:   oklch(0.875 0.022 155);
+  --b-subtle: oklch(0.915 0.014 155);
+  --b-strong: oklch(0.825 0.030 155);
+  --sep:      oklch(0.910 0.016 155);
+
+  /* ─── Ghost / watermark ─────────────────────── */
+  --ghost: oklch(0.13 0.022 155);
   --card: oklch(0.9940 0 0);
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.9911 0 0);
@@ -60,9 +82,31 @@
 }
 
 .dark {
-  --background: oklch(0.2223 0.0060 271.1393);
+  --background: oklch(0.13 0 0);
   --foreground: oklch(0.9551 0 0);
-  --card: oklch(0.2568 0.0076 274.6528);
+
+  /* ─── Surface system ─────────────────────────── */
+  --s-page:        oklch(0.13 0 0);
+  --s-sidebar:     oklch(0.18 0 0);
+  --s-card:        oklch(0.22 0 0);
+  --s-card-raised: oklch(0.20 0 0);
+  --s-subtle:      oklch(1 0 0 / 0.04);
+
+  /* ─── Text system ────────────────────────────── */
+  --t-primary:   oklch(1 0 0 / 0.92);
+  --t-secondary: oklch(1 0 0 / 0.65);
+  --t-muted:     oklch(1 0 0 / 0.32);
+  --t-micro:     oklch(1 0 0 / 0.22);
+
+  /* ─── Border system ──────────────────────────── */
+  --b-line:   oklch(1 0 0 / 0.08);
+  --b-subtle: oklch(1 0 0 / 0.05);
+  --b-strong: oklch(1 0 0 / 0.12);
+  --sep:      oklch(1 0 0 / 0.05);
+
+  /* ─── Ghost / watermark ─────────────────────── */
+  --ghost: white;
+  --card: oklch(0.21 0 0);
   --card-foreground: oklch(0.9551 0 0);
   --popover: oklch(0.2568 0.0076 274.6528);
   --popover-foreground: oklch(0.9551 0 0);
@@ -137,6 +181,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+
   button:not(.sidebar-btn) {
     @apply transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
   }
@@ -149,6 +194,11 @@
     @apply bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/10 dark:border-white/5 hover:bg-white/20 dark:hover:bg-black/40 text-foreground font-bold px-6 py-2.5 rounded-xl transition-all duration-300;
   }
 }
+
+/* ─── Sidebar nav item theme colors ─────────────────────── */
+.nav-item         { color: var(--t-muted); }
+.nav-item:hover   { color: var(--t-secondary); }
+.nav-item.active  { color: var(--t-primary); }
 
 @layer utilities {
   .scrollbar-hide::-webkit-scrollbar {

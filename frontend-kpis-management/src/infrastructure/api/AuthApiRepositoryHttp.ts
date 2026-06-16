@@ -1,36 +1,29 @@
 import { AuthCredentials } from "../../core/domain/auth/AuthCredentials";
 import { AuthRepository } from "../../core/domain/auth/AuthRepository";
 import { User } from "../../core/domain/auth/User";
-import { ToastNotificationService } from "../services/ToastNotificationService";
 import { request } from "./apiClient";
 
 export class AuthApiRepositoryHttp implements AuthRepository {
-    private readonly baseUrl = import.meta.env.VITE_API_URL ?? '';
-    private toast = new ToastNotificationService();
+    constructor(private readonly baseUrl: string) {}
 
     async login(credentials: AuthCredentials): Promise<User> {
-        try {
-            const response = await fetch(`${this.baseUrl}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: credentials.username,
-                    password: credentials.password,
-                }),
-            });
+        const response = await fetch(`${this.baseUrl}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: credentials.username,
+                password: credentials.password,
+            }),
+        });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Error al iniciar sesión');
-            }
-
-            const data = await response.json();
-            localStorage.setItem('token', data.jwt);
-            return data as User;
-        } catch (error) {
-            this.toast.showError((error as Error).message);
-            throw error;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Error al iniciar sesión');
         }
+
+        const data = await response.json();
+        localStorage.setItem('token', data.jwt);
+        return data as User;
     }
 
     async logout(): Promise<void> {
@@ -41,16 +34,10 @@ export class AuthApiRepositoryHttp implements AuthRepository {
         const token = localStorage.getItem('token');
         if (!token) return null;
 
-        try {
-            const response = await request(`${this.baseUrl}/me`, { method: 'GET' }, { requireAuth: true });
-            if (!response.ok) {
-                throw new Error('No se pudo obtener el usuario actual');
-            }
-            const data = await response.json();
-            return { ...data, token } as User;
-        } catch (error) {
-            this.toast.showError((error as Error).message);
-            return null;
-        }
+        const response = await request(`${this.baseUrl}/me`, { method: 'GET' }, { requireAuth: true });
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        return { ...data, token } as User;
     }
 }

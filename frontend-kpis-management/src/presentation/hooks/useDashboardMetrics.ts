@@ -1,100 +1,33 @@
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
-import { useAdviserMetricsStore } from '../stores/advisers/adviserMetrics.store';
 
 export const useDashboardMetrics = () => {
-  const { 
-    metrics: backendMetrics, 
-    loading: backendLoading, 
-    error: backendError,
-    fetchDashboardMetrics 
-  } = useAdvisersStore();
+    const {
+        metrics: backendMetrics,
+        loading,
+        error,
+        fetchDashboardMetrics,
+    } = useAdvisersStore();
 
-  const { 
-    totalSales, 
-    totalGoal, 
-    activeAdvisers, 
-    goalAchievement, 
-    averageSales, 
-    bestAdviser,
-    bestUptAdviser,
-    worstAdviser,
-    loading: metricsLoading,
-    error: metricsError,
-    setMetrics, 
-    setLoading, 
-    setError,
-    formatCurrency,
-    calculateProgressPercentage,
-    getProgressColor,
-    calculateWeeklyGrowth,
-    formatPercentage
-  } = useAdviserMetricsStore();
+    const fetchMetrics = useCallback(() => {
+        const now = new Date();
+        return fetchDashboardMetrics(now.getFullYear(), now.getMonth() + 1);
+    }, [fetchDashboardMetrics]);
 
-  // Sincronizar métricas del backend con el store de métricas
-  useEffect(() => {
-    if (backendMetrics) {
-      setMetrics(backendMetrics);
-    }
-  }, [backendMetrics]); // Removido setMetrics de las dependencias
-
-  // Sincronizar estados de loading y error
-  useEffect(() => {
-    setLoading(backendLoading);
-  }, [backendLoading]); // Removido setLoading de las dependencias
-
-  useEffect(() => {
-    setError(backendError);
-  }, [backendError]); // Removido setError de las dependencias
-
-  // Función helper para obtener fecha actual
-  const getCurrentDate = () => {
-    const now = new Date();
     return {
-      year: now.getFullYear(),
-      month: now.getMonth() + 1 // getMonth() devuelve 0-11, necesitamos 1-12
+        totalSales:                    backendMetrics?.totalSales        ?? 0,
+        totalGoal:                     backendMetrics?.totalGoal         ?? 0,
+        activeAdvisers:                backendMetrics?.activeAdvisers    ?? 0,
+        goalAchievement:               backendMetrics?.goalAchievement   ?? 0,
+        averageSales:                  backendMetrics?.averageSales      ?? 0,
+        bestAdviser:                   backendMetrics?.bestAdviser       ?? null,
+        bestUptAdviser:                backendMetrics?.bestUptAdviser    ?? null,
+        worstAdviser:                  backendMetrics?.worstAdviser      ?? null,
+        storePartialWeekGrowthPercent: backendMetrics?.storePartialWeekGrowthPercent,
+        adviserPartialWeekGrowth:      backendMetrics?.adviserPartialWeekGrowth,
+        loading,
+        error,
+        fetchMetrics,
+        fetchMetricsForDate: fetchDashboardMetrics,
     };
-  };
-
-  // Función wrapper que automáticamente usa la fecha actual
-  const fetchCurrentMetrics = async () => {
-    const { year, month } = getCurrentDate();
-    return fetchDashboardMetrics(year, month);
-  };
-
-  const storePartialWeekGrowthPercent = backendMetrics?.storePartialWeekGrowthPercent;
-  const adviserPartialWeekGrowth = backendMetrics?.adviserPartialWeekGrowth;
-
-  return {
-    // Métricas calculadas
-    totalSales,
-    totalGoal,
-    activeAdvisers,
-    goalAchievement,
-    averageSales,
-    bestAdviser,
-    bestUptAdviser,
-    worstAdviser,
-    storePartialWeekGrowthPercent,
-    adviserPartialWeekGrowth,
-    
-    // Estados
-    loading: backendLoading || metricsLoading,
-    error: backendError || metricsError,
-    
-    // Acciones
-    fetchMetrics: fetchCurrentMetrics, // Usa fecha actual automáticamente
-    fetchMetricsForDate: fetchDashboardMetrics, // Para casos específicos
-    
-    // Utilidades
-    formatCurrency,
-    calculateProgressPercentage,
-    getProgressColor,
-    calculateWeeklyGrowth,
-    formatPercentage,
-    getCurrentDate,
-    
-    // Métricas del backend (para comparación o debug)
-    backendMetrics
-  };
 };

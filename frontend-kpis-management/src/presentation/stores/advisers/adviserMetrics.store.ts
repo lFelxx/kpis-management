@@ -19,11 +19,6 @@ interface AdviserMetricsActions {
   clearMetrics: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  formatCurrency: (amount: number) => string;
-  calculateProgressPercentage: (current: number, goal: number) => number;
-  getProgressColor: (percentage: number) => string;
-  calculateWeeklyGrowth: (currentWeek: number, previousWeek: number) => number;
-  formatPercentage: (value: number, decimals?: number) => string;
 }
 
 type AdviserMetricsStore = AdviserMetricsState & AdviserMetricsActions;
@@ -50,7 +45,7 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
       bestAdviser: metrics.bestAdviser,
       bestUptAdviser: metrics.bestUptAdviser || null,
       worstAdviser: metrics.worstAdviser || null,
-      error: null
+      error: null,
     });
   },
 
@@ -64,45 +59,11 @@ export const useAdviserMetricsStore = create<AdviserMetricsStore>((set) => ({
       bestAdviser: null,
       bestUptAdviser: null,
       worstAdviser: null,
-      error: null
+      error: null,
     });
   },
 
-  setLoading: (loading: boolean) => {
-    set({ loading });
-  },
+  setLoading: (loading: boolean) => set({ loading }),
 
-  setError: (error: string | null) => {
-    set({ error });
-  },
-
-  formatCurrency: (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  },
-
-  calculateProgressPercentage: (current: number, goal: number) => {
-    if (goal <= 0) return 0;
-    return Math.min((current / goal) * 100, 100);
-  },
-
-  getProgressColor: (percentage: number) => {
-    if (percentage >= 100) return 'text-green-600';
-    if (percentage >= 80) return 'text-yellow-600';
-    if (percentage >= 60) return 'text-orange-600';
-    return 'text-red-600';
-  },
-
-  calculateWeeklyGrowth: (currentWeek: number, previousWeek: number) => {
-    if (previousWeek <= 0) return 0;
-    return ((currentWeek - previousWeek) / previousWeek) * 100;
-  },
-
-  formatPercentage: (value: number, decimals: number = 1) => {
-    return `${value.toFixed(decimals)}%`;
-  }
-})); 
+  setError: (error: string | null) => set({ error }),
+}));

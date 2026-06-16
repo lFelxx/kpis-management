@@ -4,11 +4,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fcastro.backend_kpis_management.model.dto.metrics.AdviserMetricsResponse;
+import com.fcastro.backend_kpis_management.model.dto.metrics.AtRiskAdviserInfo;
 import com.fcastro.backend_kpis_management.model.dto.metrics.DashboardMetricsResponse;
 import com.fcastro.backend_kpis_management.services.MetricsService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,8 +34,13 @@ public class MetricsController {
     @GetMapping("/adviser/{adviserId}")
     public ResponseEntity<AdviserMetricsResponse> getAdviserMetrics(
         @PathVariable Long adviserId,
-        @RequestParam int year, 
+        @RequestParam int year,
         @RequestParam int month) {
         return ResponseEntity.ok(metricsService.getAdviserMetrics(adviserId, year, month));
+    }
+
+    @GetMapping("/at-risk")
+    public ResponseEntity<List<AtRiskAdviserInfo>> getAtRiskAdvisers() {
+        return ResponseEntity.ok(metricsService.getAtRiskAdvisers());
     }
 }
