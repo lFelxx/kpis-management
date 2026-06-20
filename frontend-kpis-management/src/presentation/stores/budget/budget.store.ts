@@ -5,6 +5,7 @@ import {
   getBudgetTemplateUseCase,
   updateAdviserCountUseCase,
   resetManualOverrideUseCase,
+  toggleAdviserExclusionUseCase,
   notificationService,
 } from '../../../core/instances/instances';
 
@@ -19,6 +20,7 @@ interface BudgetActions {
   fetchTemplate: (year: number, month: number) => Promise<void>;
   updateAdviserCount: (year: number, month: number, date: string, adviserCount: number) => Promise<void>;
   resetOverride: (year: number, month: number, date: string) => Promise<void>;
+  toggleExclusion: (year: number, month: number, date: string, adviserId: number) => Promise<void>;
   clearTemplate: () => void;
 }
 
@@ -72,6 +74,18 @@ export const useBudgetStore = create<BudgetStore>((set, get) => ({
       await resetManualOverrideUseCase.execute(year, month, date);
       await get().fetchTemplate(year, month);
       notificationService.showSuccess('Override manual reseteado');
+    } catch (error) {
+      const msg = (error as Error).message;
+      set({ error: msg, loading: false });
+      notificationService.showError(msg);
+    }
+  },
+
+  toggleExclusion: async (year, month, date, adviserId) => {
+    set({ loading: true, error: null });
+    try {
+      const template = await toggleAdviserExclusionUseCase.execute(year, month, date, adviserId);
+      set({ template, loading: false });
     } catch (error) {
       const msg = (error as Error).message;
       set({ error: msg, loading: false });

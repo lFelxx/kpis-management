@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAdvisersStore } from "../stores/advisers/advisers.store";
+import { useReportingDateStore } from "../stores/ui/reportingDate.store";
 import { Adviser } from "../../core/domain/Adviser/Adviser";
 import { Toaster } from 'react-hot-toast';
 import { AddEditAdviserModal } from "../components/adviser/modals/AddEditAdviserModal";
@@ -23,10 +24,11 @@ export const AdvisoryTeam = () => {
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const { openModal } = useAdviserModalStore();
   const { openDeleteModal, openSumModal, openUptModal } = useAdviserUI();
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
 
   useEffect(() => {
-    fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
-  }, [fetchAdvisers]);
+    fetchAdvisers(cutoffDate);
+  }, [fetchAdvisers, cutoffDate]);
 
   const openAddModal = () => {
     openModal(emptyAdviser);

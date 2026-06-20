@@ -59,4 +59,16 @@ public class BudgetTemplateController {
         budgetTemplateService.resetManualOverride(year, month, date);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{year}/{month}/day/{date}/exclusions/{adviserId}")
+    public ResponseEntity<BudgetTemplateResponse> toggleAdviserExclusion(
+            @PathVariable int year,
+            @PathVariable int month,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @PathVariable Long adviserId) {
+
+        return ResponseEntity.ok(
+                budgetTemplateService.toggleAdviserExclusion(year, month, date, adviserId)
+        );
+    }
 }

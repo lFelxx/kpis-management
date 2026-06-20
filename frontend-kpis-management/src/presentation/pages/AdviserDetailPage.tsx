@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 import { getMonthlyCommissionsUseCase } from '../../core/instances/instances';
 import { WeeklyComparisonChart } from '../components/adviser/sections/WeeklyComparisonChart';
 import { EarningsGrowthChart } from '../components/adviser/sections/EarningsGrowthChart';
@@ -13,12 +14,14 @@ import { EMERALD, CYAN } from '../lib/colors';
 export const AdviserDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchAdviserById, clearSelectAdviser, currentAdviser, loading, error } = useAdvisersStore();
+  const { fetchAdviserById, fetchAdvisers, clearSelectAdviser, currentAdviser, advisers, loading, error } = useAdvisersStore();
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
   const [animateValue, setAnimateValue] = useState(0);
   const [monthlyCommissions, setMonthlyCommissions] = useState<number[]>(() => Array(12).fill(0));
   const currentYear = new Date().getFullYear();
 
   const monthlySummaries: MonthlySummary[] = currentAdviser?.monthlySummaries || [];
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -26,6 +29,25 @@ export const AdviserDetailPage = () => {
     clearSelectAdviser();
     fetchAdviserById(id);
   }, [id, fetchAdviserById, clearSelectAdviser]);
+
+  // Recarga la lista con la fecha de corte para obtener meta y comisión actualizadas
+  useEffect(() => {
+    fetchAdvisers(cutoffDate);
+  }, [cutoffDate, fetchAdvisers]);
+
+  // Mezcla los datos temporales (meta/comisión) de la lista con los históricos (monthlySummaries) del detalle
+  const adviser = useMemo(() => {
+    if (!currentAdviser) return null;
+    const enriched = advisers.find((a) => String(a.id) === String(id));
+    if (!enriched) return currentAdviser;
+    return {
+      ...currentAdviser,
+      goalValue: enriched.goalValue,
+      commission: enriched.commission,
+      commissionRatePercent: enriched.commissionRatePercent,
+      currentMonthSales: enriched.currentMonthSales,
+    };
+  }, [currentAdviser, advisers, id]);
 
   useEffect(() => {
     if (!currentAdviser?.id) return;
@@ -44,8 +66,8 @@ export const AdviserDetailPage = () => {
   }, [currentAdviser?.id, currentYear]);
 
   useEffect(() => {
-    if (!currentAdviser) return;
-    const earnings = currentAdviser.commission ?? 0;
+    if (!adviser) return;
+    const earnings = adviser.commission ?? 0;
     if (earnings <= 0) { setAnimateValue(0); return; }
     const duration = 2000;
     const steps = 60;
@@ -61,7 +83,7 @@ export const AdviserDetailPage = () => {
       }
     }, duration / steps);
     return () => clearInterval(interval);
-  }, [currentAdviser?.id, currentAdviser?.commission]);
+  }, [adviser?.id, adviser?.commission]);
 
   if (loading) {
     return (
@@ -71,7 +93,7 @@ export const AdviserDetailPage = () => {
     );
   }
 
-  if (error || !currentAdviser) {
+  if (error || !adviser) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-background">
         <div className="p-6 rounded-[2rem] text-center max-w-sm"
@@ -88,7 +110,7 @@ export const AdviserDetailPage = () => {
     );
   }
 
-  const initials = `${currentAdviser.name?.charAt(0) || ''}${currentAdviser.lastName?.charAt(0) || ''}`;
+  const initials = `${adviser.name?.charAt(0) || ''}${adviser.lastName?.charAt(0) || ''}`;
 
   return (
     <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background relative min-h-screen">
@@ -132,7 +154,7 @@ export const AdviserDetailPage = () => {
                   Perfil de Asesor
                 </span>
                 <h1 className="text-4xl font-black tracking-tighter" style={{ color: 'var(--t-primary)' }}>
-                  {currentAdviser.name} {currentAdviser.lastName}
+                  {adviser.name} {adviser.lastName}
                 </h1>
               </div>
             </div>
@@ -146,11 +168,11 @@ export const AdviserDetailPage = () => {
                 border: '1px solid var(--b-subtle)',
               }}
             >
-              <div className={`w-2 h-2 rounded-full ${currentAdviser.active ? 'animate-pulse' : ''}`}
-                style={{ background: currentAdviser.active ? EMERALD : '#f87171' }} />
+              <div className={`w-2 h-2 rounded-full ${adviser.active ? 'animate-pulse' : ''}`}
+                style={{ background: adviser.active ? EMERALD : '#f87171' }} />
               <span className="text-xs font-black uppercase tracking-widest"
                 style={{ color: 'var(--t-secondary)' }}>
-                {currentAdviser.active ? 'Activo' : 'Inactivo'}
+                {adviser.active ? 'Activo' : 'Inactivo'}
               </span>
             </div>
           </div>
@@ -182,7 +204,7 @@ export const AdviserDetailPage = () => {
                 Unidades por Ticket
               </p>
               <p className="text-2xl font-black" style={{ color: 'var(--t-primary)' }}>
-                {currentAdviser.upt ? Number(currentAdviser.upt).toFixed(2) : '0.00'}
+                {adviser.upt ? Number(adviser.upt).toFixed(2) : '0.00'}
               </p>
             </div>
           </motion.div>
@@ -190,7 +212,7 @@ export const AdviserDetailPage = () => {
           <EarningsGrowthChart
             monthlySummaries={monthlySummaries}
             monthlyCommissions={monthlyCommissions}
-            currentAdviser={currentAdviser}
+            currentAdviser={adviser}
             animateValue={animateValue}
           />
         </div>
@@ -202,7 +224,7 @@ export const AdviserDetailPage = () => {
           transition={{ delay: 0.2 }}
           className="mt-8"
         >
-          <WeeklyComparisonChart adviserId={currentAdviser.id} />
+          <WeeklyComparisonChart adviserId={adviser.id} />
         </motion.div>
       </div>
     </main>

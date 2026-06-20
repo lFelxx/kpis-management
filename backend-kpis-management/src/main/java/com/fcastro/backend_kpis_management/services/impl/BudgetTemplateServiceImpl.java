@@ -5,8 +5,12 @@ import com.fcastro.backend_kpis_management.model.dto.budget.BudgetTemplateRespon
 import com.fcastro.backend_kpis_management.model.dto.budget.DailyDistributionResponse;
 import com.fcastro.backend_kpis_management.model.dto.budget.ParsedBudgetTemplate;
 import com.fcastro.backend_kpis_management.model.dto.budget.ParsedDayData;
+import com.fcastro.backend_kpis_management.model.entities.Adviser;
+import com.fcastro.backend_kpis_management.model.entities.AdviserDailyExclusion;
 import com.fcastro.backend_kpis_management.model.entities.BudgetTemplate;
 import com.fcastro.backend_kpis_management.model.entities.DailyBudgetDistribution;
+import com.fcastro.backend_kpis_management.repositories.AdviserDailyExclusionRepository;
+import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.DailyBudgetDistributionRepository;
 import com.fcastro.backend_kpis_management.services.BudgetTemplateService;
@@ -20,7 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -29,43 +38,36 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
 
     private final BudgetTemplateRepository budgetTemplateRepository;
     private final DailyBudgetDistributionRepository dailyDistributionRepository;
+    private final AdviserDailyExclusionRepository exclusionRepository;
+    private final AdviserRepository adviserRepository;
     private final BudgetExcelParser excelParser;
     private final GoalService goalService;
 
     @Override
     @Transactional
     public BudgetTemplateResponse upload(InputStream excelFile, int year, int month) {
-        log.info("Procesando Excel de presupuesto para {}/{}", month, year);
-
         ParsedBudgetTemplate parsed = excelParser.parse(excelFile, year, month);
-
         BudgetTemplate template = findOrCreateTemplate(year, month, parsed.totalBudget());
         replaceDistributions(template, parsed);
-
         BudgetTemplate saved = budgetTemplateRepository.save(template);
-        log.info("Presupuesto {}/{} guardado con {} días", month, year, saved.getDailyDistributions().size());
-
         distributeGoalsToAdvisers(saved, year, month);
         return toResponse(saved);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BudgetTemplateResponse getByYearAndMonth(int year, int month) {
-        BudgetTemplate template = findTemplateOrThrow(year, month);
-        return toResponse(template);
+        return toResponse(findTemplateOrThrow(year, month));
     }
 
     @Override
     @Transactional
     public BudgetTemplateResponse updateAdviserCount(int year, int month, LocalDate date, int adviserCount) {
-        log.info("Actualizando asesores del día {} a {}", date, adviserCount);
-
         BudgetTemplate template = findTemplateOrThrow(year, month);
 
         DailyBudgetDistribution day = dailyDistributionRepository
                 .findByBudgetTemplateIdAndDate(template.getId(), date)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No existe distribución para la fecha: " + date));
+                .orElseThrow(() -> new ResourceNotFoundException("No existe distribución para la fecha: " + date));
 
         day.setAdviserCount(adviserCount);
         day.setGoalPerAdviser(calculateGoalPerAdviser(day.getDailyAmount(), adviserCount));
@@ -79,19 +81,47 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
     @Override
     @Transactional
     public void resetManualOverride(int year, int month, LocalDate date) {
-        log.info("Reseteando override manual del día {} para {}/{}", date, month, year);
-
         BudgetTemplate template = findTemplateOrThrow(year, month);
 
         DailyBudgetDistribution day = dailyDistributionRepository
                 .findByBudgetTemplateIdAndDate(template.getId(), date)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No existe distribución para la fecha: " + date));
+                .orElseThrow(() -> new ResourceNotFoundException("No existe distribución para la fecha: " + date));
 
         day.setManualOverride(false);
         dailyDistributionRepository.save(day);
 
         distributeGoalsToAdvisers(template, year, month);
+    }
+
+    @Override
+    @Transactional
+    public BudgetTemplateResponse toggleAdviserExclusion(int year, int month, LocalDate date, Long adviserId) {
+        BudgetTemplate template = findTemplateOrThrow(year, month);
+
+        Adviser adviser = adviserRepository.findById(adviserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Asesor no encontrado con ID: " + adviserId));
+
+        DailyBudgetDistribution day = dailyDistributionRepository
+                .findByBudgetTemplateIdAndDate(template.getId(), date)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe distribución para la fecha: " + date));
+
+        Optional<AdviserDailyExclusion> existing = exclusionRepository.findByAdviserIdAndDate(adviserId, date);
+        if (existing.isPresent()) {
+            exclusionRepository.delete(existing.get());
+            day.setAdviserCount(day.getAdviserCount() + 1);
+        } else {
+            AdviserDailyExclusion exclusion = new AdviserDailyExclusion();
+            exclusion.setAdviser(adviser);
+            exclusion.setDate(date);
+            exclusionRepository.save(exclusion);
+            day.setAdviserCount(Math.max(0, day.getAdviserCount() - 1));
+        }
+
+        day.setGoalPerAdviser(calculateGoalPerAdviser(day.getDailyAmount(), day.getAdviserCount()));
+        dailyDistributionRepository.save(day);
+
+        distributeGoalsToAdvisers(template, year, month);
+        return toResponse(template);
     }
 
     @Override
@@ -114,12 +144,67 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
                 .sum();
     }
 
+    /**
+     * 3 queries totales sin importar cuántos asesores haya:
+     * 1) template, 2) distribuciones hasta cutoff, 3) exclusiones del mes
+     */
     @Override
-    public double calculateTotalMonthGoalPerAdviser(int year, int month) {
+    public Map<Long, Double> calculateGoalsUpToDatePerAdviser(int year, int month,
+                                                               LocalDate cutoffDate,
+                                                               List<Long> adviserIds) {
         BudgetTemplate template = findTemplateOrThrow(year, month);
-        return template.getDailyDistributions().stream()
-                .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
-                .sum();
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+
+        List<DailyBudgetDistribution> distributions = dailyDistributionRepository
+                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), cutoffDate);
+
+        // adviserId → fechas excluidas (cargado en una sola query)
+        Map<Long, Set<LocalDate>> exclusionsByAdviser = exclusionRepository
+                .findAllByDateBetween(startOfMonth, cutoffDate)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getAdviser().getId(),
+                        Collectors.mapping(AdviserDailyExclusion::getDate, Collectors.toSet())
+                ));
+
+        return adviserIds.stream().collect(Collectors.toMap(
+                id -> id,
+                id -> {
+                    Set<LocalDate> excluded = exclusionsByAdviser.getOrDefault(id, Set.of());
+                    return distributions.stream()
+                            .filter(d -> !excluded.contains(d.getDate()))
+                            .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
+                            .sum();
+                }
+        ));
+    }
+
+    @Override
+    public Map<Long, Double> calculateFullMonthGoalsPerAdviser(int year, int month, List<Long> adviserIds) {
+        BudgetTemplate template = findTemplateOrThrow(year, month);
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+        LocalDate endOfMonth   = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        List<DailyBudgetDistribution> allDays = template.getDailyDistributions();
+
+        Map<Long, Set<LocalDate>> exclusionsByAdviser = exclusionRepository
+                .findAllByDateBetween(startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getAdviser().getId(),
+                        Collectors.mapping(AdviserDailyExclusion::getDate, Collectors.toSet())
+                ));
+
+        return adviserIds.stream().collect(Collectors.toMap(
+                id -> id,
+                id -> {
+                    Set<LocalDate> excluded = exclusionsByAdviser.getOrDefault(id, Set.of());
+                    return allDays.stream()
+                            .filter(d -> !excluded.contains(d.getDate()))
+                            .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
+                            .sum();
+                }
+        ));
     }
 
     // --- Lógica interna ---
@@ -128,7 +213,6 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
         BudgetTemplate template = budgetTemplateRepository
                 .findByYearAndMonth(year, month)
                 .orElseGet(BudgetTemplate::new);
-
         template.setYear(year);
         template.setMonth(month);
         template.setTotalBudget(totalBudget);
@@ -138,65 +222,70 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
 
     private void replaceDistributions(BudgetTemplate template, ParsedBudgetTemplate parsed) {
         List<DailyBudgetDistribution> existing = template.getDailyDistributions();
-
         for (ParsedDayData dayData : parsed.days()) {
             existing.stream()
                     .filter(d -> d.getDate().equals(dayData.date()))
                     .findFirst()
                     .ifPresentOrElse(
-                            existing_ -> updateDistributionFromExcel(existing_, dayData, parsed.totalBudget()),
+                            d -> updateDistributionFromExcel(d, dayData, parsed.totalBudget()),
                             () -> existing.add(buildDistribution(template, dayData, parsed.totalBudget()))
                     );
         }
     }
 
-    private void updateDistributionFromExcel(DailyBudgetDistribution distribution,
-                                              ParsedDayData dayData,
-                                              double totalBudget) {
+    private void updateDistributionFromExcel(DailyBudgetDistribution d, ParsedDayData dayData, double totalBudget) {
         double dailyAmount = totalBudget * dayData.weightPercentage();
-        distribution.setWeightPercentage(dayData.weightPercentage());
-        distribution.setDailyAmount(dailyAmount);
-
-        if (!distribution.isManualOverride()) {
-            distribution.setAdviserCount(dayData.adviserCount());
-        }
-        // goalPerAdviser siempre se recalcula: el presupuesto puede cambiar aunque los asesores estén fijos
-        distribution.setGoalPerAdviser(calculateGoalPerAdviser(dailyAmount, distribution.getAdviserCount()));
+        d.setWeightPercentage(dayData.weightPercentage());
+        d.setDailyAmount(dailyAmount);
+        if (!d.isManualOverride()) d.setAdviserCount(dayData.adviserCount());
+        d.setGoalPerAdviser(calculateGoalPerAdviser(dailyAmount, d.getAdviserCount()));
     }
 
-    private DailyBudgetDistribution buildDistribution(BudgetTemplate template,
-                                                       ParsedDayData dayData,
-                                                       double totalBudget) {
+    private DailyBudgetDistribution buildDistribution(BudgetTemplate template, ParsedDayData dayData, double totalBudget) {
         double dailyAmount = totalBudget * dayData.weightPercentage();
-
-        DailyBudgetDistribution distribution = new DailyBudgetDistribution();
-        distribution.setBudgetTemplate(template);
-        distribution.setDate(dayData.date());
-        distribution.setWeightPercentage(dayData.weightPercentage());
-        distribution.setDailyAmount(dailyAmount);
-        distribution.setAdviserCount(dayData.adviserCount());
-        distribution.setGoalPerAdviser(calculateGoalPerAdviser(dailyAmount, dayData.adviserCount()));
-        distribution.setManualOverride(false);
-        return distribution;
+        DailyBudgetDistribution d = new DailyBudgetDistribution();
+        d.setBudgetTemplate(template);
+        d.setDate(dayData.date());
+        d.setWeightPercentage(dayData.weightPercentage());
+        d.setDailyAmount(dailyAmount);
+        d.setAdviserCount(dayData.adviserCount());
+        d.setGoalPerAdviser(calculateGoalPerAdviser(dailyAmount, dayData.adviserCount()));
+        d.setManualOverride(false);
+        return d;
     }
 
     private double calculateGoalPerAdviser(double dailyAmount, int adviserCount) {
-        if (adviserCount <= 0) return 0;
-        return dailyAmount / adviserCount;
+        return adviserCount <= 0 ? 0 : dailyAmount / adviserCount;
     }
 
-    /**
-     * Suma todos los goalPerAdviser del mes y asigna esa meta mensual
-     * a cada asesor activo via GoalService.
-     */
     private void distributeGoalsToAdvisers(BudgetTemplate template, int year, int month) {
-        double goalUpToYesterday = template.getDailyDistributions().stream()
-                .filter(d -> !d.getDate().isAfter(LocalDate.now().minusDays(1)))
-                .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
-                .sum();
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate firstDay  = LocalDate.of(year, month, 1);
 
-        log.info("Distribuyendo meta acumulada hasta ayer ${} a asesores activos para {}/{}", goalUpToYesterday, month, year);
-        goalService.updateGoalsForAllActiveAdvisers(goalUpToYesterday, year, month);
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
+        List<Long> adviserIds = activeAdvisers.stream().map(Adviser::getId).toList();
+
+        // Una sola query para todas las exclusiones del mes
+        Map<Long, Set<LocalDate>> exclusionsByAdviser = exclusionRepository
+                .findAllByDateBetween(firstDay, yesterday)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getAdviser().getId(),
+                        Collectors.mapping(AdviserDailyExclusion::getDate, Collectors.toSet())
+                ));
+
+        List<DailyBudgetDistribution> daysUpToYesterday = template.getDailyDistributions().stream()
+                .filter(d -> !d.getDate().isAfter(yesterday))
+                .toList();
+
+        for (Long adviserId : adviserIds) {
+            Set<LocalDate> excluded = exclusionsByAdviser.getOrDefault(adviserId, Set.of());
+            double goal = daysUpToYesterday.stream()
+                    .filter(d -> !excluded.contains(d.getDate()))
+                    .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
+                    .sum();
+            goalService.updateGoal(adviserId, goal, year, month);
+        }
     }
 
     private BudgetTemplate findTemplateOrThrow(int year, int month) {
@@ -208,35 +297,33 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
     // --- Mapeo a respuesta ---
 
     private BudgetTemplateResponse toResponse(BudgetTemplate template) {
+        LocalDate startOfMonth = LocalDate.of(template.getYear(), template.getMonth(), 1);
+        LocalDate endOfMonth   = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        // Una query para todas las exclusiones del mes
+        Map<LocalDate, List<Long>> exclusionIdsByDate = exclusionRepository
+                .findAllByDateBetween(startOfMonth, endOfMonth)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        AdviserDailyExclusion::getDate,
+                        Collectors.mapping(e -> e.getAdviser().getId(), Collectors.toList())
+                ));
+
         List<DailyDistributionResponse> days = template.getDailyDistributions().stream()
-                .sorted((a, b) -> a.getDate().compareTo(b.getDate()))
-                .map(this::toDailyResponse)
+                .sorted(Comparator.comparing(DailyBudgetDistribution::getDate))
+                .map(d -> toDailyResponse(d, exclusionIdsByDate.getOrDefault(d.getDate(), List.of())))
                 .toList();
 
-        double distributedBudget = days.stream()
-                .mapToDouble(DailyDistributionResponse::dailyAmount)
-                .sum();
+        double distributedBudget = days.stream().mapToDouble(DailyDistributionResponse::dailyAmount).sum();
 
         return new BudgetTemplateResponse(
-                template.getId(),
-                template.getYear(),
-                template.getMonth(),
-                template.getTotalBudget(),
-                distributedBudget,
-                template.getUploadedAt(),
-                days
-        );
+                template.getId(), template.getYear(), template.getMonth(),
+                template.getTotalBudget(), distributedBudget, template.getUploadedAt(), days);
     }
 
-    private DailyDistributionResponse toDailyResponse(DailyBudgetDistribution d) {
+    private DailyDistributionResponse toDailyResponse(DailyBudgetDistribution d, List<Long> excludedIds) {
         return new DailyDistributionResponse(
-                d.getId(),
-                d.getDate(),
-                d.getWeightPercentage(),
-                d.getDailyAmount(),
-                d.getAdviserCount(),
-                d.getGoalPerAdviser(),
-                d.isManualOverride()
-        );
+                d.getId(), d.getDate(), d.getWeightPercentage(), d.getDailyAmount(),
+                d.getAdviserCount(), d.getGoalPerAdviser(), d.isManualOverride(), excludedIds);
     }
 }

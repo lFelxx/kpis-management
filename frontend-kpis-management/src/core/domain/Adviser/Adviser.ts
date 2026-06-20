@@ -13,6 +13,7 @@ export interface Adviser {
   lastName: string;
   sales: number;
   goalValue: number;
+  fullMonthGoal?: number;
   currentMonthSales?: number;
   /** Comisión del mes en curso (calculada en backend según cumplimiento de la tienda). */
   commission?: number;

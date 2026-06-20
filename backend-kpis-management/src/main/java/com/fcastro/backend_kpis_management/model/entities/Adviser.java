@@ -38,4 +38,7 @@ public class Adviser {
 
     @OneToMany(mappedBy = "adviser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklySalesComparison> weeklySalesComparisons = new ArrayList<>();
+
+    @OneToMany(mappedBy = "adviser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AdviserSalesReport> salesReports = new ArrayList<>();
 }

@@ -108,22 +108,31 @@ public class MetricsServiceImpl implements MetricsService {
         int month       = cutoffDate.getMonthValue();
         int daysElapsed = cutoffDate.getDayOfMonth();
         int daysInMonth = cutoffDate.lengthOfMonth();
-        double monthGoal = resolveFullMonthGoalPerAdviser(year, month);
 
-        if (daysElapsed == 0 || monthGoal <= 0) return List.of();
+        if (daysElapsed == 0) return List.of();
 
-        return monthlySummaryRepository.findByYearAndMonth(year, month).stream()
+        List<MonthlySummary> summaries = monthlySummaryRepository.findByYearAndMonth(year, month).stream()
                 .filter(s -> s.getAdviser() != null && Boolean.TRUE.equals(s.getAdviser().getActive()))
-                .map(s -> toAtRiskInfo(s, daysElapsed, daysInMonth, monthGoal))
+                .toList();
+
+        if (summaries.isEmpty()) return List.of();
+
+        List<Long> adviserIds = summaries.stream().map(s -> s.getAdviser().getId()).toList();
+        Map<Long, Double> goalByAdviser = resolveFullMonthGoalsPerAdviser(year, month, adviserIds);
+
+        return summaries.stream()
+                .map(s -> toAtRiskInfo(s, daysElapsed, daysInMonth, goalByAdviser))
                 .filter(a -> a.projectedAchievement() < 80.0)
                 .sorted((a, b) -> Double.compare(a.projectedAchievement(), b.projectedAchievement()))
                 .toList();
     }
 
-    private AtRiskAdviserInfo toAtRiskInfo(MonthlySummary s, int daysElapsed, int daysInMonth, double monthGoal) {
+    private AtRiskAdviserInfo toAtRiskInfo(MonthlySummary s, int daysElapsed, int daysInMonth,
+                                           Map<Long, Double> goalByAdviser) {
         double currentSales   = s.getTotalSales() != null ? s.getTotalSales() : 0.0;
+        double monthGoal      = goalByAdviser.getOrDefault(s.getAdviser().getId(), 0.0);
         double projectedSales = (currentSales / daysElapsed) * daysInMonth;
-        double projectedPct   = (projectedSales / monthGoal) * 100.0;
+        double projectedPct   = monthGoal > 0 ? (projectedSales / monthGoal) * 100.0 : 0.0;
         return new AtRiskAdviserInfo(
                 s.getAdviser().getId(),
                 s.getAdviser().getName() + " " + s.getAdviser().getLastname(),
@@ -134,17 +143,16 @@ public class MetricsServiceImpl implements MetricsService {
         );
     }
 
-    private double resolveFullMonthGoalPerAdviser(int year, int month) {
+    private Map<Long, Double> resolveFullMonthGoalsPerAdviser(int year, int month, List<Long> adviserIds) {
         if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
-            return budgetTemplateService.calculateTotalMonthGoalPerAdviser(year, month);
+            return budgetTemplateService.calculateFullMonthGoalsPerAdviser(year, month, adviserIds);
         }
-        return adviserRepository.findAllActiveAdvisers().stream()
-                .mapToDouble(adviser -> goalRepository
-                        .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
+        return adviserIds.stream().collect(Collectors.toMap(
+                id -> id,
+                id -> goalRepository.findByAdviserIdAndYearAndMonth(id, year, month)
                         .map(g -> g.getGoalValue())
-                        .orElse(0.0))
-                .average()
-                .orElse(0.0);
+                        .orElse(0.0)
+        ));
     }
 
     // ─── Ranking de asesores ─────────────────────────────────────────────────

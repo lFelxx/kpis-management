@@ -4,6 +4,8 @@ import com.fcastro.backend_kpis_management.model.dto.budget.BudgetTemplateRespon
 
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 public interface BudgetTemplateService {
 
@@ -19,5 +21,9 @@ public interface BudgetTemplateService {
 
     double calculateGoalUpToDate(int year, int month, LocalDate cutoffDate);
 
-    double calculateTotalMonthGoalPerAdviser(int year, int month);
+    Map<Long, Double> calculateGoalsUpToDatePerAdviser(int year, int month, LocalDate cutoffDate, List<Long> adviserIds);
+
+    Map<Long, Double> calculateFullMonthGoalsPerAdviser(int year, int month, List<Long> adviserIds);
+
+    BudgetTemplateResponse toggleAdviserExclusion(int year, int month, LocalDate date, Long adviserId);
 }

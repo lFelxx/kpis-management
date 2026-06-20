@@ -3,6 +3,7 @@ package com.fcastro.backend_kpis_management.services.impl;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityManager;
@@ -159,8 +160,15 @@ public class AdviserServiceImpl implements AdviserService {
         int year  = cutoffDate.getYear();
         int month = cutoffDate.getMonthValue();
         if (!budgetTemplateRepository.existsByYearAndMonth(year, month)) return;
-        double dynamicGoal = budgetTemplateService.calculateGoalUpToDate(year, month, cutoffDate);
-        responses.forEach(r -> r.setGoalValue(dynamicGoal));
+        List<Long> ids = responses.stream().map(AdviserResponse::getId).toList();
+        Map<Long, Double> goalsUpToDate = budgetTemplateService
+                .calculateGoalsUpToDatePerAdviser(year, month, cutoffDate, ids);
+        Map<Long, Double> fullMonthGoals = budgetTemplateService
+                .calculateFullMonthGoalsPerAdviser(year, month, ids);
+        responses.forEach(r -> {
+            r.setGoalValue(goalsUpToDate.getOrDefault(r.getId(), 0.0));
+            r.setFullMonthGoal(fullMonthGoals.getOrDefault(r.getId(), 0.0));
+        });
     }
 
     private void enrichCommission(AdviserResponse response, LocalDate cutoffDate) {

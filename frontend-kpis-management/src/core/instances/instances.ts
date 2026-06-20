@@ -37,6 +37,7 @@ import { UploadBudgetTemplateUseCase } from "../usecases/budget/UploadBudgetTemp
 import { GetBudgetTemplateUseCase } from "../usecases/budget/GetBudgetTemplateUseCase";
 import { UpdateAdviserCountUseCase } from "../usecases/budget/UpdateAdviserCountUseCase";
 import { ResetManualOverrideUseCase } from "../usecases/budget/ResetManualOverrideUseCase";
+import { ToggleAdviserExclusionUseCase } from "../usecases/budget/ToggleAdviserExclusionUseCase";
 
 // ─── Repositories ────────────────────────────────────────────────────────────
 const adviserRepository = new AdviserApiRepository(config.apiUrl);
@@ -75,6 +76,7 @@ export const uploadBudgetTemplateUseCase = new UploadBudgetTemplateUseCase(budge
 export const getBudgetTemplateUseCase = new GetBudgetTemplateUseCase(budgetTemplateRepository);
 export const updateAdviserCountUseCase = new UpdateAdviserCountUseCase(budgetTemplateRepository);
 export const resetManualOverrideUseCase = new ResetManualOverrideUseCase(budgetTemplateRepository);
+export const toggleAdviserExclusionUseCase = new ToggleAdviserExclusionUseCase(budgetTemplateRepository);
 
 // ─── Adviser sales report use cases ──────────────────────────────────────────
 export const uploadSalesReportUseCase = new UploadSalesReportUseCase(adviserSalesReportRepository);

@@ -133,6 +133,19 @@ export const AdviserCard: React.FC<AdviserCardProps> = ({ adviser, index = 0 }) 
           </div>
         </div>
 
+        {/* Meta del mes completo */}
+        {adviser.fullMonthGoal !== undefined && adviser.fullMonthGoal > 0 && (
+          <div className="mb-3 px-3 py-2 rounded-xl flex items-center justify-between"
+            style={{ background: 'var(--s-subtle)', border: '1px solid var(--b-subtle)' }}>
+            <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--t-micro)' }}>
+              Meta del mes
+            </span>
+            <span className="text-xs font-black" style={{ color: 'var(--t-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+              ${adviser.fullMonthGoal.toLocaleString()}
+            </span>
+          </div>
+        )}
+
         {/* UPT */}
         <div className="mb-5">
           <span

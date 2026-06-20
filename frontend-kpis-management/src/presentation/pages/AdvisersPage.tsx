@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
+import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 import FeaturedAdvisersSection from '../components/adviser/sections/FeaturedAdvisersSection';
 import AdvisersPerformanceChart from '../components/adviser/sections/AdvisersPerformanceChart';
 import AdvisersListSection from '../components/adviser/sections/AdvisersListSection';
@@ -16,10 +17,12 @@ export const AdvisersPage: React.FC = () => {
     fetchMetrics
   } = useDashboardMetrics();
 
+  const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+
   useEffect(() => {
-    fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
+    fetchAdvisers(cutoffDate);
     fetchMetrics();
-  }, [fetchAdvisers]);
+  }, [fetchAdvisers, fetchMetrics, cutoffDate]);
 
   const sortedAdvisers = useMemo(() => {
     return [...advisers].sort((a, b) => b.sales - a.sales);
@@ -59,7 +62,7 @@ export const AdvisersPage: React.FC = () => {
         <p className="text-destructive/80">{error}</p>
         <button
           onClick={() => {
-            fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
+            fetchAdvisers(cutoffDate);
             fetchMetrics();
           }}
           className="mt-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"

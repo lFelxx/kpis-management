@@ -45,4 +45,14 @@ export class BudgetTemplateApiRepository implements BudgetTemplateRepository {
     );
     if (!response.ok) throw new Error('Error al resetear el override manual');
   }
+
+  async toggleAdviserExclusion(year: number, month: number, date: string, adviserId: number): Promise<BudgetTemplate> {
+    const response = await request(
+      `${this.baseUrl}/v1/budget-template/${year}/${month}/day/${date}/exclusions/${adviserId}`,
+      { method: 'POST' },
+      { requireAuth: true }
+    );
+    if (!response.ok) throw new Error('Error al actualizar la incapacidad del asesor');
+    return response.json();
+  }
 }

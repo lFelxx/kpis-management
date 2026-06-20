@@ -6,6 +6,7 @@ export interface DailyDistribution {
   adviserCount: number;
   goalPerAdviser: number;
   manualOverride: boolean;
+  excludedAdviserIds: number[];
 }
 
 export interface BudgetTemplate {

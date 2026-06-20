@@ -33,4 +33,7 @@ public class MonthlySummary {
     @Column(nullable = false)
     private Double totalSales = 0.0;
 
+    @Column(nullable = false)
+    private Double goal = 0.0;
+
 }

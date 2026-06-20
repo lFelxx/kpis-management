@@ -51,6 +51,7 @@ public class MonthlySummaryServiceImpl implements MonthlySummaryService {
         summary.setYear(year);
         summary.setMonth(month);
         summary.setTotalSales(0.0);
+        summary.setGoal(0.0);
         return summary;
     }
 }

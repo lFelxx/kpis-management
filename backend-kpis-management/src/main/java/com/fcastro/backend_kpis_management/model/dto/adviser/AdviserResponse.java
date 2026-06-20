@@ -17,6 +17,8 @@ public class AdviserResponse {
     private Double sales;
     private Double goalValue;
     private Double currentMonthSales;
+    /** Meta acumulada hasta la fecha de corte (puede ser menor si tuvo ausencias). */
+    private Double fullMonthGoal;
     /** Comisión del mes actual según ventas del asesor y cumplimiento global de la tienda. */
     private Double commission;
     /** Tasa efectiva sobre ventas del asesor en % (ej. 1,2). Igual para todos los asesores del mismo mes (regla de tienda). */

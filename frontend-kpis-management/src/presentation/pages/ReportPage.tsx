@@ -62,11 +62,27 @@ export const ReportPage = () => {
       viewportMeta?.setAttribute('content', 'width=1280');
       await new Promise((r) => setTimeout(r, 280));
 
+      // Eliminar overflow-hidden/auto para que html-to-image capture la tabla completa
+      const overflowEls = node.querySelectorAll<HTMLElement>('*');
+      const overflowBackup: { el: HTMLElement; value: string }[] = [];
+      overflowEls.forEach((el) => {
+        const ov = getComputedStyle(el).overflow;
+        const ovx = getComputedStyle(el).overflowX;
+        if (ov === 'hidden' || ov === 'auto' || ov === 'scroll' || ovx === 'auto' || ovx === 'scroll') {
+          overflowBackup.push({ el, value: el.style.overflow });
+          el.style.overflow = 'visible';
+        }
+      });
+
       const dataUrl = await toPng(node, {
         backgroundColor,
         pixelRatio: 2,
         cacheBust: true,
+        width: node.scrollWidth,
+        height: node.scrollHeight,
       });
+
+      overflowBackup.forEach(({ el, value }) => { el.style.overflow = value; });
 
       const link = document.createElement('a');
       link.download = `reporte-${monthLabel.replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -78,6 +94,7 @@ export const ReportPage = () => {
       viewportMeta?.setAttribute('content', originalViewport);
       setDownloading(false);
     }
+
   };
 
   const sortedAdvisers = useMemo(
@@ -457,7 +474,7 @@ export const ReportPage = () => {
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left" style={{ minWidth: '700px' }}>
             <thead>
               <tr className="bg-muted/50 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
                 <th className="px-6 py-4">Asesor</th>
