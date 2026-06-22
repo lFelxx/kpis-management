@@ -54,16 +54,36 @@ export const ReportPage = () => {
     const CAPTURE_WIDTH = 1200;
     const originalMinWidth = node.style.minWidth;
     const originalWidth    = node.style.width;
+    const viewportMeta     = document.querySelector('meta[name="viewport"]');
+    const originalViewport = viewportMeta?.getAttribute('content') ?? '';
 
     try {
       const isDark = document.documentElement.classList.contains('dark');
       const backgroundColor = isDark ? '#0a0a0a' : '#fafafa';
 
-      // Forzar ancho desktop directamente en el nodo para que el browser
-      // reflow renderice la tabla completa independientemente del viewport móvil
+      // 1) Viewport meta → hint al browser del nuevo ancho
+      viewportMeta?.setAttribute('content', `width=${CAPTURE_WIDTH}`);
+      // 2) Ancho directo en el nodo → garantiza dimensiones en html-to-image
       node.style.minWidth = `${CAPTURE_WIDTH}px`;
       node.style.width    = `${CAPTURE_WIDTH}px`;
-      await new Promise((r) => setTimeout(r, 120));
+      // 3) Forzar clases responsive de Tailwind sin depender del viewport real
+      //    Cada selector replica exactamente lo que haría el breakpoint md:/sm:/lg:
+      const captureStyle = document.createElement('style');
+      captureStyle.id = '__report-capture-overrides';
+      captureStyle.textContent = `
+        .sm\\:grid-cols-2  { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+        .lg\\:grid-cols-3  { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+        .lg\\:grid-cols-4  { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+        .md\\:grid-cols-2  { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+        .md\\:grid-cols-\\[2fr_3fr\\] { grid-template-columns: 2fr 3fr !important; }
+        .md\\:border-t-0   { border-top-width: 0 !important; }
+        .md\\:pt-0         { padding-top: 0 !important; }
+        .md\\:border-l     { border-left-width: 1px !important; }
+        .md\\:pl-6         { padding-left: 1.5rem !important; }
+        .sm\\:flex-row     { flex-direction: row !important; }
+      `;
+      document.head.appendChild(captureStyle);
+      await new Promise((r) => setTimeout(r, 150));
 
       // Eliminar overflow-hidden/auto para capturar la tabla completa
       const overflowEls = node.querySelectorAll<HTMLElement>('*');
@@ -97,6 +117,8 @@ export const ReportPage = () => {
     } catch {
       notificationService.showError('Error al generar la imagen');
     } finally {
+      document.getElementById('__report-capture-overrides')?.remove();
+      viewportMeta?.setAttribute('content', originalViewport);
       node.style.minWidth = originalMinWidth;
       node.style.width    = originalWidth;
       setDownloading(false);
