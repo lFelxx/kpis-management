@@ -58,8 +58,7 @@ public class MetricsServiceImpl implements MetricsService {
         Map<Long, Double> uptByAdviserId = buildUptMap(year, month);
 
         Double totalSales = monthlySummaries.stream().mapToDouble(MonthlySummary::getTotalSales).sum();
-        double goalPerAdviser = resolveGoalPerAdviser(year, month, cutoffDate);
-        Double totalGoal = goalPerAdviser * activeAdvisers.size();
+        Double totalGoal = resolveStoreTotalGoal(year, month, activeAdvisers, cutoffDate);
         Double goalAchievement = totalGoal > 0
                 ? commissionService.computeStoreGoalAchievementPercent(year, month, cutoffDate)
                 : 0.0;
@@ -69,9 +68,12 @@ public class MetricsServiceImpl implements MetricsService {
                 .filter(s -> s.getAdviser() != null && Boolean.TRUE.equals(s.getAdviser().getActive()))
                 .toList();
 
-        BestAdviserInfo bestAdviser = findBestByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
-        BestAdviserInfo bestUptAdviser = findBestByUpt(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
-        BestAdviserInfo worstAdviser = findWorstByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalPerAdviser);
+        List<Long> adviserIds = activeAdvisers.stream().map(Adviser::getId).toList();
+        Map<Long, Double> goalsByAdviser = resolveGoalsPerAdviser(year, month, cutoffDate, adviserIds);
+
+        BestAdviserInfo bestAdviser = findBestByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalsByAdviser);
+        BestAdviserInfo bestUptAdviser = findBestByUpt(activeAdviserSummaries, uptByAdviserId, goalsByAdviser);
+        BestAdviserInfo worstAdviser = findWorstByGoalAchievement(activeAdviserSummaries, uptByAdviserId, goalsByAdviser);
 
         PartialWeekTotals partialWeek = computePartialWeekComparisons(activeAdvisers);
 
@@ -92,7 +94,9 @@ public class MetricsServiceImpl implements MetricsService {
         Adviser adviser = adviserRepository.findById(adviserId)
                 .orElseThrow(() -> new RuntimeException("Asesor no encontrado"));
 
-        double resolvedGoal = resolveGoalPerAdviser(year, month, LocalDate.now().minusDays(1));
+        LocalDate cutoffDate = LocalDate.now().minusDays(1);
+        Map<Long, Double> goalsMap = resolveGoalsPerAdviser(year, month, cutoffDate, List.of(adviserId));
+        double resolvedGoal = goalsMap.getOrDefault(adviserId, 0.0);
 
         Double goalAchievement = calculateGoalAchievement(monthlySummary.getTotalSales(), resolvedGoal);
 
@@ -157,9 +161,9 @@ public class MetricsServiceImpl implements MetricsService {
 
     // ─── Ranking de asesores ─────────────────────────────────────────────────
 
-    private BestAdviserInfo findBestByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+    private BestAdviserInfo findBestByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, Map<Long, Double> goalsByAdviser) {
         return summaries.stream()
-                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalsByAdviser))
                 .max((a, b) -> {
                     int cmp = Double.compare(a.goalAchievement(), b.goalAchievement());
                     if (Math.abs(a.goalAchievement() - b.goalAchievement()) < 0.01) {
@@ -170,9 +174,9 @@ public class MetricsServiceImpl implements MetricsService {
                 .orElse(null);
     }
 
-    private BestAdviserInfo findBestByUpt(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+    private BestAdviserInfo findBestByUpt(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, Map<Long, Double> goalsByAdviser) {
         return summaries.stream()
-                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalsByAdviser))
                 .filter(info -> info.upt() > 0.0)
                 .max((a, b) -> {
                     int cmp = Double.compare(a.upt(), b.upt());
@@ -181,9 +185,9 @@ public class MetricsServiceImpl implements MetricsService {
                 .orElse(null);
     }
 
-    private BestAdviserInfo findWorstByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+    private BestAdviserInfo findWorstByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, Map<Long, Double> goalsByAdviser) {
         return summaries.stream()
-                .map(s -> toAdviserInfo(s, uptByAdviserId, goalPerAdviser))
+                .map(s -> toAdviserInfo(s, uptByAdviserId, goalsByAdviser))
                 .min((a, b) -> {
                     int cmp = Double.compare(a.goalAchievement(), b.goalAchievement());
                     if (cmp != 0) return cmp;
@@ -193,11 +197,11 @@ public class MetricsServiceImpl implements MetricsService {
                 .orElse(null);
     }
 
-    private BestAdviserInfo toAdviserInfo(MonthlySummary summary, Map<Long, Double> uptByAdviserId, double goalPerAdviser) {
+    private BestAdviserInfo toAdviserInfo(MonthlySummary summary, Map<Long, Double> uptByAdviserId, Map<Long, Double> goalsByAdviser) {
         Long adviserId = summary.getAdviser().getId();
         Double manualUpt = summary.getAdviser().getUpt();
         Double upt = uptByAdviserId.getOrDefault(adviserId, manualUpt != null ? manualUpt : 0.0);
-        double goal = goalPerAdviser;
+        double goal = goalsByAdviser.getOrDefault(adviserId, 0.0);
         Double achievement = calculateGoalAchievement(summary.getTotalSales(), goal);
         return new BestAdviserInfo(
                 adviserId,
@@ -248,17 +252,28 @@ public class MetricsServiceImpl implements MetricsService {
 
     // ─── Utilidades ──────────────────────────────────────────────────────────
 
-    private double resolveGoalPerAdviser(int year, int month, LocalDate cutoffDate) {
+    private Double resolveStoreTotalGoal(int year, int month, List<Adviser> active, LocalDate cutoffDate) {
         if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
-            return budgetTemplateService.calculateGoalUpToDate(year, month, cutoffDate);
+            return budgetTemplateService.calculatePafUpToDate(year, month, cutoffDate);
         }
-        return adviserRepository.findAllActiveAdvisers().stream()
-                .mapToDouble(adviser -> goalRepository
-                        .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
+        return active.stream()
+                .mapToDouble(a -> goalRepository
+                        .findByAdviserIdAndYearAndMonth(a.getId(), year, month)
                         .map(g -> g.getGoalValue())
                         .orElse(0.0))
-                .average()
-                .orElse(0.0);
+                .sum();
+    }
+
+    private Map<Long, Double> resolveGoalsPerAdviser(int year, int month, LocalDate cutoffDate, List<Long> adviserIds) {
+        if (budgetTemplateRepository.existsByYearAndMonth(year, month)) {
+            return budgetTemplateService.calculateGoalsUpToDatePerAdviser(year, month, cutoffDate, adviserIds);
+        }
+        return adviserIds.stream().collect(Collectors.toMap(
+                id -> id,
+                id -> goalRepository.findByAdviserIdAndYearAndMonth(id, year, month)
+                        .map(g -> g.getGoalValue())
+                        .orElse(0.0)
+        ));
     }
 
     private Double calculateGoalAchievement(Double totalSales, Double goal) {

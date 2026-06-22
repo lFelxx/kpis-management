@@ -19,8 +19,6 @@ public interface BudgetTemplateService {
 
     double calculatePafUpToDate(int year, int month, LocalDate cutoffDate);
 
-    double calculateGoalUpToDate(int year, int month, LocalDate cutoffDate);
-
     Map<Long, Double> calculateGoalsUpToDatePerAdviser(int year, int month, LocalDate cutoffDate, List<Long> adviserIds);
 
     Map<Long, Double> calculateFullMonthGoalsPerAdviser(int year, int month, List<Long> adviserIds);

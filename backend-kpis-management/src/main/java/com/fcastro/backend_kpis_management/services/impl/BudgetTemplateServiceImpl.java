@@ -134,16 +134,6 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
                 .sum();
     }
 
-    @Override
-    public double calculateGoalUpToDate(int year, int month, LocalDate cutoffDate) {
-        BudgetTemplate template = findTemplateOrThrow(year, month);
-        return dailyDistributionRepository
-                .findByBudgetTemplateIdAndDateLessThanEqual(template.getId(), cutoffDate)
-                .stream()
-                .mapToDouble(DailyBudgetDistribution::getGoalPerAdviser)
-                .sum();
-    }
-
     /**
      * 3 queries totales sin importar cuántos asesores haya:
      * 1) template, 2) distribuciones hasta cutoff, 3) exclusiones del mes
