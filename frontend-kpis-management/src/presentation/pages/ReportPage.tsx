@@ -51,26 +51,29 @@ export const ReportPage = () => {
     if (!node) return;
     setDownloading(true);
 
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
-    const originalViewport = viewportMeta?.getAttribute('content') ?? '';
+    const CAPTURE_WIDTH = 1200;
+    const originalMinWidth = node.style.minWidth;
+    const originalWidth    = node.style.width;
 
     try {
       const isDark = document.documentElement.classList.contains('dark');
       const backgroundColor = isDark ? '#0a0a0a' : '#fafafa';
 
-      // Forzar viewport desktop para que Tailwind aplique breakpoints de pantalla grande
-      viewportMeta?.setAttribute('content', 'width=1280');
-      await new Promise((r) => setTimeout(r, 280));
+      // Forzar ancho desktop directamente en el nodo para que el browser
+      // reflow renderice la tabla completa independientemente del viewport móvil
+      node.style.minWidth = `${CAPTURE_WIDTH}px`;
+      node.style.width    = `${CAPTURE_WIDTH}px`;
+      await new Promise((r) => setTimeout(r, 120));
 
-      // Eliminar overflow-hidden/auto para que html-to-image capture la tabla completa
+      // Eliminar overflow-hidden/auto para capturar la tabla completa
       const overflowEls = node.querySelectorAll<HTMLElement>('*');
-      const overflowBackup: { el: HTMLElement; value: string }[] = [];
+      const overflowBackup: { el: HTMLElement; overflow: string; overflowX: string }[] = [];
       overflowEls.forEach((el) => {
-        const ov = getComputedStyle(el).overflow;
-        const ovx = getComputedStyle(el).overflowX;
-        if (ov === 'hidden' || ov === 'auto' || ov === 'scroll' || ovx === 'auto' || ovx === 'scroll') {
-          overflowBackup.push({ el, value: el.style.overflow });
-          el.style.overflow = 'visible';
+        const s = getComputedStyle(el);
+        if (['hidden', 'auto', 'scroll'].includes(s.overflow) || ['auto', 'scroll'].includes(s.overflowX)) {
+          overflowBackup.push({ el, overflow: el.style.overflow, overflowX: el.style.overflowX });
+          el.style.overflow  = 'visible';
+          el.style.overflowX = 'visible';
         }
       });
 
@@ -78,11 +81,14 @@ export const ReportPage = () => {
         backgroundColor,
         pixelRatio: 2,
         cacheBust: true,
-        width: node.scrollWidth,
+        width:  node.scrollWidth,
         height: node.scrollHeight,
       });
 
-      overflowBackup.forEach(({ el, value }) => { el.style.overflow = value; });
+      overflowBackup.forEach(({ el, overflow, overflowX }) => {
+        el.style.overflow  = overflow;
+        el.style.overflowX = overflowX;
+      });
 
       const link = document.createElement('a');
       link.download = `reporte-${monthLabel.replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -91,10 +97,10 @@ export const ReportPage = () => {
     } catch {
       notificationService.showError('Error al generar la imagen');
     } finally {
-      viewportMeta?.setAttribute('content', originalViewport);
+      node.style.minWidth = originalMinWidth;
+      node.style.width    = originalWidth;
       setDownloading(false);
     }
-
   };
 
   const sortedAdvisers = useMemo(
