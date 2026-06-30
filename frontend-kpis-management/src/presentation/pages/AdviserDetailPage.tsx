@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useReportingDateStore } from '../stores/ui/reportingDate.store';
+import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
 import { getMonthlyCommissionsUseCase } from '../../core/instances/instances';
 import { WeeklyComparisonChart } from '../components/adviser/sections/WeeklyComparisonChart';
 import { EarningsGrowthChart } from '../components/adviser/sections/EarningsGrowthChart';
@@ -16,10 +17,14 @@ export const AdviserDetailPage = () => {
   const navigate = useNavigate();
   const { fetchAdviserById, fetchAdvisers, clearSelectAdviser, currentAdviser, advisers, error } = useAdvisersStore();
   const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+  const { reports: salesReports, fetchReports } = useSalesReportStore();
   const [detailLoading, setDetailLoading] = useState(true);
   const [animateValue, setAnimateValue] = useState(0);
   const [monthlyCommissions, setMonthlyCommissions] = useState<number[]>(() => Array(12).fill(0));
-  const currentYear = new Date().getFullYear();
+
+  const cutoff       = useMemo(() => new Date(cutoffDate + 'T00:00:00'), [cutoffDate]);
+  const currentYear  = cutoff.getFullYear();
+  const currentMonth = cutoff.getMonth() + 1;
 
   const monthlySummaries: MonthlySummary[] = currentAdviser?.monthlySummaries || [];
 
@@ -31,24 +36,24 @@ export const AdviserDetailPage = () => {
     fetchAdviserById(id).finally(() => setDetailLoading(false));
   }, [id, fetchAdviserById, clearSelectAdviser]);
 
-  // Recarga la lista con la fecha de corte para obtener meta y comisión actualizadas
   useEffect(() => {
     fetchAdvisers(cutoffDate);
-  }, [cutoffDate, fetchAdvisers]);
+    fetchReports(currentYear, currentMonth);
+  }, [cutoffDate, fetchAdvisers, fetchReports, currentYear, currentMonth]);
 
-  // Mezcla los datos temporales (meta/comisión) de la lista con los históricos (monthlySummaries) del detalle
   const adviser = useMemo(() => {
     if (!currentAdviser) return null;
     const enriched = advisers.find((a) => String(a.id) === String(id));
-    if (!enriched) return currentAdviser;
+    const csvReport = salesReports.find((r) => String(r.adviserId) === String(id));
     return {
       ...currentAdviser,
-      goalValue: enriched.goalValue,
-      commission: enriched.commission,
-      commissionRatePercent: enriched.commissionRatePercent,
-      currentMonthSales: enriched.currentMonthSales,
+      goalValue: enriched?.goalValue ?? currentAdviser.goalValue,
+      commission: enriched?.commission ?? currentAdviser.commission,
+      commissionRatePercent: enriched?.commissionRatePercent ?? currentAdviser.commissionRatePercent,
+      currentMonthSales: enriched?.currentMonthSales ?? currentAdviser.currentMonthSales,
+      upt: csvReport?.upt != null ? String(csvReport.upt) : currentAdviser.upt,
     };
-  }, [currentAdviser, advisers, id]);
+  }, [currentAdviser, advisers, salesReports, id]);
 
   useEffect(() => {
     if (!currentAdviser?.id) return;

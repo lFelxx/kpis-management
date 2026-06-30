@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { AdviserSalesReport, CsvUploadResult } from "../../../core/domain/AdviserSalesReport/AdviserSalesReport";
+import { AdviserSalesReport, CsvUploadResult, SalesReportSummary } from "../../../core/domain/AdviserSalesReport/AdviserSalesReport";
 import {
   uploadSalesReportUseCase,
   getSalesReportUseCase,
@@ -8,6 +8,7 @@ import {
 
 interface SalesReportState {
   reports: AdviserSalesReport[];
+  summary: SalesReportSummary | null;
   lastUploadResult: CsvUploadResult | null;
   loading: boolean;
   uploadCsvReport: (file: File) => Promise<void>;
@@ -17,6 +18,7 @@ interface SalesReportState {
 
 export const useSalesReportStore = create<SalesReportState>((set) => ({
   reports: [],
+  summary: null,
   lastUploadResult: null,
   loading: false,
 
@@ -36,11 +38,11 @@ export const useSalesReportStore = create<SalesReportState>((set) => ({
   fetchReports: async (year, month) => {
     set({ loading: true });
     try {
-      const reports = await getSalesReportUseCase.execute(year, month);
-      set({ reports, loading: false });
+      const { advisers, summary } = await getSalesReportUseCase.execute(year, month);
+      set({ reports: advisers, summary, loading: false });
     } catch (error) {
       const msg = (error as Error).message;
-      set({ reports: [], loading: false });
+      set({ reports: [], summary: null, loading: false });
       notificationService.showError(msg);
     }
   },

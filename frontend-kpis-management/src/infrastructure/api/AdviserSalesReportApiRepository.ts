@@ -1,4 +1,4 @@
-import { AdviserSalesReport, CsvUploadResult } from "../../core/domain/AdviserSalesReport/AdviserSalesReport";
+import { CsvUploadResult, SalesReportPageResponse } from "../../core/domain/AdviserSalesReport/AdviserSalesReport";
 import { AdviserSalesReportRepository } from "../../core/interfaces/repositories/AdviserSalesReportRepository";
 import { request } from "./apiClient";
 
@@ -17,14 +17,36 @@ export class AdviserSalesReportApiRepository implements AdviserSalesReportReposi
     return response.json();
   }
 
-  async getByYearAndMonth(year: number, month: number): Promise<AdviserSalesReport[]> {
+  async getByYearAndMonth(year: number, month: number): Promise<SalesReportPageResponse> {
     const response = await request(
       `${this.baseUrl}/v1/adviser-sales-report?year=${year}&month=${month}`,
       {},
       { requireAuth: true }
     );
-    if (response.status === 404) return [];
+    if (response.status === 404) return { advisers: [], summary: emptySummary() };
     if (!response.ok) throw new Error("Error al obtener el reporte");
     return response.json();
   }
+}
+
+function emptySummary() {
+  return {
+    totalInvoices: 0,
+    totalUnits: 0,
+    totalGrossSales: 0,
+    generalUpt: 0,
+    storeAtv: 0,
+    storeWowCurrentWeekSales: null,
+    storeWowPreviousWeekSales: null,
+    storeWowGrowthPercentage: null,
+    bestUptAdviserId: null,
+    bestUptAdviserName: null,
+    bestUptValue: null,
+    bestAvgPriceAdviserId: null,
+    bestAvgPriceAdviserName: null,
+    bestAvgPriceValue: null,
+    bestAtvAdviserId: null,
+    bestAtvAdviserName: null,
+    bestAtvValue: null,
+  };
 }

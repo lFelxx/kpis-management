@@ -2,6 +2,8 @@ package com.fcastro.backend_kpis_management.services.impl;
 
 import com.fcastro.backend_kpis_management.model.dto.salesReport.AdviserSalesReportResponse;
 import com.fcastro.backend_kpis_management.model.dto.salesReport.CsvUploadResponse;
+import com.fcastro.backend_kpis_management.model.dto.salesReport.SalesReportPageResponse;
+import com.fcastro.backend_kpis_management.model.dto.salesReport.SalesReportSummaryResponse;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
 import com.fcastro.backend_kpis_management.model.entities.WeeklySalesComparison;
@@ -48,10 +50,11 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
     }
 
     @Override
-    public List<AdviserSalesReportResponse> getByYearAndMonth(int year, int month) {
-        return salesReportRepository.findByYearAndMonth(year, month).stream()
+    public SalesReportPageResponse getByYearAndMonth(int year, int month) {
+        List<AdviserSalesReportResponse> advisers = salesReportRepository.findByYearAndMonth(year, month).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+        return new SalesReportPageResponse(advisers, computeSummary(advisers));
     }
 
     // ─── Procesamiento mensual ────────────────────────────────────────────────
@@ -197,20 +200,72 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 .findTopByAdviserIdAndYearAndMonthOrderByWeekNumberDesc(
                         report.getAdviser().getId(), report.getYear(), report.getMonth());
 
+        int invoiceCount  = report.getInvoiceCount();
+        int unitsSold     = report.getUnitsSold();
+        double grossSales = report.getGrossSales() != null ? report.getGrossSales() : 0.0;
+
         return AdviserSalesReportResponse.builder()
                 .adviserId(report.getAdviser().getId())
                 .adviserName(report.getAdviser().getName() + " " + report.getAdviser().getLastname())
                 .year(report.getYear())
                 .month(report.getMonth())
-                .invoiceCount(report.getInvoiceCount())
-                .unitsSold(report.getUnitsSold())
+                .invoiceCount(invoiceCount)
+                .unitsSold(unitsSold)
                 .upt(report.getUpt())
-                .grossSales(report.getGrossSales())
+                .grossSales(grossSales)
                 .netSales(report.getNetSales())
+                .atv(invoiceCount > 0 ? grossSales / invoiceCount : null)
+                .avgUnitPrice(unitsSold > 0 ? grossSales / unitsSold : null)
                 .wowCurrentWeekSales(latestWow.map(WeeklySalesComparison::getCurrentWeekSales).orElse(null))
                 .wowPreviousWeekSales(latestWow.map(WeeklySalesComparison::getPreviousWeekSales).orElse(null))
                 .wowGrowthPercentage(latestWow.map(WeeklySalesComparison::getGrowthPercentage).orElse(null))
                 .build();
+    }
+
+    private SalesReportSummaryResponse computeSummary(List<AdviserSalesReportResponse> advisers) {
+        if (advisers.isEmpty()) {
+            return new SalesReportSummaryResponse(0, 0, 0.0, 0.0, 0.0, null, null, null, null, null, null, null, null, null, null, null, null);
+        }
+
+        int totalInvoices  = advisers.stream().mapToInt(AdviserSalesReportResponse::getInvoiceCount).sum();
+        int totalUnits     = advisers.stream().mapToInt(AdviserSalesReportResponse::getUnitsSold).sum();
+        double totalGross  = advisers.stream().mapToDouble(a -> a.getGrossSales() != null ? a.getGrossSales() : 0.0).sum();
+        double generalUpt  = totalInvoices > 0 ? (double) totalUnits / totalInvoices : 0.0;
+        double storeAtv    = totalInvoices > 0 ? totalGross / totalInvoices : 0.0;
+
+        double storeWowCurrent  = advisers.stream().mapToDouble(a -> a.getWowCurrentWeekSales()  != null ? a.getWowCurrentWeekSales()  : 0.0).sum();
+        double storeWowPrevious = advisers.stream().mapToDouble(a -> a.getWowPreviousWeekSales() != null ? a.getWowPreviousWeekSales() : 0.0).sum();
+        Double storeWowGrowth   = storeWowPrevious == 0.0
+                ? (storeWowCurrent > 0.0 ? 100.0 : null)
+                : ((storeWowCurrent - storeWowPrevious) / storeWowPrevious) * 100.0;
+
+        AdviserSalesReportResponse bestUpt = advisers.stream()
+                .max(Comparator.comparingDouble(a -> a.getUpt() != null ? a.getUpt() : 0.0))
+                .orElse(null);
+
+        AdviserSalesReportResponse bestAvgPrice = advisers.stream()
+                .filter(a -> a.getAvgUnitPrice() != null)
+                .max(Comparator.comparingDouble(AdviserSalesReportResponse::getAvgUnitPrice))
+                .orElse(null);
+
+        AdviserSalesReportResponse bestAtv = advisers.stream()
+                .filter(a -> a.getAtv() != null)
+                .max(Comparator.comparingDouble(AdviserSalesReportResponse::getAtv))
+                .orElse(null);
+
+        return new SalesReportSummaryResponse(
+                totalInvoices, totalUnits, totalGross, generalUpt, storeAtv,
+                storeWowCurrent, storeWowPrevious, storeWowGrowth,
+                bestUpt != null ? bestUpt.getAdviserId() : null,
+                bestUpt != null ? bestUpt.getAdviserName() : null,
+                bestUpt != null ? bestUpt.getUpt() : null,
+                bestAvgPrice != null ? bestAvgPrice.getAdviserId() : null,
+                bestAvgPrice != null ? bestAvgPrice.getAdviserName() : null,
+                bestAvgPrice != null ? bestAvgPrice.getAvgUnitPrice() : null,
+                bestAtv != null ? bestAtv.getAdviserId() : null,
+                bestAtv != null ? bestAtv.getAdviserName() : null,
+                bestAtv != null ? bestAtv.getAtv() : null
+        );
     }
 
     // ─── Utilidades ──────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from 'react';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useReportingDateStore } from '../stores/ui/reportingDate.store';
+import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
 import FeaturedAdvisersSection from '../components/adviser/sections/FeaturedAdvisersSection';
 import AdvisersPerformanceChart from '../components/adviser/sections/AdvisersPerformanceChart';
 import AdvisersListSection from '../components/adviser/sections/AdvisersListSection';
@@ -18,15 +19,31 @@ export const AdvisersPage: React.FC = () => {
   } = useDashboardMetrics();
 
   const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+  const { reports: salesReports, fetchReports } = useSalesReportStore();
+
+  const cutoff       = useMemo(() => new Date(cutoffDate + 'T00:00:00'), [cutoffDate]);
+  const currentYear  = cutoff.getFullYear();
+  const currentMonth = cutoff.getMonth() + 1;
 
   useEffect(() => {
     fetchAdvisers(cutoffDate);
     fetchMetrics();
-  }, [fetchAdvisers, fetchMetrics, cutoffDate]);
+    fetchReports(currentYear, currentMonth);
+  }, [fetchAdvisers, fetchMetrics, fetchReports, cutoffDate, currentYear, currentMonth]);
+
+  const uptByAdviserId = useMemo(
+    () => new Map(salesReports.map((r) => [r.adviserId, r.upt])),
+    [salesReports]
+  );
 
   const sortedAdvisers = useMemo(() => {
-    return [...advisers].sort((a, b) => b.sales - a.sales);
-  }, [advisers]);
+    return [...advisers]
+      .sort((a, b) => b.sales - a.sales)
+      .map((a) => {
+        const csvUpt = uptByAdviserId.get(Number(a.id));
+        return csvUpt != null ? { ...a, upt: String(csvUpt) } : a;
+      });
+  }, [advisers, uptByAdviserId]);
 
   const bestAdviserAsAdviser = bestAdviser ? {
     id: bestAdviser.adviserId.toString(),
@@ -37,7 +54,10 @@ export const AdvisersPage: React.FC = () => {
     active: true,
     currentMonthSales: bestAdviser.totalSales,
     monthlySummaries: [],
-    upt: bestAdviser.upt?.toString() || ''
+    upt: (() => {
+      const csvUpt = uptByAdviserId.get(Number(bestAdviser.adviserId));
+      return csvUpt != null ? String(csvUpt) : (bestAdviser.upt?.toString() || '');
+    })()
   } : null;
 
   const worstAdviserAsAdviser = worstAdviser ? {
@@ -49,7 +69,10 @@ export const AdvisersPage: React.FC = () => {
     active: true,
     currentMonthSales: worstAdviser.totalSales,
     monthlySummaries: [],
-    upt: worstAdviser.upt?.toString() || ''
+    upt: (() => {
+      const csvUpt = uptByAdviserId.get(Number(worstAdviser.adviserId));
+      return csvUpt != null ? String(csvUpt) : (worstAdviser.upt?.toString() || '');
+    })()
   } : null;
 
   const loading = advisersLoading || metricsLoading;
@@ -76,7 +99,6 @@ export const AdvisersPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 bg-background min-h-screen space-y-8">
-        {/* Skeleton de cards destacados — 2 tarjetas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {[0, 1].map((i) => (
             <div
@@ -86,12 +108,10 @@ export const AdvisersPage: React.FC = () => {
             />
           ))}
         </div>
-        {/* Skeleton del gráfico de barras */}
         <div
           className="animate-pulse rounded-[1.4rem]"
           style={{ background: 'var(--s-card)', border: '1px solid var(--b-line)', height: 480 }}
         />
-        {/* Skeleton de la tabla de asesores */}
         <AdviserTableSkeleton rows={8} />
       </div>
     );

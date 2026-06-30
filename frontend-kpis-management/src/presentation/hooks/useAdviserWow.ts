@@ -19,8 +19,8 @@ export function useAdviserWow(adviserId: string | number) {
 
     try {
       const now = new Date();
-      const reports = await getSalesReportUseCase.execute(now.getFullYear(), now.getMonth() + 1);
-      const report = reports.find(r => String(r.adviserId) === String(adviserId));
+      const { advisers } = await getSalesReportUseCase.execute(now.getFullYear(), now.getMonth() + 1);
+      const report = advisers.find(r => String(r.adviserId) === String(adviserId));
 
       if (!report || report.wowCurrentWeekSales == null) {
         setData(null);

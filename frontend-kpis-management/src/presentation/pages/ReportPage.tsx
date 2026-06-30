@@ -27,7 +27,7 @@ export const ReportPage = () => {
     fetchMetrics,
   } = useDashboardMetrics();
 
-  const { reports: salesReports, fetchReports } = useSalesReportStore();
+  const { reports: salesReports, summary: salesSummary, fetchReports } = useSalesReportStore();
 
   const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
   const cutoff       = useMemo(() => new Date(cutoffDate + 'T00:00:00'), [cutoffDate]);
@@ -61,13 +61,9 @@ export const ReportPage = () => {
       const isDark = document.documentElement.classList.contains('dark');
       const backgroundColor = isDark ? '#0a0a0a' : '#fafafa';
 
-      // 1) Viewport meta → hint al browser del nuevo ancho
       viewportMeta?.setAttribute('content', `width=${CAPTURE_WIDTH}`);
-      // 2) Ancho directo en el nodo → garantiza dimensiones en html-to-image
       node.style.minWidth = `${CAPTURE_WIDTH}px`;
       node.style.width    = `${CAPTURE_WIDTH}px`;
-      // 3) Forzar clases responsive de Tailwind sin depender del viewport real
-      //    Cada selector replica exactamente lo que haría el breakpoint md:/sm:/lg:
       const captureStyle = document.createElement('style');
       captureStyle.id = '__report-capture-overrides';
       captureStyle.textContent = `
@@ -85,7 +81,6 @@ export const ReportPage = () => {
       document.head.appendChild(captureStyle);
       await new Promise((r) => setTimeout(r, 150));
 
-      // Eliminar overflow-hidden/auto para capturar la tabla completa
       const overflowEls = node.querySelectorAll<HTMLElement>('*');
       const overflowBackup: { el: HTMLElement; overflow: string; overflowX: string }[] = [];
       overflowEls.forEach((el) => {
@@ -130,14 +125,6 @@ export const ReportPage = () => {
     [advisers]
   );
 
-  const storeWowPercent = useMemo(() => {
-    if (salesReports.length === 0) return null;
-    const current  = salesReports.reduce((s, r) => s + (r.wowCurrentWeekSales ?? 0), 0);
-    const previous = salesReports.reduce((s, r) => s + (r.wowPreviousWeekSales ?? 0), 0);
-    if (previous === 0) return current > 0 ? 100 : null;
-    return ((current - previous) / previous) * 100;
-  }, [salesReports]);
-
   const formatWeekOverWeek = (pct: number | null | undefined) => {
     if (pct == null || !Number.isFinite(pct)) return '—';
     const sign = pct > 0 ? '+' : '';
@@ -162,26 +149,6 @@ export const ReportPage = () => {
   }, [sortedAdvisers]);
 
   const formatCommissionRate = (pct: number) => `${pct}%`;
-
-  const salesKpis = useMemo(() => {
-    if (salesReports.length === 0) return null;
-    const totalInvoices = salesReports.reduce((s, r) => s + r.invoiceCount, 0);
-    const totalUnits = salesReports.reduce((s, r) => s + r.unitsSold, 0);
-    const totalGross = salesReports.reduce((s, r) => s + r.grossSales, 0);
-    const generalUpt = totalInvoices > 0 ? totalUnits / totalInvoices : 0;
-    const storeAtv = totalInvoices > 0 ? totalGross / totalInvoices : 0;
-    const bestUptReport = [...salesReports].sort((a, b) => b.upt - a.upt)[0];
-    // Precio promedio por unidad = ventas netas / unidades vendidas
-    const withAvgPrice = salesReports
-      .filter((r) => r.unitsSold > 0)
-      .map((r) => ({ ...r, avgUnitPrice: r.grossSales / r.unitsSold }));
-    const bestAvgPriceReport = withAvgPrice.sort((a, b) => b.avgUnitPrice - a.avgUnitPrice)[0] ?? null;
-    const withAtv = salesReports
-      .filter((r) => r.invoiceCount > 0)
-      .map((r) => ({ ...r, atv: r.grossSales / r.invoiceCount }));
-    const bestAtvReport = withAtv.sort((a, b) => b.atv - a.atv)[0] ?? null;
-    return { totalInvoices, totalUnits, generalUpt, storeAtv, bestUptReport, bestAvgPriceReport, bestAtvReport };
-  }, [salesReports]);
 
   if (loading) {
     return (
@@ -308,8 +275,8 @@ export const ReportPage = () => {
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
                 WoW Tienda
               </p>
-              <p className={`text-xl font-black ${weekOverWeekClass(storeWowPercent)}`}>
-                {formatWeekOverWeek(storeWowPercent)}
+              <p className={`text-xl font-black ${weekOverWeekClass(salesSummary?.storeWowGrowthPercentage)}`}>
+                {formatWeekOverWeek(salesSummary?.storeWowGrowthPercentage)}
               </p>
             </div>
           )}
@@ -317,7 +284,7 @@ export const ReportPage = () => {
       </motion.section>
 
       {/* KPIs de ventas CSV */}
-      {salesKpis && (
+      {salesSummary && salesReports.length > 0 && (
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -340,7 +307,7 @@ export const ReportPage = () => {
                   UPT General
                 </p>
                 <p className="text-xl font-black text-cyan-500">
-                  {salesKpis.generalUpt.toFixed(2)}
+                  {salesSummary.generalUpt.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -348,7 +315,7 @@ export const ReportPage = () => {
                   ATV Tienda
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {formatCurrency(salesKpis.storeAtv)}
+                  {formatCurrency(salesSummary.storeAtv)}
                 </p>
               </div>
               <div>
@@ -356,7 +323,7 @@ export const ReportPage = () => {
                   Facturas
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {salesKpis.totalInvoices}
+                  {salesSummary.totalInvoices}
                 </p>
               </div>
               <div>
@@ -364,49 +331,51 @@ export const ReportPage = () => {
                   Unidades vendidas
                 </p>
                 <p className="text-xl font-black text-foreground">
-                  {salesKpis.totalUnits}
+                  {salesSummary.totalUnits}
                 </p>
               </div>
             </div>
             {/* Columna derecha: KPIs dinámicos por asesor */}
             <div className="flex flex-row gap-6 border-t border-border pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                  <FaStar className="w-3 h-3 text-amber-500" />
-                  Mejor UPT
-                </p>
-                <p className="text-lg font-black text-foreground">
-                  {salesKpis.bestUptReport.adviserName.split(' ').slice(0, 2).join(' ')}
-                </p>
-                <p className="text-sm font-bold text-cyan-500 mt-0.5">
-                  {salesKpis.bestUptReport.upt.toFixed(2)} upt
-                </p>
-              </div>
-              {salesKpis.bestAvgPriceReport && (
+              {salesSummary.bestUptAdviserName && salesSummary.bestUptValue != null && (
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                    <FaStar className="w-3 h-3 text-amber-500" />
+                    Mejor UPT
+                  </p>
+                  <p className="text-lg font-black text-foreground">
+                    {salesSummary.bestUptAdviserName.split(' ').slice(0, 2).join(' ')}
+                  </p>
+                  <p className="text-sm font-bold text-cyan-500 mt-0.5">
+                    {salesSummary.bestUptValue.toFixed(2)} upt
+                  </p>
+                </div>
+              )}
+              {salesSummary.bestAvgPriceAdviserName && salesSummary.bestAvgPriceValue != null && (
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
                     <FaBoxOpen className="w-3 h-3 text-amber-400" />
                     Artículos más caros por factura (AVG)
                   </p>
                   <p className="text-lg font-black text-foreground">
-                    {salesKpis.bestAvgPriceReport.adviserName.split(' ').slice(0, 2).join(' ')}
+                    {salesSummary.bestAvgPriceAdviserName.split(' ').slice(0, 2).join(' ')}
                   </p>
                   <p className="text-sm font-bold text-amber-500 mt-0.5">
-                    {formatCurrency(salesKpis.bestAvgPriceReport.avgUnitPrice)} / unidad
+                    {formatCurrency(salesSummary.bestAvgPriceValue)} / unidad
                   </p>
                 </div>
               )}
-              {salesKpis.bestAtvReport && (
+              {salesSummary.bestAtvAdviserName && salesSummary.bestAtvValue != null && (
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
                     <FaFileInvoiceDollar className="w-3 h-3 text-emerald-500" />
                     Mejor ATV
                   </p>
                   <p className="text-lg font-black text-foreground">
-                    {salesKpis.bestAtvReport.adviserName.split(' ').slice(0, 2).join(' ')}
+                    {salesSummary.bestAtvAdviserName.split(' ').slice(0, 2).join(' ')}
                   </p>
                   <p className="text-sm font-bold text-emerald-500 mt-0.5">
-                    {formatCurrency(salesKpis.bestAtvReport.atv)} / factura
+                    {formatCurrency(salesSummary.bestAtvValue)} / factura
                   </p>
                 </div>
               )}

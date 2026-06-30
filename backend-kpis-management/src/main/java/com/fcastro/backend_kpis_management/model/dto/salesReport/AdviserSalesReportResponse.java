@@ -18,4 +18,6 @@ public class AdviserSalesReportResponse {
     private Double wowCurrentWeekSales;
     private Double wowPreviousWeekSales;
     private Double wowGrowthPercentage;
+    private Double atv;
+    private Double avgUnitPrice;
 }

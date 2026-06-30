@@ -21,6 +21,7 @@ public interface AdviserMapper {
     @Mapping(target = "currentMonthSales", expression = "java(getCurrentMonthSales(adviser))")
     @Mapping(target = "commission", ignore = true)
     @Mapping(target = "commissionRatePercent", ignore = true)
+    @Mapping(target = "fullMonthGoal", ignore = true)
     AdviserResponse tResponse(Adviser adviser);
 
     @Mapping(source = "lastName", target = "lastname")
@@ -28,6 +29,7 @@ public interface AdviserMapper {
     @Mapping(target = "goals", ignore = true)
     @Mapping(target = "monthlySummaries", ignore = true)
     @Mapping(target = "weeklySalesComparisons", ignore = true)
+    @Mapping(target = "salesReports", ignore = true)
     @Mapping(target = "id", ignore = true)
     Adviser toEntity(com.fcastro.backend_kpis_management.model.dto.adviser.AdviserRequest request);
 
