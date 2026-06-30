@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUpload, FaCalendarAlt, FaEdit, FaUndo, FaCheckCircle, FaBan } from 'react-icons/fa';
+import { FaCalendarAlt, FaEdit, FaUndo, FaCheckCircle, FaBan } from 'react-icons/fa';
+import { FileDropZone } from '../components/ui/FileDropZone';
 import { useBudgetStore } from '../stores/budget/budget.store';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { DailyDistribution } from '../../core/domain/BudgetTemplate/BudgetTemplate';
@@ -188,8 +189,6 @@ function AbsenceModal({ day, activeAdvisers, year, month, onClose }: AbsenceModa
 export const BudgetTemplatePage = () => {
   const { template, loading, uploadTemplate, fetchTemplate, resetOverride } = useBudgetStore();
   const { advisers, fetchAdvisers } = useAdvisersStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -219,11 +218,8 @@ export const BudgetTemplatePage = () => {
     if (updated) setAbsenceDay(updated);
   }, [template]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFile = async (file: File) => {
     await uploadTemplate(file, year, month);
-    e.target.value = '';
   };
 
   const activeAdvisers = advisers.filter((a) => a.active);
@@ -252,28 +248,35 @@ export const BudgetTemplatePage = () => {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-4 mb-8 items-end">
-        <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
-          style={{ background: 'var(--s-subtle)', border: '1px solid var(--b-subtle)' }}>
-          <FaCalendarAlt style={{ color: '#34d399' }} />
-          <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
-            className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
-            style={{ color: 'var(--t-primary)' }}>
-            {MONTH_NAMES.slice(1).map((name, i) => <option key={i + 1} value={i + 1}>{name}</option>)}
-          </select>
-          <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))}
-            className="bg-transparent text-sm font-semibold outline-none w-16 text-center"
-            style={{ color: 'var(--t-primary)' }} min={2020} max={2100} />
+      <div
+        className="rounded-[2rem] p-6 mb-8 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-center"
+        style={{ background: 'var(--s-card)', border: '1px solid var(--b-line)' }}
+      >
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--t-muted)' }}>
+            Período
+          </p>
+          <div className="flex items-center gap-3 rounded-2xl px-4 py-3 w-fit"
+            style={{ background: 'var(--s-subtle)', border: '1px solid var(--b-subtle)' }}>
+            <FaCalendarAlt style={{ color: '#34d399' }} />
+            <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
+              className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
+              style={{ color: 'var(--t-primary)' }}>
+              {MONTH_NAMES.slice(1).map((name, i) => <option key={i + 1} value={i + 1}>{name}</option>)}
+            </select>
+            <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))}
+              className="bg-transparent text-sm font-semibold outline-none w-16 text-center"
+              style={{ color: 'var(--t-primary)' }} min={2020} max={2100} />
+          </div>
         </div>
 
-        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => fileInputRef.current?.click()} disabled={loading}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold cursor-pointer disabled:opacity-50 transition-all"
-          style={{ background: 'linear-gradient(135deg, #34d399, #22d3ee)', color: '#000' }}>
-          <FaUpload size={14} />
-          {loading ? 'Procesando...' : 'Subir Excel'}
-        </motion.button>
-        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileChange} />
+        <FileDropZone
+          accept=".xlsx,.xls"
+          acceptLabel="Excel (.xlsx)"
+          onFile={handleFile}
+          loading={loading}
+          className="py-6"
+        />
       </div>
 
       {template && (

@@ -74,9 +74,11 @@ public class CommissionServiceImpl implements CommissionService {
     @Override
     public List<Double> computeMonthlyCommissionsForAdviser(Adviser adviser, int year) {
         List<Double> out = new ArrayList<>(12);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
         for (int month = 1; month <= 12; month++) {
             LocalDate lastDay = LocalDate.of(year, month, 1).with(TemporalAdjusters.lastDayOfMonth());
-            double storeAch = computeStoreGoalAchievementPercent(year, month, lastDay);
+            LocalDate cutoff = lastDay.isBefore(yesterday) ? lastDay : yesterday;
+            double storeAch = computeStoreGoalAchievementPercent(year, month, cutoff);
             double sales = monthSales(adviser, year, month);
             out.add(computeCommission(sales, storeAch));
         }

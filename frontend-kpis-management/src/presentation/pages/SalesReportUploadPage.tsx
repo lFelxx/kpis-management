@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUpload, FaCalendarAlt, FaExclamationTriangle, FaCheckCircle, FaFileAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaExclamationTriangle, FaCheckCircle, FaFileAlt } from 'react-icons/fa';
 import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
 import { AdviserSalesReport } from '../../core/domain/AdviserSalesReport/AdviserSalesReport';
+import { FileDropZone } from '../components/ui/FileDropZone';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -154,7 +155,6 @@ function ReportsTable({ reports }: { reports: AdviserSalesReport[] }) {
 export const SalesReportUploadPage = () => {
   const { reports, lastUploadResult, loading, uploadCsvReport, fetchReports, clearUploadResult } =
     useSalesReportStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -164,12 +164,9 @@ export const SalesReportUploadPage = () => {
     fetchReports(year, month);
   }, [year, month]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFile = async (file: File) => {
     await uploadCsvReport(file);
     await fetchReports(year, month);
-    e.target.value = '';
   };
 
   const totalGross = reports.reduce((s, r) => s + r.grossSales, 0);
@@ -189,48 +186,49 @@ export const SalesReportUploadPage = () => {
         </p>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-wrap gap-4 mb-6 items-end">
-        <div
-          className="flex items-center gap-3 rounded-2xl px-4 py-3"
-          style={{ background: 'var(--s-subtle)', border: '1px solid var(--b-subtle)' }}
-        >
-          <FaCalendarAlt style={{ color: '#34d399' }} />
-          <select
-            value={month}
-            onChange={(e) => { setMonth(Number(e.target.value)); clearUploadResult(); }}
-            className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
-            style={{ color: 'var(--t-primary)' }}
+      {/* Upload card */}
+      <div
+        className="rounded-[2rem] p-6 mb-6 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-center"
+        style={{ background: 'var(--s-card)', border: '1px solid var(--b-line)' }}
+      >
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--t-muted)' }}>
+            Período
+          </p>
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 w-fit"
+            style={{ background: 'var(--s-subtle)', border: '1px solid var(--b-subtle)' }}
           >
-            {MONTH_NAMES.slice(1).map((name, i) => (
-              <option key={i + 1} value={i + 1}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => { setYear(Number(e.target.value)); clearUploadResult(); }}
-            className="bg-transparent text-sm font-semibold outline-none w-16 text-center"
-            style={{ color: 'var(--t-primary)' }}
-            min={2020}
-            max={2100}
-          />
+            <FaCalendarAlt style={{ color: '#34d399' }} />
+            <select
+              value={month}
+              onChange={(e) => { setMonth(Number(e.target.value)); clearUploadResult(); }}
+              className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
+              style={{ color: 'var(--t-primary)' }}
+            >
+              {MONTH_NAMES.slice(1).map((name, i) => (
+                <option key={i + 1} value={i + 1}>{name}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => { setYear(Number(e.target.value)); clearUploadResult(); }}
+              className="bg-transparent text-sm font-semibold outline-none w-16 text-center"
+              style={{ color: 'var(--t-primary)' }}
+              min={2020}
+              max={2100}
+            />
+          </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => fileInputRef.current?.click()}
-          disabled={loading}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold cursor-pointer disabled:opacity-50 transition-all"
-          style={{ background: 'linear-gradient(135deg, #34d399, #22d3ee)', color: '#000' }}
-        >
-          <FaUpload size={14} />
-          {loading ? 'Procesando...' : 'Subir CSV'}
-        </motion.button>
-        <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
+        <FileDropZone
+          accept=".csv"
+          acceptLabel="CSV"
+          onFile={handleFile}
+          loading={loading}
+          className="py-6"
+        />
       </div>
 
       {/* Feedback de carga */}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useReportingDateStore } from '../stores/ui/reportingDate.store';
@@ -16,18 +16,19 @@ export const AdviserDetailPage = () => {
   const navigate = useNavigate();
   const { fetchAdviserById, fetchAdvisers, clearSelectAdviser, currentAdviser, advisers, loading, error } = useAdvisersStore();
   const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
+  const [detailLoading, setDetailLoading] = useState(true);
   const [animateValue, setAnimateValue] = useState(0);
   const [monthlyCommissions, setMonthlyCommissions] = useState<number[]>(() => Array(12).fill(0));
   const currentYear = new Date().getFullYear();
 
   const monthlySummaries: MonthlySummary[] = currentAdviser?.monthlySummaries || [];
 
-
   useEffect(() => {
     window.scrollTo(0, 0);
     if (!id) return;
+    setDetailLoading(true);
     clearSelectAdviser();
-    fetchAdviserById(id);
+    fetchAdviserById(id).finally(() => setDetailLoading(false));
   }, [id, fetchAdviserById, clearSelectAdviser]);
 
   // Recarga la lista con la fecha de corte para obtener meta y comisión actualizadas
@@ -55,13 +56,10 @@ export const AdviserDetailPage = () => {
     getMonthlyCommissionsUseCase
       .execute(currentAdviser.id, currentYear)
       .then((data) => {
-        if (!cancelled && Array.isArray(data) && data.length === 12) {
+        if (!cancelled && Array.isArray(data) && data.length === 12)
           setMonthlyCommissions(data);
-        }
       })
-      .catch(() => {
-        if (!cancelled) setMonthlyCommissions(Array(12).fill(0));
-      });
+      .catch(() => { if (!cancelled) setMonthlyCommissions(Array(12).fill(0)); });
     return () => { cancelled = true; };
   }, [currentAdviser?.id, currentYear]);
 
@@ -85,7 +83,7 @@ export const AdviserDetailPage = () => {
     return () => clearInterval(interval);
   }, [adviser?.id, adviser?.commission]);
 
-  if (loading) {
+  if (detailLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />

@@ -54,24 +54,24 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
   const currentYear = new Date().getFullYear();
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-  const netEarningsByMonth = Array.from({ length: 12 }, (_, i) => {
+  const commissionsByMonth = Array.from({ length: 12 }, (_, i) => {
     const c = monthlyCommissions[i];
     return typeof c === 'number' && !Number.isNaN(c) ? c : 0;
   });
 
-  const accumulatedEarnings: number[] = [];
-  let sum = 0;
-  for (const earning of netEarningsByMonth) {
-    sum += earning;
-    accumulatedEarnings.push(Math.round(sum));
+  const accumulatedCommissions: number[] = [];
+  let runningTotal = 0;
+  for (const c of commissionsByMonth) {
+    runningTotal += c;
+    accumulatedCommissions.push(Math.round(runningTotal));
   }
 
   const lineData = {
     labels: months,
     datasets: [
       {
-        label: 'Ganancias Mensuales',
-        data: netEarningsByMonth,
+        label: 'Comisión Mensual',
+        data: commissionsByMonth,
         borderColor: EMERALD,
         backgroundColor: `${EMERALD}1a`,
         fill: true,
@@ -83,8 +83,8 @@ export const EarningsGrowthChart: React.FC<EarningsGrowthChartProps> = ({
         yAxisID: 'y',
       },
       {
-        label: 'Ganancias Acumuladas',
-        data: accumulatedEarnings,
+        label: 'Comisión Acumulada',
+        data: accumulatedCommissions,
         borderColor: CYAN,
         backgroundColor: `${CYAN}0d`,
         fill: false,
