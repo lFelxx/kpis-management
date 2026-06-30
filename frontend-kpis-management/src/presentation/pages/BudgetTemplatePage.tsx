@@ -306,7 +306,7 @@ export const BudgetTemplatePage = () => {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl p-12 text-center"
           style={{ background: 'var(--s-subtle)', border: '1px dashed var(--b-line)' }}>
-          <FaUpload size={32} className="mx-auto mb-4" style={{ color: 'var(--t-micro)' }} />
+          <FaCalendarAlt size={32} className="mx-auto mb-4" style={{ color: 'var(--t-micro)' }} />
           <p className="text-base font-semibold" style={{ color: 'var(--t-muted)' }}>
             No hay presupuesto para {MONTH_NAMES[month]} {year}
           </p>

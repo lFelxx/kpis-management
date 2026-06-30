@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useReportingDateStore } from '../stores/ui/reportingDate.store';
@@ -14,7 +14,7 @@ import { EMERALD, CYAN } from '../lib/colors';
 export const AdviserDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchAdviserById, fetchAdvisers, clearSelectAdviser, currentAdviser, advisers, loading, error } = useAdvisersStore();
+  const { fetchAdviserById, fetchAdvisers, clearSelectAdviser, currentAdviser, advisers, error } = useAdvisersStore();
   const cutoffDate = useReportingDateStore((s) => s.cutoffDate);
   const [detailLoading, setDetailLoading] = useState(true);
   const [animateValue, setAnimateValue] = useState(0);
