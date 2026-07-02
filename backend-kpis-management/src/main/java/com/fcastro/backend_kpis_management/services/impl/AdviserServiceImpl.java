@@ -21,6 +21,7 @@ import com.fcastro.backend_kpis_management.model.entities.Sale;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
+import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
 import com.fcastro.backend_kpis_management.repositories.SaleRepository;
 import com.fcastro.backend_kpis_management.services.AdviserService;
 import com.fcastro.backend_kpis_management.services.BudgetTemplateService;
@@ -48,6 +49,7 @@ public class AdviserServiceImpl implements AdviserService {
     private final EntityManager entityManager;
     private final AdviserMapper adviserMapper;
     private final CommissionService commissionService;
+    private final MonthlySummaryRepository monthlySummaryRepository;
 
     @Override
     public List<AdviserResponse> getAdvisers(LocalDate cutoffDate) {
@@ -55,6 +57,7 @@ public class AdviserServiceImpl implements AdviserService {
         List<Adviser> advisers = adviserRepository.findAll();
         List<AdviserResponse> responses = adviserMapper.toResponseList(advisers);
         enrichGoal(responses, cutoffDate);
+        enrichSales(responses, cutoffDate);
         enrichCommission(responses, cutoffDate);
         return responses;
     }
@@ -149,6 +152,19 @@ public class AdviserServiceImpl implements AdviserService {
         enrichGoal(response, yesterday);
         enrichCommission(response, yesterday);
         return response;
+    }
+
+    private void enrichSales(List<AdviserResponse> responses, LocalDate cutoffDate) {
+        if (responses == null || responses.isEmpty()) return;
+        int year  = cutoffDate.getYear();
+        int month = cutoffDate.getMonthValue();
+        Map<Long, Double> salesByAdviser = monthlySummaryRepository.findByYearAndMonth(year, month)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        s -> s.getAdviser().getId(),
+                        s -> s.getTotalSales() != null ? s.getTotalSales() : 0.0
+                ));
+        responses.forEach(r -> r.setCurrentMonthSales(salesByAdviser.getOrDefault(r.getId(), 0.0)));
     }
 
     private void enrichGoal(AdviserResponse response, LocalDate cutoffDate) {
