@@ -76,7 +76,7 @@ jobs:
         run: |
           curl -f -X POST \
             "${{ secrets.DOKPLOY_URL }}/api/application.redeploy" \
-            -H "Authorization: Bearer ${{ secrets.DOKPLOY_TOKEN }}" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"applicationId":"${{ secrets.DOKPLOY_BACKEND_APP_ID }}"}'
 
@@ -84,6 +84,6 @@ jobs:
         run: |
           curl -f -X POST \
             "${{ secrets.DOKPLOY_URL }}/api/application.redeploy" \
-            -H "Authorization: Bearer ${{ secrets.DOKPLOY_TOKEN }}" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"applicationId":"${{ secrets.DOKPLOY_FRONTEND_APP_ID }}"}'
