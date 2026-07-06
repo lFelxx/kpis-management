@@ -28,7 +28,7 @@ jobs:
       - name: Run tests
         run: |
           chmod +x mvnw
-          ./mvnw test -B
+          ./mvnw test -B -Dgroups="!local"
 
       - name: Upload Surefire reports on failure
         if: failure()

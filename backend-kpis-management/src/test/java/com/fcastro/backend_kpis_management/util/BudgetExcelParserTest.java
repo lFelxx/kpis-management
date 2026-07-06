@@ -2,12 +2,14 @@ package com.fcastro.backend_kpis_management.util;
 
 import com.fcastro.backend_kpis_management.model.dto.budget.ParsedBudgetTemplate;
 import com.fcastro.backend_kpis_management.model.dto.budget.ParsedDayData;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("local")
 class BudgetExcelParserTest {
 
     private final BudgetExcelParser parser = new BudgetExcelParser();
