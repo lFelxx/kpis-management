@@ -1,5 +1,6 @@
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaChartPie, FaUserTie, FaUsers, FaGift, FaHeart, FaSignOutAlt, FaMoon, FaSun, FaFileAlt, FaMoneyBillWave, FaFileCsv, FaQuestionCircle } from 'react-icons/fa';
+import { FaChartPie, FaUserTie, FaUsers, FaSignOutAlt, FaMoon, FaSun, FaFileAlt, FaMoneyBillWave, FaFileCsv, FaQuestionCircle, FaBrain } from 'react-icons/fa';
 import { useOnboardingStore } from '../stores/ui/onboarding.store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
@@ -14,15 +15,14 @@ const BRAND_R   = 36;
 const BRAND_C   = 2 * Math.PI * BRAND_R;
 const BRAND_ARC = BRAND_C * 0.55;
 
-const menuItems = [
-  { label: 'Dashboard',      to: '/dashboard',     icon: FaChartPie, description: 'Panel de control' },
-  { label: 'Asesores',       to: '/advisers',      icon: FaUserTie,  description: 'Listado de asesores' },
-  { label: 'Equipo',         to: '/advisory-team', icon: FaUsers,    description: 'Miembros del equipo' },
-  { label: 'Reporte',        to: '/report',        icon: FaFileAlt,       description: 'Reporte del mes' },
-  { label: 'Presupuesto',   to: '/budget',        icon: FaMoneyBillWave, description: 'Distribución de metas' },
-  { label: 'Ventas CSV',    to: '/sales-report',  icon: FaFileCsv,       description: 'Cargar reporte POS' },
-  { label: 'Recompensas',    to: '/tasks',         icon: FaGift,     description: 'Recompensas',    disabled: true },
-  { label: 'Administración', to: '/events',        icon: FaHeart,    description: 'Administración', disabled: true },
+const menuItems: { label: string; to: string; icon: React.ElementType; description: string; badge?: string; accent?: string }[] = [
+  { label: 'Dashboard',    to: '/dashboard',     icon: FaChartPie,     description: 'Panel de control' },
+  { label: 'Asesores',     to: '/advisers',      icon: FaUserTie,      description: 'Listado de asesores' },
+  { label: 'Equipo',       to: '/advisory-team', icon: FaUsers,        description: 'Miembros del equipo' },
+  { label: 'Reporte',      to: '/report',        icon: FaFileAlt,      description: 'Reporte del mes' },
+  { label: 'Presupuesto',  to: '/budget',        icon: FaMoneyBillWave,description: 'Distribución de metas' },
+  { label: 'Ventas CSV',   to: '/sales-report',  icon: FaFileCsv,      description: 'Cargar reporte POS' },
+  { label: 'Análisis',     to: '/insights',      icon: FaBrain,        description: 'Estadísticas predictivas', badge: '∑' },
 ];
 
 export const Sidebar = () => {
@@ -151,7 +151,9 @@ export const Sidebar = () => {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto scrollbar-hide py-1"
         style={{ padding: expanded ? '4px 12px' : '4px 8px' }}>
-        {menuItems.map((item) => (
+        {menuItems.map((item) => {
+          const accent = item.accent ?? EMERALD;
+          return (
           <NavLink
             key={item.label}
             to={item.to}
@@ -160,8 +162,7 @@ export const Sidebar = () => {
             title={!expanded ? item.label : undefined}
             className={({ isActive }) =>
               `nav-item${isActive ? ' active' : ''} group relative flex items-center rounded-xl mb-0.5 transition-colors duration-300
-              ${!expanded ? 'justify-center px-0 py-2.5' : 'gap-3.5 px-3.5 py-2.5'}
-              ${item.disabled ? 'opacity-25 pointer-events-none' : ''}`
+              ${!expanded ? 'justify-center px-0 py-2.5' : 'gap-3.5 px-3.5 py-2.5'}`
             }
           >
             {({ isActive }) => (
@@ -172,15 +173,15 @@ export const Sidebar = () => {
                       layoutId="sidebarActiveGlow"
                       className="absolute inset-0 rounded-xl pointer-events-none"
                       style={{
-                        background: `radial-gradient(ellipse 80% 100% at 0% 50%, ${EMERALD}18 0%, transparent 70%)`,
-                        border: `1px solid ${EMERALD}20`,
+                        background: `radial-gradient(ellipse 80% 100% at 0% 50%, ${accent}18 0%, transparent 70%)`,
+                        border: `1px solid ${accent}20`,
                       }}
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                     <motion.div
                       layoutId="sidebarActiveLine"
                       className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full"
-                      style={{ background: `linear-gradient(to bottom, ${EMERALD}, ${EMERALD}40)` }}
+                      style={{ background: `linear-gradient(to bottom, ${accent}, ${accent}40)` }}
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                   </>
@@ -189,11 +190,19 @@ export const Sidebar = () => {
                 <div
                   className="relative z-10 shrink-0 transition-colors duration-300"
                   style={{
-                    color: isActive ? EMERALD : undefined,
-                    filter: isActive ? 'drop-shadow(0 0 6px rgba(52,211,153,0.5))' : undefined,
+                    color: isActive ? accent : undefined,
+                    filter: isActive ? `drop-shadow(0 0 6px ${accent}80)` : undefined,
                   }}
                 >
                   <item.icon size={17} />
+                  {item.badge && (
+                    <span
+                      className="absolute -top-1 -right-1.5 text-[7px] font-black leading-none px-1 py-px rounded-full"
+                      style={{ background: `${EMERALD}22`, color: EMERALD, border: `1px solid ${EMERALD}40` }}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
                 </div>
 
                 <AnimatePresence>
@@ -207,7 +216,7 @@ export const Sidebar = () => {
                         {item.label}
                       </span>
                       <span className="text-[9px] font-medium tracking-wide truncate mt-0.5"
-                        style={{ color: isActive ? `${EMERALD}70` : 'var(--t-micro)' }}>
+                        style={{ color: isActive ? `${accent}70` : 'var(--t-micro)' }}>
                         {item.description}
                       </span>
                     </motion.div>
@@ -216,7 +225,8 @@ export const Sidebar = () => {
               </>
             )}
           </NavLink>
-        ))}
+          );
+        })}
       </nav>
 
       {/* Separador */}

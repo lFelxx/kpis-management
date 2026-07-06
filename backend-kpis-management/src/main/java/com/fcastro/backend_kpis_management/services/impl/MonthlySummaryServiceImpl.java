@@ -45,6 +45,19 @@ public class MonthlySummaryServiceImpl implements MonthlySummaryService {
         monthlySummaryRepository.save(summary);
     }
 
+    @Override
+    public void syncGoal(Long adviserId, int year, int month, Double goalValue) {
+        Adviser adviser = adviserRepository.findById(adviserId)
+                .orElseThrow(() -> new RuntimeException("Asesor no encontrado con id: " + adviserId));
+
+        MonthlySummary summary = monthlySummaryRepository
+                .findByAdviserIdAndYearAndMonth(adviserId, year, month)
+                .orElseGet(() -> newSummary(adviser, year, month));
+
+        summary.setGoal(goalValue != null ? goalValue : 0.0);
+        monthlySummaryRepository.save(summary);
+    }
+
     private MonthlySummary newSummary(Adviser adviser, int year, int month) {
         MonthlySummary summary = new MonthlySummary();
         summary.setAdviser(adviser);

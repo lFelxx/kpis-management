@@ -1,4 +1,5 @@
 import { AdviserApiRepository } from "../../infrastructure/api/AdviserApiRepository";
+import { PredictionApiRepository } from "../../infrastructure/api/PredictionApiRepository";
 import { AdviserSalesReportApiRepository } from "../../infrastructure/api/AdviserSalesReportApiRepository";
 import { BudgetTemplateApiRepository } from "../../infrastructure/api/BudgetTemplateApiRepository";
 import { AuthApiRepositoryHttp } from "../../infrastructure/api/AuthApiRepositoryHttp";
@@ -19,6 +20,11 @@ import { UpdateMonthlySalesUseCase } from "../usecases/adviser/UpdateMonthlySale
 import { UpdateAllGoalsUseCase } from "../usecases/adviser/UpdateAllGoalsUseCase";
 import { GetDashboardMetricsUseCase } from "../usecases/adviser/GetDashboardMetricsUseCase";
 import { GetMonthlyCommissionsUseCase } from "../usecases/adviser/GetMonthlyCommissionsUseCase";
+import { GetStoreClosingUseCase } from "../usecases/prediction/GetStoreClosingUseCase";
+import { GetAdviserRiskUseCase } from "../usecases/prediction/GetAdviserRiskUseCase";
+import { GetAdviserClosingUseCase } from "../usecases/prediction/GetAdviserClosingUseCase";
+import { GetAdviserPatternsUseCase } from "../usecases/prediction/GetAdviserPatternsUseCase";
+import { GetAdviserAnomaliesUseCase } from "../usecases/prediction/GetAdviserAnomaliesUseCase";
 
 // Auth use cases
 import { LoginUseCase } from "../usecases/auth/LoginUseCase";
@@ -41,6 +47,7 @@ import { ToggleAdviserExclusionUseCase } from "../usecases/budget/ToggleAdviserE
 
 // ─── Repositories ────────────────────────────────────────────────────────────
 const adviserRepository = new AdviserApiRepository(config.apiUrl);
+const predictionRepository = new PredictionApiRepository(config.apiUrl);
 const authRepository = new AuthApiRepositoryHttp(config.apiUrl);
 const monthlySummaryRepository = new MonthlySummaryApiRepository(config.apiUrl);
 const budgetTemplateRepository = new BudgetTemplateApiRepository(config.apiUrl);
@@ -77,6 +84,13 @@ export const getBudgetTemplateUseCase = new GetBudgetTemplateUseCase(budgetTempl
 export const updateAdviserCountUseCase = new UpdateAdviserCountUseCase(budgetTemplateRepository);
 export const resetManualOverrideUseCase = new ResetManualOverrideUseCase(budgetTemplateRepository);
 export const toggleAdviserExclusionUseCase = new ToggleAdviserExclusionUseCase(budgetTemplateRepository);
+
+// ─── Prediction use cases ────────────────────────────────────────────────────
+export const getStoreClosingUseCase = new GetStoreClosingUseCase(predictionRepository);
+export const getAdviserRiskUseCase = new GetAdviserRiskUseCase(predictionRepository);
+export const getAdviserClosingUseCase = new GetAdviserClosingUseCase(predictionRepository);
+export const getAdviserPatternsUseCase = new GetAdviserPatternsUseCase(predictionRepository);
+export const getAdviserAnomaliesUseCase = new GetAdviserAnomaliesUseCase(predictionRepository);
 
 // ─── Adviser sales report use cases ──────────────────────────────────────────
 export const uploadSalesReportUseCase = new UploadSalesReportUseCase(adviserSalesReportRepository);

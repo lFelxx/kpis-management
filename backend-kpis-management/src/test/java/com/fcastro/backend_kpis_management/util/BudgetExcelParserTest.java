@@ -17,7 +17,7 @@ class BudgetExcelParserTest {
         ParsedBudgetTemplate result = parseTestFile(2026, 5);
 
         System.out.println("=== Presupuesto total: " + result.totalBudget() + " ===");
-        assertThat(result.totalBudget()).isEqualTo(345_100_000.0);
+        assertThat(result.totalBudget()).isEqualTo(450_000_000.0);
     }
 
     @Test

@@ -11,4 +11,8 @@ public interface MonthlySummaryRepository extends JpaRepository<MonthlySummary, 
     Optional<MonthlySummary> findByAdviserIdAndYearAndMonth(Long adviserId, int year, int month);
 
     List<MonthlySummary> findByYearAndMonth(int year, int month);
+
+    List<MonthlySummary> findByAdviserIdAndYearLessThanEqualOrderByYearAscMonthAsc(Long adviserId, int year);
+
+    List<MonthlySummary> findByAdviserIdAndYearOrderByMonthAsc(Long adviserId, int year);
 }

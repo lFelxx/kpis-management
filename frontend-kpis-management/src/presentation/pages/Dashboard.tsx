@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdvisersStore } from '../stores/advisers/advisers.store';
 import { useDashboardMetrics } from '../hooks/useDashboardMetrics';
 import { useBudgetStore } from '../stores/budget/budget.store';
@@ -9,6 +10,8 @@ import { DashboardCardSkeleton, AdviserTableSkeleton } from '../components/skele
 import { AtRiskBanner } from '../components/AtRiskBanner';
 import { CutoffDateSelector } from '../components/CutoffDateSelector';
 import { useAtRiskAdvisers } from '../hooks/useAtRiskAdvisers';
+import { useStoreClosing } from '../hooks/useStoreClosing';
+import { AiInsightBanner } from '../components/prediction/AiInsightBanner';
 import {
   FaChartLine,
   FaBullseye,
@@ -20,6 +23,8 @@ import {
 import { AdviserTable } from '../components/adviser/AdviserTable';
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
+
   const { advisers, fetchAdvisers } = useAdvisersStore();
   const { atRisk, loading: atRiskLoading } = useAtRiskAdvisers();
   const {
@@ -39,6 +44,10 @@ export const Dashboard = () => {
   const currentMonth = cutoff.getMonth() + 1;
   const daysElapsed  = cutoff.getDate();
   const daysInMonth  = new Date(currentYear, currentMonth, 0).getDate();
+
+  const today = useMemo(() => new Date(), []);
+  const { storeClosing } = useStoreClosing(today.getFullYear(), today.getMonth() + 1);
+  const bannerReady = storeClosing !== null && storeClosing.storeGoal > 0 && storeClosing.projectedStoreSales > 0;
 
   const { template, fetchTemplate } = useBudgetStore();
 
@@ -151,10 +160,19 @@ export const Dashboard = () => {
 
         <AtRiskBanner advisers={atRisk} loading={atRiskLoading} />
 
+        {bannerReady && (
+          <AiInsightBanner
+            data={storeClosing!}
+            onClick={() => navigate('/insights')}
+          />
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
           {loading
             ? Array.from({ length: 6 }, (_, i) => <DashboardCardSkeleton key={i} index={i} />)
-            : dashboardCards.map((card, index) => <DashboardCard key={index} {...card} index={index} />)
+            : dashboardCards.map((card, index) => (
+                <DashboardCard key={index} {...card} index={index} />
+              ))
           }
         </div>
 
@@ -165,6 +183,7 @@ export const Dashboard = () => {
           }
         </section>
       </div>
+
     </main>
   );
 };

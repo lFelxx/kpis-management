@@ -10,6 +10,7 @@ import com.fcastro.backend_kpis_management.model.entities.Goal;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.services.GoalService;
+import com.fcastro.backend_kpis_management.services.MonthlySummaryService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +20,7 @@ public class GoalServiceImpl implements GoalService {
 
     private final GoalRepository goalRepository;
     private final AdviserRepository adviserRepository;
+    private final MonthlySummaryService monthlySummaryService;
 
     @Override
     @Transactional
@@ -37,6 +39,7 @@ public class GoalServiceImpl implements GoalService {
 
         goal.setGoalValue(goalValue);
         goalRepository.save(goal);
+        monthlySummaryService.syncGoal(adviserId, year, month, goalValue);
     }
 
     @Override

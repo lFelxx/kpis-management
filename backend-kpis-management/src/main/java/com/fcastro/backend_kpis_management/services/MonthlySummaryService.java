@@ -7,4 +7,5 @@ import com.fcastro.backend_kpis_management.model.entities.Adviser;
 public interface MonthlySummaryService {
     void addSaleToMonthlySummary(Adviser adviser, LocalDate saleDate, Double amount);
     void updateTotalSalesByAdviser(Long id, int year, int month, Double totalSales);
+    void syncGoal(Long adviserId, int year, int month, Double goalValue);
 }

@@ -6,9 +6,11 @@ import com.fcastro.backend_kpis_management.model.dto.salesReport.SalesReportPage
 import com.fcastro.backend_kpis_management.model.dto.salesReport.SalesReportSummaryResponse;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
+import com.fcastro.backend_kpis_management.model.entities.Sale;
 import com.fcastro.backend_kpis_management.model.entities.WeeklySalesComparison;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.AdviserSalesReportRepository;
+import com.fcastro.backend_kpis_management.repositories.SaleRepository;
 import com.fcastro.backend_kpis_management.repositories.WeeklySalesComparisonRepository;
 import com.fcastro.backend_kpis_management.services.AdviserSalesReportService;
 import com.fcastro.backend_kpis_management.services.MonthlySummaryService;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
+import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,6 +36,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
     private final WeeklySalesComparisonRepository weeklyComparisonRepository;
     private final AdviserRepository adviserRepository;
     private final MonthlySummaryService monthlySummaryService;
+    private final SaleRepository saleRepository;
 
     @Override
     @Transactional
@@ -97,6 +101,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
 
         salesReportRepository.save(report);
         monthlySummaryService.updateTotalSalesByAdviser(adviser.getId(), year, month, netSales);
+        upsertDailySales(adviser, year, month, rows);
     }
 
     private AdviserSalesReport newMonthlyReport(Adviser adviser, int year, int month) {
@@ -105,6 +110,38 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         report.setYear(year);
         report.setMonth(month);
         return report;
+    }
+
+    // ─── Sales diarias desde CSV ──────────────────────────────────────────────
+
+    /**
+     * Reemplaza las Sale del mes por las del CSV.
+     * Agrupa los rows por fecha y crea una Sale por día con el neto acumulado.
+     * El CSV es fuente de verdad; las entradas manuales previas se descartan.
+     */
+    private void upsertDailySales(Adviser adviser, int year, int month, List<CsvRow> rows) {
+        LocalDate firstDay = LocalDate.of(year, month, 1);
+        LocalDate lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+
+        saleRepository.deleteByAdviserAndSaleDateBetween(adviser, firstDay, lastDay);
+
+        Map<LocalDate, Double> netByDay = rows.stream()
+                .collect(Collectors.groupingBy(CsvRow::saleDate,
+                         Collectors.summingDouble(CsvRow::netAmount)));
+
+        List<Sale> dailySales = netByDay.entrySet().stream()
+                .map(e -> buildSale(adviser, e.getKey(), Math.floor(e.getValue())))
+                .collect(Collectors.toList());
+
+        saleRepository.saveAll(dailySales);
+    }
+
+    private Sale buildSale(Adviser adviser, LocalDate date, double amount) {
+        Sale sale = new Sale();
+        sale.setAdviser(adviser);
+        sale.setSaleDate(date);
+        sale.setAmount(amount);
+        return sale;
     }
 
     // ─── Procesamiento semanal WoW ────────────────────────────────────────────
@@ -133,11 +170,28 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         for (int i = 0; i < sortedWeeks.size(); i++) {
             WeekKey key = sortedWeeks.get(i);
             List<CsvRow> weekRows = rowsByWeek.get(key);
+            boolean isCurrentWeek = (i == sortedWeeks.size() - 1);
 
             double currentSales  = Math.floor(weekRows.stream().mapToDouble(CsvRow::netAmount).sum());
-            double previousSales = i > 0
-                    ? Math.floor(rowsByWeek.get(sortedWeeks.get(i - 1)).stream().mapToDouble(CsvRow::netAmount).sum())
-                    : 0.0;
+            double previousSales = 0.0;
+
+            if (i > 0) {
+                List<CsvRow> prevWeekRows = rowsByWeek.get(sortedWeeks.get(i - 1));
+                if (isCurrentWeek) {
+                    // Comparación justa: la semana anterior solo hasta el mismo día de semana
+                    // que el último día con datos en la semana actual.
+                    // Ej: si hoy es miércoles, compara lun-mié actual vs lun-mié anterior.
+                    int maxDayOfWeek = weekRows.stream()
+                            .mapToInt(r -> r.saleDate().getDayOfWeek().getValue())
+                            .max()
+                            .orElse(7);
+                    previousSales = Math.floor(prevWeekRows.stream()
+                            .filter(r -> r.saleDate().getDayOfWeek().getValue() <= maxDayOfWeek)
+                            .mapToDouble(CsvRow::netAmount).sum());
+                } else {
+                    previousSales = Math.floor(prevWeekRows.stream().mapToDouble(CsvRow::netAmount).sum());
+                }
+            }
 
             WeeklySalesComparison wsc = weeklyComparisonRepository
                     .findByAdviserIdAndYearAndWeekNumber(adviser.getId(), key.isoYear(), key.weekNumber())
