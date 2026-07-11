@@ -1,0 +1,17 @@
+<svg width="220" height="48" viewBox="0 0 220 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="xGlowS" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="1.6" result="b"></feGaussianBlur>
+      <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="b"></feMergeNode></feMerge>
+    </filter>
+  </defs>
+  <g transform="translate(1,1)">
+    <path d="M21 1L38 11.5V29.5L21 40L4 29.5V11.5L21 1Z" fill="#101214" stroke="#4B5563" stroke-width="1" stroke-dasharray="3.2 2.8"></path>
+    <path d="M13 11.5V29.5" stroke="#10B981" stroke-width="3.3" stroke-linecap="round"></path>
+    <path d="M23.5 11.5L14.7 20.5L23.5 29.5" stroke="#10B981" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+    <path d="M29.5 11.5L20.5 20.5L29.5 29.5" stroke="#00F2FE" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+    <circle cx="21" cy="20.5" r="1.7" fill="#FFFFFF"></circle>
+  </g>
+  <text x="54" y="30" font-family="&#39;Space Grotesk&#39;, Arial, sans-serif" font-weight="700" font-size="19" letter-spacing="-0.005em" fill="none">KPIs<tspan font-weight="500" fill="none">Manage</tspan><tspan font-weight="500" fill="#00F2FE" filter="url(#xGlowS)" opacity="0.85">X</tspan></text>
+  <text x="54" y="30" font-family="&#39;Space Grotesk&#39;, Arial, sans-serif" font-weight="700" font-size="19" letter-spacing="-0.005em" fill="#F5F7F8">KPIs<tspan fill="#10B981">Manage</tspan><tspan font-weight="500" fill="#00F2FE">X</tspan></text>
+</svg>

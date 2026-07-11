@@ -79,14 +79,7 @@ export const Sidebar = () => {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <span className="text-[9px] font-black tracking-[0.3em] uppercase block mb-1"
-                  style={{ color: `${EMERALD}80` }}>
-                  Mission Control
-                </span>
-                <span className="text-xl font-black tracking-tighter bg-clip-text text-transparent block"
-                  style={{ backgroundImage: `linear-gradient(135deg, ${EMERALD}, #22d3ee)` }}>
-                  KPIs Management
-                </span>
+                <img src="/logo-sidebar.svg" alt="KPIs ManageX" className="h-12 w-auto" />
               </motion.div>
             </>
           )}
@@ -94,10 +87,7 @@ export const Sidebar = () => {
 
         {!expanded && (
           <div className="flex justify-center">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: `${EMERALD}18` }}>
-              <FaChartPie size={15} style={{ color: EMERALD }} />
-            </div>
+            <img src="/logo-icon.svg" alt="KPIs ManageX" className="w-9 h-9" />
           </div>
         )}
       </div>

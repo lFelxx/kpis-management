@@ -24,17 +24,6 @@ function IconLock() {
   );
 }
 
-/* ── Icono marca: cuadrado con línea de tendencia ── */
-function BrandIcon() {
-  return (
-    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" aria-hidden="true">
-      <rect x="1.5" y="1.5" width="39" height="39" rx="6" stroke="#34d399" strokeWidth="1.2" opacity="0.22" />
-      <path d="M9 29L16 19L22 24L33 12" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M28 12H33V17" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />
-    </svg>
-  );
-}
-
 export const LoginPage = () => {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
@@ -117,13 +106,11 @@ export const LoginPage = () => {
               <div className="px-14 py-16">
 
                 {/* ── Brand ── */}
-                <div className="mb-12 flex flex-col items-center gap-3">
-                  <BrandIcon />
+                <div className="mb-12 flex flex-col items-center gap-4">
+                  <img src="/logo-icon.svg" alt="KPIs ManageX" className="w-14 h-14" />
                   <div className="text-center">
-                    <h1 className="text-[27px] font-semibold tracking-tight text-white leading-none">
-                      KPIs Management
-                    </h1>
-                    <p className="mt-1.5 font-mono text-[11px] tracking-[0.14em] text-white/60 uppercase">
+                    <img src="/logo-sidebar.svg" alt="KPIs ManageX" className="h-8 w-auto mx-auto" />
+                    <p className="mt-2 font-mono text-[11px] tracking-[0.14em] text-white/60 uppercase">
                       Sistema de Gestión Comercial
                     </p>
                   </div>
