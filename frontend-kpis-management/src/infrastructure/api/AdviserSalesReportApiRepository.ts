@@ -48,5 +48,7 @@ function emptySummary() {
     bestAtvAdviserId: null,
     bestAtvAdviserName: null,
     bestAtvValue: null,
+    weeklyTopProductSku: null,
+    weeklyTopProductQty: null,
   };
 }

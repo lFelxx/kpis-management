@@ -20,4 +20,5 @@ public class AdviserSalesReportResponse {
     private Double wowGrowthPercentage;
     private Double atv;
     private Double avgUnitPrice;
+    private String starProductSku;
 }

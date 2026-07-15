@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { useStoreClosing } from '../hooks/useStoreClosing';
 import { usePredictionStore } from '../stores/prediction/prediction.store';
+import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
 import { useAdviserInsights } from '../hooks/useAdviserInsights';
 import { AdviserProjection, RiskLevel, StoreClosingPrediction } from '../../core/domain/Prediction/StoreClosingPrediction';
 import { formatCurrency } from '../lib/format';
@@ -1417,6 +1418,8 @@ function AdviserDetailPanel({
 }: { adviserId: number; adviserName: string; year: number; month: number; onClose: () => void; onScrollToPlan: () => void }) {
   const [activeTab, setActiveTab] = useState<DetailTab>('closing');
   const detail = useAdviserInsights(adviserId, year, month);
+  const { reports } = useSalesReportStore();
+  const starProductSku = reports.find(r => r.adviserId === adviserId)?.starProductSku ?? null;
 
   const tabs: { key: DetailTab; label: string }[] = [
     { key: 'closing',   label: 'Proyección' },
@@ -1490,7 +1493,7 @@ function AdviserDetailPanel({
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2 }}
             >
-              <PatternsTab detail={detail} />
+              <PatternsTab detail={detail} starProductSku={starProductSku} />
             </motion.div>
           )}
           {activeTab === 'simulator' && (
@@ -1657,7 +1660,7 @@ function ClosingTab({ detail }: { detail: ReturnType<typeof useAdviserInsights> 
 
 // ── Tab: Patterns ─────────────────────────────────────────────────────────────
 
-function PatternsTab({ detail }: { detail: ReturnType<typeof useAdviserInsights> }) {
+function PatternsTab({ detail, starProductSku }: { detail: ReturnType<typeof useAdviserInsights>; starProductSku?: string | null }) {
   if (detail.loadingPatterns) return <TabSkeleton />;
   if (!detail.patterns) return <TabEmpty label="No hay patrones disponibles" />;
 
@@ -1672,6 +1675,63 @@ function PatternsTab({ detail }: { detail: ReturnType<typeof useAdviserInsights>
         <StatChip label="Mejor semana" value={`Semana ${p.bestWeekOfMonth}`}    color={CYAN}    />
         <StatChip label="Prom. diario" value={formatCurrency(p.overallDailyAvg)} color={AMBER}  />
       </div>
+
+      {/* Star product */}
+      {starProductSku && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-2xl p-4"
+          style={{
+            background: 'linear-gradient(120deg, #051a10 0%, #04120b 55%, #0d0d0d 100%)',
+            border: `1px solid ${EMERALD}40`,
+            boxShadow: `0 0 0 1px ${EMERALD}06, inset 0 1px 0 ${EMERALD}20`,
+          }}
+        >
+          {/* Top glow */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: `radial-gradient(ellipse 80% 55% at 50% -15%, ${EMERALD}14 0%, transparent 70%)`,
+          }} />
+          <div className="absolute top-0 inset-x-0 h-px" style={{
+            background: `linear-gradient(90deg, transparent 10%, ${EMERALD}50 50%, transparent 90%)`,
+          }} />
+
+          <div className="relative z-10 flex items-center gap-3">
+            {/* Star icon */}
+            <motion.div
+              animate={{ rotate: [0, 12, -12, 6, -6, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
+              className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, ${EMERALD}22, ${EMERALD}08)`,
+                border: `1px solid ${EMERALD}45`,
+                boxShadow: `0 0 12px ${EMERALD}30`,
+              }}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 2.5l2.6 5.3 5.9.85-4.25 4.15 1 5.87L12 15.8l-5.25 2.77 1-5.87L3.5 8.65l5.9-.85z"
+                  fill={EMERALD} stroke={EMERALD} strokeWidth="0.6" strokeLinejoin="round"
+                />
+              </svg>
+            </motion.div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="text-[8px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: `${EMERALD}70` }}>
+                Producto estrella del mes
+              </div>
+              <div
+                className="font-mono text-base font-black leading-tight"
+                style={{ color: EMERALD, textShadow: `0 0 18px ${EMERALD}50` }}
+              >
+                {starProductSku}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Day bar chart */}
       {p.dailyPattern.length > 0 && (
@@ -1773,6 +1833,87 @@ function TabEmpty({ label }: { label: string }) {
   );
 }
 
+// ── Weekly top product widget ─────────────────────────────────────────────────
+
+
+function WeeklyTopProductWidget({ sku, qty }: { sku: string; qty: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.22 }}
+      className="relative overflow-hidden rounded-2xl mb-4"
+      style={{
+        background: 'linear-gradient(110deg, #051a10 0%, #04120b 60%, #0d0d0d 100%)',
+        border: `1px solid ${EMERALD}40`,
+        boxShadow: `0 0 0 1px ${EMERALD}08, 0 8px 40px #00000055, inset 0 1px 0 ${EMERALD}20`,
+      }}
+    >
+      {/* Left glow */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: `radial-gradient(ellipse 40% 140% at -8% 50%, ${EMERALD}18 0%, transparent 65%)`,
+      }} />
+      {/* Top shimmer */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{
+        background: `linear-gradient(90deg, transparent 5%, ${EMERALD}50 35%, ${EMERALD}50 65%, transparent 95%)`,
+      }} />
+
+      <div className="relative z-10 flex items-center gap-4 px-5 py-4">
+
+        {/* Icon block */}
+        <div className="shrink-0 flex flex-col items-center gap-1">
+          <motion.div
+            animate={{ boxShadow: [`0 0 8px ${EMERALD}30`, `0 0 22px ${EMERALD}60`, `0 0 8px ${EMERALD}30`] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-11 h-11 rounded-xl flex items-center justify-center"
+            style={{
+              background: `linear-gradient(135deg, ${EMERALD}28, ${EMERALD}0a)`,
+              border: `1px solid ${EMERALD}50`,
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 2.5l2.6 5.3 5.9.85-4.25 4.15 1 5.87L12 15.8l-5.25 2.77 1-5.87L3.5 8.65l5.9-.85z"
+                fill={EMERALD} stroke={EMERALD} strokeWidth="0.6" strokeLinejoin="round"
+              />
+            </svg>
+          </motion.div>
+          <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: `${EMERALD}80` }}>
+            Semana
+          </span>
+        </div>
+
+        {/* SKU */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[8px] font-black uppercase tracking-[0.35em] mb-1.5" style={{ color: `${EMERALD}70` }}>
+            Top producto de la semana · Tienda
+          </div>
+          <div
+            className="font-mono text-xl font-black tracking-tight leading-none"
+            style={{ color: EMERALD, textShadow: `0 0 28px ${EMERALD}55` }}
+          >
+            {sku}
+          </div>
+        </div>
+
+        {/* Qty badge */}
+        <div
+          className="shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl"
+          style={{ background: `${EMERALD}0e`, border: `1px solid ${EMERALD}28` }}
+        >
+          <span className="text-2xl font-black tabular-nums leading-none" style={{ color: EMERALD }}>
+            {qty}
+          </span>
+          <span className="text-[7px] font-black uppercase tracking-widest mt-0.5" style={{ color: `${EMERALD}70` }}>
+            uds
+          </span>
+        </div>
+
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export const InsightsPage = () => {
@@ -1783,6 +1924,9 @@ export const InsightsPage = () => {
 
   const { storeClosing, loading } = useStoreClosing(currentYear, currentMonth);
   const { selectedAdviserId, selectAdviser, adviserDetail } = usePredictionStore();
+  const { summary, fetchReports } = useSalesReportStore();
+
+  useEffect(() => { fetchReports(currentYear, currentMonth); }, [currentYear, currentMonth]);
 
   const noGoal   = storeClosing !== null && storeClosing.storeGoal === 0;
   const noSales  = storeClosing !== null && storeClosing.projectedStoreSales === 0;
@@ -1855,6 +1999,11 @@ export const InsightsPage = () => {
       {/* Store breakdown */}
       {!loading && storeClosing && !notReady && storeClosing.adviserProjections.length > 0 && (
         <StoreBreakdown storeClosing={storeClosing} />
+      )}
+
+      {/* Weekly top product */}
+      {summary?.weeklyTopProductSku && summary.weeklyTopProductQty != null && (
+        <WeeklyTopProductWidget sku={summary.weeklyTopProductSku} qty={summary.weeklyTopProductQty} />
       )}
 
       {/* Not-ready notice */}

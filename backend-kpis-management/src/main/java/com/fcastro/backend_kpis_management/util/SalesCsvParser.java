@@ -19,6 +19,7 @@ public class SalesCsvParser {
 
     private static final int COL_INVOICE_NUMBER = 0;
     private static final int COL_DATE           = 2;
+    private static final int COL_SKU            = 9;
     private static final int COL_QTY            = 10;
     private static final int COL_NET_AMOUNT     = 11;
     private static final int COL_GROSS_AMOUNT   = 15;
@@ -27,6 +28,7 @@ public class SalesCsvParser {
     public record CsvRow(
             String invoiceNumber,
             LocalDate saleDate,
+            String sku,
             int qty,
             double netAmount,
             double grossAmount,
@@ -55,13 +57,23 @@ public class SalesCsvParser {
         try {
             String invoiceNumber = cols[COL_INVOICE_NUMBER].trim();
             LocalDate saleDate   = LocalDate.parse(cols[COL_DATE].trim(), DATE_FORMATTER);
+            String sku           = skuWithColor(cols[COL_SKU].trim());
             int qty              = Integer.parseInt(cols[COL_QTY].trim());
             double netAmount     = Double.parseDouble(cols[COL_NET_AMOUNT].trim());
             double grossAmount   = Double.parseDouble(cols[COL_GROSS_AMOUNT].trim());
             String vendor        = cols[COL_VENDOR].trim();
-            return new CsvRow(invoiceNumber, saleDate, qty, netAmount, grossAmount, vendor);
+            return new CsvRow(invoiceNumber, saleDate, sku, qty, netAmount, grossAmount, vendor);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String skuWithColor(String rawSku) {
+        String[] parts = rawSku.split(" ", 3);
+        if (parts.length < 2) return parts[0];
+        String colorToken = parts[1];
+        int slashIdx = colorToken.indexOf('/');
+        String color = slashIdx > 0 ? colorToken.substring(0, slashIdx) : colorToken;
+        return parts[0] + " " + color;
     }
 }

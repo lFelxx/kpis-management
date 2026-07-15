@@ -9,6 +9,7 @@ import { Adviser } from '../../core/domain/Adviser/Adviser';
 import { formatCurrency } from '../lib/format';
 import { MONTH_NAMES } from '../lib/constants';
 import { formatDate, isToday, isPast } from '../lib/dates';
+import { useTheme } from '../hooks/useTheme';
 
 // ─── EditAdviserModal ────────────────────────────────────────────────────────
 
@@ -189,6 +190,7 @@ function AbsenceModal({ day, activeAdvisers, year, month, onClose }: AbsenceModa
 export const BudgetTemplatePage = () => {
   const { template, loading, uploadTemplate, fetchTemplate, resetOverride } = useBudgetStore();
   const { advisers, fetchAdvisers } = useAdvisersStore();
+  const { theme } = useTheme();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -261,7 +263,7 @@ export const BudgetTemplatePage = () => {
             <FaCalendarAlt style={{ color: '#34d399' }} />
             <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
               className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
-              style={{ color: 'var(--t-primary)' }}>
+              style={{ color: 'var(--t-primary)', colorScheme: theme }}>
               {MONTH_NAMES.slice(1).map((name, i) => <option key={i + 1} value={i + 1}>{name}</option>)}
             </select>
             <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))}

@@ -8,12 +8,14 @@ import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
 import com.fcastro.backend_kpis_management.model.entities.Sale;
 import com.fcastro.backend_kpis_management.model.entities.WeeklySalesComparison;
+import com.fcastro.backend_kpis_management.model.entities.WeeklyTopProduct;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.AdviserSalesReportRepository;
 import com.fcastro.backend_kpis_management.repositories.SaleRepository;
 import com.fcastro.backend_kpis_management.repositories.WeeklySalesComparisonRepository;
 import com.fcastro.backend_kpis_management.services.AdviserSalesReportService;
 import com.fcastro.backend_kpis_management.services.MonthlySummaryService;
+import com.fcastro.backend_kpis_management.services.WeeklyTopProductService;
 import com.fcastro.backend_kpis_management.util.SalesCsvParser;
 import com.fcastro.backend_kpis_management.util.SalesCsvParser.CsvRow;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
     private final SalesCsvParser csvParser;
     private final AdviserSalesReportRepository salesReportRepository;
     private final WeeklySalesComparisonRepository weeklyComparisonRepository;
+    private final WeeklyTopProductService weeklyTopProductService;
     private final AdviserRepository adviserRepository;
     private final MonthlySummaryService monthlySummaryService;
     private final SaleRepository saleRepository;
@@ -46,6 +49,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
 
         List<String> unmatchedVendors = processMonthlyReports(rows, advisersByNormalizedName);
         processWeeklyComparisons(rows, advisersByNormalizedName);
+        weeklyTopProductService.storeCurrentWeekTop(rows);
 
         return CsvUploadResponse.builder()
                 .processedCount(groupByVendorAndPeriod(rows).size() - unmatchedVendors.size())
@@ -58,7 +62,10 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         List<AdviserSalesReportResponse> advisers = salesReportRepository.findByYearAndMonth(year, month).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
-        return new SalesReportPageResponse(advisers, computeSummary(advisers));
+
+        WeeklyTopProduct topProduct = weeklyTopProductService.getLatestForMonth(year, month).orElse(null);
+
+        return new SalesReportPageResponse(advisers, computeSummary(advisers, topProduct));
     }
 
     // ─── Procesamiento mensual ────────────────────────────────────────────────
@@ -88,6 +95,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         double grossSales = Math.floor(rows.stream().mapToDouble(CsvRow::grossAmount).sum());
         double netSales   = Math.floor(rows.stream().mapToDouble(CsvRow::netAmount).sum());
         double upt        = (double) unitsSold / invoiceCount;
+        String starProduct = starProductFrom(rows);
 
         AdviserSalesReport report = salesReportRepository
                 .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
@@ -98,6 +106,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         report.setUpt(upt);
         report.setGrossSales(grossSales);
         report.setNetSales(netSales);
+        report.setStarProductSku(starProduct);
 
         salesReportRepository.save(report);
         monthlySummaryService.updateTotalSalesByAdviser(adviser.getId(), year, month, netSales);
@@ -270,15 +279,16 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 .netSales(report.getNetSales())
                 .atv(invoiceCount > 0 ? grossSales / invoiceCount : null)
                 .avgUnitPrice(unitsSold > 0 ? grossSales / unitsSold : null)
+                .starProductSku(report.getStarProductSku())
                 .wowCurrentWeekSales(latestWow.map(WeeklySalesComparison::getCurrentWeekSales).orElse(null))
                 .wowPreviousWeekSales(latestWow.map(WeeklySalesComparison::getPreviousWeekSales).orElse(null))
                 .wowGrowthPercentage(latestWow.map(WeeklySalesComparison::getGrowthPercentage).orElse(null))
                 .build();
     }
 
-    private SalesReportSummaryResponse computeSummary(List<AdviserSalesReportResponse> advisers) {
+    private SalesReportSummaryResponse computeSummary(List<AdviserSalesReportResponse> advisers, WeeklyTopProduct topProduct) {
         if (advisers.isEmpty()) {
-            return new SalesReportSummaryResponse(0, 0, 0.0, 0.0, 0.0, null, null, null, null, null, null, null, null, null, null, null, null);
+            return new SalesReportSummaryResponse(0, 0, 0.0, 0.0, 0.0, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         }
 
         int totalInvoices  = advisers.stream().mapToInt(AdviserSalesReportResponse::getInvoiceCount).sum();
@@ -318,8 +328,25 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 bestAvgPrice != null ? bestAvgPrice.getAvgUnitPrice() : null,
                 bestAtv != null ? bestAtv.getAdviserId() : null,
                 bestAtv != null ? bestAtv.getAdviserName() : null,
-                bestAtv != null ? bestAtv.getAtv() : null
+                bestAtv != null ? bestAtv.getAtv() : null,
+                topProduct != null ? topProduct.getSku() : null,
+                topProduct != null ? topProduct.getQty() : null
         );
+    }
+
+    // ─── Producto estrella por asesor ─────────────────────────────────────────
+
+    private String starProductFrom(List<CsvRow> rows) {
+        return rows.stream()
+                .collect(Collectors.groupingBy(CsvRow::sku,
+                        Collectors.teeing(
+                                Collectors.summingDouble(CsvRow::netAmount),
+                                Collectors.summingInt(CsvRow::qty),
+                                (net, qty) -> net * Math.log1p(qty))))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 
     // ─── Utilidades ──────────────────────────────────────────────────────────

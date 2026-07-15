@@ -37,4 +37,7 @@ public class AdviserSalesReport {
 
     @Column(name = "net_sales", nullable = false)
     private Double netSales;
+
+    @Column(name = "star_product_sku")
+    private String starProductSku;
 }

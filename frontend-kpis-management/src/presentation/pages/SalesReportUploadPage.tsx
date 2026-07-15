@@ -4,6 +4,7 @@ import { FaCalendarAlt, FaExclamationTriangle, FaCheckCircle, FaFileAlt } from '
 import { useSalesReportStore } from '../stores/salesReport/salesReport.store';
 import { AdviserSalesReport } from '../../core/domain/AdviserSalesReport/AdviserSalesReport';
 import { FileDropZone } from '../components/ui/FileDropZone';
+import { useTheme } from '../hooks/useTheme';
 
 const MONTH_NAMES = [
   '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -155,6 +156,7 @@ function ReportsTable({ reports }: { reports: AdviserSalesReport[] }) {
 export const SalesReportUploadPage = () => {
   const { reports, lastUploadResult, loading, uploadCsvReport, fetchReports, clearUploadResult } =
     useSalesReportStore();
+  const { theme } = useTheme();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -204,7 +206,7 @@ export const SalesReportUploadPage = () => {
               value={month}
               onChange={(e) => { setMonth(Number(e.target.value)); clearUploadResult(); }}
               className="bg-transparent text-sm font-semibold outline-none cursor-pointer"
-              style={{ color: 'var(--t-primary)' }}
+              style={{ color: 'var(--t-primary)', colorScheme: theme }}
             >
               {MONTH_NAMES.slice(1).map((name, i) => (
                 <option key={i + 1} value={i + 1}>{name}</option>

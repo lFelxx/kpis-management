@@ -10,6 +10,7 @@ export interface AdviserSalesReport {
   netSales: number;
   atv: number | null;
   avgUnitPrice: number | null;
+  starProductSku: string | null;
   wowCurrentWeekSales: number | null;
   wowPreviousWeekSales: number | null;
   wowGrowthPercentage: number | null;
@@ -33,6 +34,8 @@ export interface SalesReportSummary {
   bestAtvAdviserId: number | null;
   bestAtvAdviserName: string | null;
   bestAtvValue: number | null;
+  weeklyTopProductSku: string | null;
+  weeklyTopProductQty: number | null;
 }
 
 export interface SalesReportPageResponse {

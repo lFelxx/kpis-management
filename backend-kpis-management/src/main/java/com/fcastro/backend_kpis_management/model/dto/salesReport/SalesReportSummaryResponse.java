@@ -17,5 +17,7 @@ public record SalesReportSummaryResponse(
         Double bestAvgPriceValue,
         Long bestAtvAdviserId,
         String bestAtvAdviserName,
-        Double bestAtvValue
+        Double bestAtvValue,
+        String weeklyTopProductSku,
+        Integer weeklyTopProductQty
 ) {}
