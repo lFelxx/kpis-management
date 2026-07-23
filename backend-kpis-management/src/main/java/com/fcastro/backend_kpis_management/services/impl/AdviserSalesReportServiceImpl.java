@@ -95,7 +95,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         double grossSales = Math.floor(rows.stream().mapToDouble(CsvRow::grossAmount).sum());
         double netSales   = Math.floor(rows.stream().mapToDouble(CsvRow::netAmount).sum());
         double upt        = (double) unitsSold / invoiceCount;
-        String starProduct = starProductFrom(rows);
+        StarProduct starProduct = starProductFrom(rows);
 
         AdviserSalesReport report = salesReportRepository
                 .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)
@@ -106,7 +106,8 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
         report.setUpt(upt);
         report.setGrossSales(grossSales);
         report.setNetSales(netSales);
-        report.setStarProductSku(starProduct);
+        report.setStarProductSku(starProduct != null ? starProduct.sku() : null);
+        report.setStarProductQty(starProduct != null ? starProduct.qty() : null);
 
         salesReportRepository.save(report);
         monthlySummaryService.updateTotalSalesByAdviser(adviser.getId(), year, month, netSales);
@@ -280,6 +281,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 .atv(invoiceCount > 0 ? grossSales / invoiceCount : null)
                 .avgUnitPrice(unitsSold > 0 ? grossSales / unitsSold : null)
                 .starProductSku(report.getStarProductSku())
+                .starProductQty(report.getStarProductQty())
                 .wowCurrentWeekSales(latestWow.map(WeeklySalesComparison::getCurrentWeekSales).orElse(null))
                 .wowPreviousWeekSales(latestWow.map(WeeklySalesComparison::getPreviousWeekSales).orElse(null))
                 .wowGrowthPercentage(latestWow.map(WeeklySalesComparison::getGrowthPercentage).orElse(null))
@@ -336,7 +338,9 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
 
     // ─── Producto estrella por asesor ─────────────────────────────────────────
 
-    private String starProductFrom(List<CsvRow> rows) {
+    private record StarProduct(String sku, int qty) {}
+
+    private StarProduct starProductFrom(List<CsvRow> rows) {
         return rows.stream()
                 .collect(Collectors.groupingBy(CsvRow::sku,
                         Collectors.teeing(
@@ -345,7 +349,13 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                                 (net, qty) -> net * Math.log1p(qty))))
                 .entrySet().stream()
                 .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
+                .map(best -> {
+                    int qty = rows.stream()
+                            .filter(r -> r.sku().equals(best.getKey()))
+                            .mapToInt(CsvRow::qty)
+                            .sum();
+                    return new StarProduct(best.getKey(), qty);
+                })
                 .orElse(null);
     }
 

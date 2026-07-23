@@ -1419,7 +1419,9 @@ function AdviserDetailPanel({
   const [activeTab, setActiveTab] = useState<DetailTab>('closing');
   const detail = useAdviserInsights(adviserId, year, month);
   const { reports } = useSalesReportStore();
-  const starProductSku = reports.find(r => r.adviserId === adviserId)?.starProductSku ?? null;
+  const starReport = reports.find(r => r.adviserId === adviserId);
+  const starProductSku = starReport?.starProductSku ?? null;
+  const starProductQty = starReport?.starProductQty ?? null;
 
   const tabs: { key: DetailTab; label: string }[] = [
     { key: 'closing',   label: 'Proyección' },
@@ -1493,7 +1495,7 @@ function AdviserDetailPanel({
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2 }}
             >
-              <PatternsTab detail={detail} starProductSku={starProductSku} />
+              <PatternsTab detail={detail} starProductSku={starProductSku} starProductQty={starProductQty} />
             </motion.div>
           )}
           {activeTab === 'simulator' && (
@@ -1660,7 +1662,7 @@ function ClosingTab({ detail }: { detail: ReturnType<typeof useAdviserInsights> 
 
 // ── Tab: Patterns ─────────────────────────────────────────────────────────────
 
-function PatternsTab({ detail, starProductSku }: { detail: ReturnType<typeof useAdviserInsights>; starProductSku?: string | null }) {
+function PatternsTab({ detail, starProductSku, starProductQty }: { detail: ReturnType<typeof useAdviserInsights>; starProductSku?: string | null; starProductQty?: number | null }) {
   if (detail.loadingPatterns) return <TabSkeleton />;
   if (!detail.patterns) return <TabEmpty label="No hay patrones disponibles" />;
 
@@ -1728,6 +1730,11 @@ function PatternsTab({ detail, starProductSku }: { detail: ReturnType<typeof use
               >
                 {starProductSku}
               </div>
+              {starProductQty != null && (
+                <div className="text-[9px] font-bold mt-0.5" style={{ color: `${EMERALD}80` }}>
+                  {starProductQty} uds. vendidas
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

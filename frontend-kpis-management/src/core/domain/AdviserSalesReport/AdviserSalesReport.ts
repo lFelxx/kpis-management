@@ -11,6 +11,7 @@ export interface AdviserSalesReport {
   atv: number | null;
   avgUnitPrice: number | null;
   starProductSku: string | null;
+  starProductQty: number | null;
   wowCurrentWeekSales: number | null;
   wowPreviousWeekSales: number | null;
   wowGrowthPercentage: number | null;

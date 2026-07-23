@@ -21,4 +21,5 @@ public class AdviserSalesReportResponse {
     private Double atv;
     private Double avgUnitPrice;
     private String starProductSku;
+    private Integer starProductQty;
 }

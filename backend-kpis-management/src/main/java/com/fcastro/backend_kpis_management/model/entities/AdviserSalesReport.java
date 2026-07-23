@@ -40,4 +40,7 @@ public class AdviserSalesReport {
 
     @Column(name = "star_product_sku")
     private String starProductSku;
+
+    @Column(name = "star_product_qty")
+    private Integer starProductQty;
 }
