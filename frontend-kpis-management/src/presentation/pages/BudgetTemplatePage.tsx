@@ -11,6 +11,8 @@ import { MONTH_NAMES } from '../lib/constants';
 import { formatDate, isToday, isPast } from '../lib/dates';
 import { useTheme } from '../hooks/useTheme';
 
+const IVA = 1.19;
+
 // ─── EditAdviserModal ────────────────────────────────────────────────────────
 
 interface EditAdviserModalProps {
@@ -200,6 +202,7 @@ export const BudgetTemplatePage = () => {
   useEffect(() => { fetchTemplate(year, month); }, [year, month, fetchTemplate]);
 
   const isInitialMount = useRef(true);
+  const todayRowRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
     const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
@@ -212,6 +215,14 @@ export const BudgetTemplatePage = () => {
     const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     fetchAdvisers(yesterday);
   }, [template, fetchAdvisers]);
+
+  useEffect(() => {
+    if (!template || !todayRowRef.current) return;
+    const timeout = setTimeout(() => {
+      todayRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [template?.days.length]);
 
   // Sincroniza absenceDay con la versión más reciente del template tras un toggle
   useEffect(() => {
@@ -322,7 +333,7 @@ export const BudgetTemplatePage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--b-subtle)', background: 'var(--s-subtle)' }}>
-                  {['Día', '% Peso', 'Monto diario', 'Asesores', 'Meta/Asesor', 'Ausencias', 'Estado'].map((h) => (
+                  {['Día', '% Peso', 'Monto diario', 'Monto diario + IVA', 'Asesores', 'Meta/Asesor', 'Meta/Asesor + IVA', 'Ausencias', 'Estado'].map((h) => (
                     <th key={h} className="px-5 py-4 text-left text-xs font-black uppercase tracking-wider"
                       style={{ color: 'var(--t-micro)' }}>{h}</th>
                   ))}
@@ -339,6 +350,7 @@ export const BudgetTemplatePage = () => {
 
                   return (
                     <motion.tr key={day.id}
+                      ref={todayRow ? todayRowRef : undefined}
                       initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.015 }}
                       style={{
@@ -363,6 +375,9 @@ export const BudgetTemplatePage = () => {
                       <td className="px-5 py-3.5 font-semibold" style={{ color: 'var(--t-primary)' }}>
                         {formatCurrency(day.dailyAmount)}
                       </td>
+                      <td className="px-5 py-3.5 font-semibold" style={{ color: 'var(--t-secondary)' }}>
+                        {formatCurrency(day.dailyAmount * IVA)}
+                      </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
                           <span className={`font-bold ${day.manualOverride ? 'text-amber-400' : ''}`}
@@ -377,6 +392,9 @@ export const BudgetTemplatePage = () => {
                       </td>
                       <td className="px-5 py-3.5 font-semibold" style={{ color: '#34d399' }}>
                         {day.adviserCount > 0 ? formatCurrency(day.goalPerAdviser) : '—'}
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold" style={{ color: '#6ee7b7' }}>
+                        {day.adviserCount > 0 ? formatCurrency(day.goalPerAdviser * IVA) : '—'}
                       </td>
 
                       {/* Columna Ausencias */}
@@ -466,7 +484,7 @@ export const BudgetTemplatePage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--b-subtle)', background: 'var(--s-subtle)' }}>
-                  {['Asesor', 'Meta del mes', 'Días ausente', 'Estado'].map((h) => (
+                  {['Asesor', 'Meta del mes', 'Meta del mes + IVA', 'Días ausente', 'Estado'].map((h) => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-black uppercase tracking-wider"
                       style={{ color: 'var(--t-micro)' }}>{h}</th>
                   ))}
@@ -491,6 +509,9 @@ export const BudgetTemplatePage = () => {
                       </td>
                       <td className="px-5 py-3.5 font-black" style={{ color: '#34d399' }}>
                         {formatCurrency(fullMonthGoal)}
+                      </td>
+                      <td className="px-5 py-3.5 font-black" style={{ color: '#6ee7b7' }}>
+                        {formatCurrency(fullMonthGoal * IVA)}
                       </td>
                       <td className="px-5 py-3.5">
                         {absentDays > 0 ? (
@@ -522,14 +543,25 @@ export const BudgetTemplatePage = () => {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 flex items-center justify-between"
+          <div className="px-5 py-3 flex items-center justify-between flex-wrap gap-2"
             style={{ borderTop: '1px solid var(--b-subtle)' }}>
             <span className="text-xs font-semibold" style={{ color: 'var(--t-muted)' }}>
               Total distribuido entre asesores
             </span>
-            <span className="text-sm font-black" style={{ color: 'var(--t-primary)' }}>
-              {formatCurrency(activeAdvisers.reduce((s, a) => s + (a.fullMonthGoal ?? 0), 0))}
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-xs" style={{ color: 'var(--t-muted)' }}>
+                Sin IVA:{' '}
+                <span className="font-black" style={{ color: '#34d399' }}>
+                  {formatCurrency(activeAdvisers.reduce((s, a) => s + (a.fullMonthGoal ?? 0), 0))}
+                </span>
+              </span>
+              <span className="text-xs" style={{ color: 'var(--t-muted)' }}>
+                Con IVA:{' '}
+                <span className="font-black" style={{ color: '#6ee7b7' }}>
+                  {formatCurrency(activeAdvisers.reduce((s, a) => s + (a.fullMonthGoal ?? 0), 0) * IVA)}
+                </span>
+              </span>
+            </div>
           </div>
         </motion.div>
       )}

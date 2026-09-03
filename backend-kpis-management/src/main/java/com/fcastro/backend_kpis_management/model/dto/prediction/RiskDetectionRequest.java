@@ -11,5 +11,6 @@ public record RiskDetectionRequest(
         @JsonProperty("days_in_month")     int daysInMonth,
         @JsonProperty("current_sales")     double currentSales,
         @JsonProperty("full_month_goal")   double fullMonthGoal,
-        @JsonProperty("historical_months") List<HistoricalMonthDto> historicalMonths
+        @JsonProperty("historical_months") List<HistoricalMonthDto> historicalMonths,
+        @JsonProperty("daily_budget")      List<DailySaleDto> dailyBudget
 ) {}

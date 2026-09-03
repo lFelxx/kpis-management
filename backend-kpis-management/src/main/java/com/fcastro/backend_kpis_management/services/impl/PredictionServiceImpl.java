@@ -71,6 +71,7 @@ public class PredictionServiceImpl implements PredictionService {
         List<DailySaleDto> currentSales = buildCurrentDailySales(adviser, firstDay, cutoff);
         List<HistoricalMonthDto> history = buildHistoricalMonths(adviser, year, month);
         double goal = resolveFullMonthGoal(adviserId, year, month);
+        List<DailySaleDto> dailyBudget = buildDailyBudget(adviserId, year, month);
 
         return mlServiceClient.detectRisk(new RiskDetectionRequest(
                 adviserId,
@@ -79,7 +80,8 @@ public class PredictionServiceImpl implements PredictionService {
                 lastDay.getDayOfMonth(),
                 sumSales(currentSales),
                 goal,
-                history
+                history,
+                dailyBudget
         ));
     }
 
@@ -145,13 +147,15 @@ public class PredictionServiceImpl implements PredictionService {
         List<DailySaleDto> currentSales = buildCurrentDailySales(adviser, firstDay, today);
         List<HistoricalMonthDto> history = buildHistoricalMonths(adviser, year, month);
         double goal = goals.getOrDefault(adviser.getId(), 0.0);
+        List<DailySaleDto> dailyBudget = buildDailyBudget(adviser.getId(), year, month);
 
         return new AdviserInputDto(
                 adviser.getId(),
                 fullName(adviser),
                 sumSales(currentSales),
                 goal,
-                history
+                history,
+                dailyBudget
         );
     }
 

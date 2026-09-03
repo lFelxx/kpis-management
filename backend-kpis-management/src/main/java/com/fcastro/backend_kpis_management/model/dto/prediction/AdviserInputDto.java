@@ -9,5 +9,6 @@ public record AdviserInputDto(
         @JsonProperty("adviser_name")      String adviserName,
         @JsonProperty("current_sales")     double currentSales,
         @JsonProperty("full_month_goal")   double fullMonthGoal,
-        @JsonProperty("historical_months") List<HistoricalMonthDto> historicalMonths
+        @JsonProperty("historical_months") List<HistoricalMonthDto> historicalMonths,
+        @JsonProperty("daily_budget")      List<DailySaleDto> dailyBudget
 ) {}

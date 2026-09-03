@@ -15,9 +15,11 @@ import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
 import com.fcastro.backend_kpis_management.repositories.MonthlySummaryRepository;
 import com.fcastro.backend_kpis_management.repositories.SaleRepository;
+import com.fcastro.backend_kpis_management.model.dto.prediction.RiskDetectionResponse;
 import com.fcastro.backend_kpis_management.services.BudgetTemplateService;
 import com.fcastro.backend_kpis_management.services.CommissionService;
 import com.fcastro.backend_kpis_management.services.MetricsService;
+import com.fcastro.backend_kpis_management.services.PredictionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,7 @@ public class MetricsServiceImpl implements MetricsService {
     private final SaleRepository saleRepository;
     private final BudgetTemplateRepository budgetTemplateRepository;
     private final BudgetTemplateService budgetTemplateService;
+    private final PredictionService predictionService;
 
     @Override
     public DashboardMetricsResponse getDashboardMetrics(int year, int month, LocalDate cutoffDate) {
@@ -111,7 +114,6 @@ public class MetricsServiceImpl implements MetricsService {
         int year        = cutoffDate.getYear();
         int month       = cutoffDate.getMonthValue();
         int daysElapsed = cutoffDate.getDayOfMonth();
-        int daysInMonth = cutoffDate.lengthOfMonth();
 
         if (daysElapsed == 0) return List.of();
 
@@ -125,26 +127,33 @@ public class MetricsServiceImpl implements MetricsService {
         Map<Long, Double> goalByAdviser = resolveFullMonthGoalsPerAdviser(year, month, adviserIds);
 
         return summaries.stream()
-                .map(s -> toAtRiskInfo(s, daysElapsed, daysInMonth, goalByAdviser))
-                .filter(a -> a.projectedAchievement() < 80.0)
+                .map(s -> toAtRiskInfo(s, year, month, goalByAdviser))
+                .filter(a -> a != null && a.projectedAchievement() < 80.0)
                 .sorted((a, b) -> Double.compare(a.projectedAchievement(), b.projectedAchievement()))
                 .toList();
     }
 
-    private AtRiskAdviserInfo toAtRiskInfo(MonthlySummary s, int daysElapsed, int daysInMonth,
-                                           Map<Long, Double> goalByAdviser) {
-        double currentSales   = s.getTotalSales() != null ? s.getTotalSales() : 0.0;
-        double monthGoal      = goalByAdviser.getOrDefault(s.getAdviser().getId(), 0.0);
-        double projectedSales = (currentSales / daysElapsed) * daysInMonth;
-        double projectedPct   = monthGoal > 0 ? (projectedSales / monthGoal) * 100.0 : 0.0;
-        return new AtRiskAdviserInfo(
-                s.getAdviser().getId(),
-                s.getAdviser().getName() + " " + s.getAdviser().getLastname(),
-                currentSales,
-                monthGoal,
-                projectedSales,
-                projectedPct
-        );
+    private AtRiskAdviserInfo toAtRiskInfo(MonthlySummary s, int year, int month, Map<Long, Double> goalByAdviser) {
+        try {
+            Long adviserId    = s.getAdviser().getId();
+            double currentSales = s.getTotalSales() != null ? s.getTotalSales() : 0.0;
+            double monthGoal  = goalByAdviser.getOrDefault(adviserId, 0.0);
+            RiskDetectionResponse risk = predictionService.detectRiskForAdviser(adviserId, year, month);
+            double projectedSales = monthGoal > 0
+                    ? (risk.predictedAchievementPct() / 100.0) * monthGoal
+                    : 0.0;
+            return new AtRiskAdviserInfo(
+                    adviserId,
+                    s.getAdviser().getName() + " " + s.getAdviser().getLastname(),
+                    currentSales,
+                    monthGoal,
+                    projectedSales,
+                    risk.predictedAchievementPct()
+            );
+        } catch (Exception e) {
+            log.warn("No se pudo obtener proyección ML para asesor {}: {}", s.getAdviser().getId(), e.getMessage());
+            return null;
+        }
     }
 
     private Map<Long, Double> resolveFullMonthGoalsPerAdviser(int year, int month, List<Long> adviserIds) {
@@ -188,6 +197,7 @@ public class MetricsServiceImpl implements MetricsService {
     private BestAdviserInfo findWorstByGoalAchievement(List<MonthlySummary> summaries, Map<Long, Double> uptByAdviserId, Map<Long, Double> goalsByAdviser) {
         return summaries.stream()
                 .map(s -> toAdviserInfo(s, uptByAdviserId, goalsByAdviser))
+                .filter(info -> info.totalGoal() > 0.0)
                 .min((a, b) -> {
                     int cmp = Double.compare(a.goalAchievement(), b.goalAchievement());
                     if (cmp != 0) return cmp;

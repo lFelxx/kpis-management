@@ -217,7 +217,7 @@ export const ReportPage = () => {
           Reporte hasta la fecha
         </h1>
         <p className="text-sm font-medium text-muted-foreground mt-1">
-          {currentDateLabel} — Meta global, ventas, cumplimiento y comisión por asesor.
+          {currentDateLabel} — PAF, ventas, cumplimiento y comisión por asesor.
         </p>
       </header>
 
@@ -234,7 +234,7 @@ export const ReportPage = () => {
           </div>
           <div>
             <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-              Meta global
+              PAF
             </h2>
             <p className="text-2xl font-black text-foreground">
               {formatCurrency(totalGoal ?? 0)}
