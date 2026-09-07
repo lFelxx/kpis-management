@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -179,7 +180,7 @@ public class PredictionServiceImpl implements PredictionService {
 
     private List<HistoricalMonthDto> buildHistoricalMonths(Adviser adviser, int currentYear, int currentMonth) {
         return monthlySummaryRepository
-                .findByAdviserIdAndYearOrderByMonthAsc(adviser.getId(), currentYear)
+                .findByAdviserIdAndYearLessThanEqualOrderByYearAscMonthAsc(adviser.getId(), currentYear)
                 .stream()
                 .filter(s -> !isCurrentMonth(s, currentYear, currentMonth))
                 .map(this::toHistoricalMonthDto)
@@ -203,7 +204,13 @@ public class PredictionServiceImpl implements PredictionService {
         try {
             return budgetTemplateService.calculateFullMonthGoalsPerAdviser(year, month, adviserIds);
         } catch (Exception e) {
-            return Map.of();
+            return adviserIds.stream().collect(Collectors.toMap(
+                    id -> id,
+                    id -> monthlySummaryRepository
+                            .findByAdviserIdAndYearAndMonth(id, year, month)
+                            .map(MonthlySummary::getGoal)
+                            .orElse(0.0)
+            ));
         }
     }
 

@@ -7,9 +7,7 @@ import { useReportingDateStore } from '../stores/ui/reportingDate.store';
 import { formatCurrency } from '../lib/format';
 import { DashboardCard } from '../components/DashboardCard';
 import { DashboardCardSkeleton, AdviserTableSkeleton } from '../components/skeletons/SkeletonLoader';
-import { AtRiskBanner } from '../components/AtRiskBanner';
 import { CutoffDateSelector } from '../components/CutoffDateSelector';
-import { useAtRiskAdvisers } from '../hooks/useAtRiskAdvisers';
 import { useStoreClosing } from '../hooks/useStoreClosing';
 import { AiInsightBanner } from '../components/prediction/AiInsightBanner';
 import {
@@ -26,7 +24,6 @@ export const Dashboard = () => {
   const navigate = useNavigate();
 
   const { advisers, fetchAdvisers } = useAdvisersStore();
-  const { atRisk, loading: atRiskLoading } = useAtRiskAdvisers();
   const {
     totalSales,
     goalAchievement,
@@ -157,8 +154,6 @@ export const Dashboard = () => {
             Métricas de rendimiento en tiempo real para la gestión estratégica del equipo.
           </p>
         </header>
-
-        <AtRiskBanner advisers={atRisk} loading={atRiskLoading} />
 
         {bannerReady && (
           <AiInsightBanner

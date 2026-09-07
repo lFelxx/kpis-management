@@ -18,4 +18,6 @@ export interface AdviserPrediction {
   historicalDailyRate: number;
   dailySalesByDay: DailySaleByDay[];
   methodUsed: string;
+  trendMonthlyPct: number;
+  trendDirection: 'up' | 'down' | 'flat';
 }

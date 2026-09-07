@@ -15,5 +15,7 @@ public record ClosingPredictionResponse(
         @JsonProperty("full_month_goal")          double fullMonthGoal,
         @JsonProperty("historical_daily_rate")    double historicalDailyRate,
         @JsonProperty("daily_sales_by_day")       List<DailySaleByDayDto> dailySalesByDay,
-        @JsonProperty("method_used")              String methodUsed
+        @JsonProperty("method_used")              String methodUsed,
+        @JsonProperty("trend_monthly_pct")        double trendMonthlyPct,
+        @JsonProperty("trend_direction")          String trendDirection
 ) {}

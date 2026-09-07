@@ -238,6 +238,42 @@ function ConfidenceMeter({ level }: { level: string }) {
   );
 }
 
+// ── Trend badge ───────────────────────────────────────────────────────────────
+
+function TrendBadge({ pct, direction }: { pct: number; direction: string }) {
+  const isUp   = direction === 'up';
+  const isDown = direction === 'down';
+  const color  = isUp ? EMERALD : isDown ? RED : AMBER;
+  const arrow  = isUp ? '↑' : isDown ? '↓' : '→';
+  const label  = isUp ? 'en crecimiento' : isDown ? 'en declive' : 'estable';
+  const absPct = Math.abs(pct);
+
+  return (
+    <div
+      className="flex items-center justify-between px-3 py-2 rounded-xl"
+      style={{ background: `${color}08`, border: `1px solid ${color}20` }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-base font-black" style={{ color }}>{arrow}</span>
+        <div>
+          <div className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--t-micro)' }}>
+            Tendencia mensual
+          </div>
+          <div className="text-[10px] font-bold capitalize" style={{ color: 'var(--t-secondary)' }}>
+            {label}
+          </div>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="text-sm font-black" style={{ color }}>
+          {absPct < 0.5 ? '~0%' : `${isDown ? '-' : '+'}${absPct.toFixed(1)}%`}
+        </div>
+        <div className="text-[9px]" style={{ color: 'var(--t-micro)' }}>por mes</div>
+      </div>
+    </div>
+  );
+}
+
 // ── SVG: Day bar chart ────────────────────────────────────────────────────────
 
 const LOW_SAMPLE_THRESHOLD = 4;
@@ -1587,6 +1623,11 @@ function ClosingTab({ detail }: { detail: ReturnType<typeof useAdviserInsights> 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tendencia mensual */}
+      {closing && closing.trendDirection !== undefined && (
+        <TrendBadge pct={closing.trendMonthlyPct} direction={closing.trendDirection} />
       )}
 
       {/* Divider */}

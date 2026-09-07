@@ -103,6 +103,8 @@ interface RawAdviserPrediction {
   historical_daily_rate:    number;
   daily_sales_by_day:       RawDailySaleByDay[];
   method_used:              string;
+  trend_monthly_pct:        number;
+  trend_direction:          string;
 }
 
 function toAdviserPrediction(raw: RawAdviserPrediction): AdviserPrediction {
@@ -119,6 +121,8 @@ function toAdviserPrediction(raw: RawAdviserPrediction): AdviserPrediction {
     historicalDailyRate:     raw.historical_daily_rate,
     dailySalesByDay:         raw.daily_sales_by_day ?? [],
     methodUsed:              raw.method_used,
+    trendMonthlyPct:         raw.trend_monthly_pct ?? 0,
+    trendDirection:          (raw.trend_direction ?? 'flat') as AdviserPrediction['trendDirection'],
   };
 }
 
