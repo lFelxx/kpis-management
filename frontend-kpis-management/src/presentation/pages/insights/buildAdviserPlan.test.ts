@@ -20,6 +20,8 @@ function makeClosing(overrides: Partial<AdviserPrediction> = {}): AdviserPredict
     historicalDailyRate:     300_000,
     dailySalesByDay:         [],
     methodUsed:              'linear',
+    trendMonthlyPct:         0,
+    trendDirection:          'flat',
     ...overrides,
   };
 }
