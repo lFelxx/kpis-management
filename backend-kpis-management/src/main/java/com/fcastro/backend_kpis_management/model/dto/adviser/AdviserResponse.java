@@ -1,12 +1,10 @@
 package com.fcastro.backend_kpis_management.model.dto.adviser;
 
-
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
+import com.fcastro.backend_kpis_management.model.dto.MonthlySummaryDTO;
+import lombok.Data;
 
 import java.util.List;
-
-import com.fcastro.backend_kpis_management.model.dto.MonthlySummaryDTO;
-
-import lombok.Data;
 
 @Data
 public class AdviserResponse {
@@ -14,6 +12,7 @@ public class AdviserResponse {
     private String name;
     private String lastName;
     private Boolean active;
+    private TeamRole teamRole;
     private Double sales;
     private Double goalValue;
     private Double currentMonthSales;
@@ -24,5 +23,7 @@ public class AdviserResponse {
     /** Tasa efectiva sobre ventas del asesor en % (ej. 1,2). Igual para todos los asesores del mismo mes (regla de tienda). */
     private Double commissionRatePercent;
     private Double upt;
+    /** 1=lunes … 7=domingo (ISO). Null = sin día fijo. */
+    private Integer restDay;
     private List<MonthlySummaryDTO> monthlySummaries;
 }

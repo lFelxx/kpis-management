@@ -49,4 +49,12 @@ public class PredictionController {
             @RequestParam int month) {
         return ResponseEntity.ok(predictionService.detectAnomaliesForAdviser(adviserId, year, month));
     }
+
+    @GetMapping("/insights/{adviserId}")
+    public ResponseEntity<AdviserInsightResponse> getAdviserInsight(
+            @PathVariable Long adviserId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(predictionService.getAdviserInsight(adviserId, year, month));
+    }
 }

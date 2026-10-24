@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.model.entities.Goal;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
@@ -47,7 +48,7 @@ public class GoalServiceImpl implements GoalService {
     public void updateGoalsForAllActiveAdvisers(Double goalValue, int year, int month) {
         if (goalValue == null) throw new IllegalArgumentException("El valor de la meta no puede ser null");
 
-        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING);
         for (Adviser adviser : activeAdvisers) {
             updateGoal(adviser.getId(), goalValue, year, month);
         }

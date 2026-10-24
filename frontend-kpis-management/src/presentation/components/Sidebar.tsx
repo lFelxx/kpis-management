@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaChartPie, FaUserTie, FaUsers, FaSignOutAlt, FaMoon, FaSun, FaFileAlt, FaMoneyBillWave, FaFileCsv, FaQuestionCircle, FaBrain } from 'react-icons/fa';
+import { FaChartPie, FaUserTie, FaUsers, FaSignOutAlt, FaMoon, FaSun, FaFileAlt, FaMoneyBillWave, FaFileCsv, FaQuestionCircle, FaBrain, FaCalendarAlt } from 'react-icons/fa';
 import { useOnboardingStore } from '../stores/ui/onboarding.store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
@@ -23,6 +23,7 @@ const menuItems: { label: string; to: string; icon: React.ElementType; descripti
   { label: 'Presupuesto',  to: '/budget',        icon: FaMoneyBillWave,description: 'Distribución de metas' },
   { label: 'Ventas CSV',   to: '/sales-report',  icon: FaFileCsv,      description: 'Cargar reporte POS' },
   { label: 'Análisis',     to: '/insights',      icon: FaBrain,        description: 'Estadísticas predictivas', badge: '∑' },
+  { label: 'Horarios',    to: '/schedule',      icon: FaCalendarAlt,  description: 'Horario semanal del equipo' },
 ];
 
 export const Sidebar = () => {

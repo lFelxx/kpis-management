@@ -16,6 +16,7 @@ import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
 public interface AdviserMapper {
     
     @Mapping(source = "lastname", target = "lastName")
+    @Mapping(source = "restDay", target = "restDay")
     @Mapping(target = "sales", expression ="java(calculateTotalSales(adviser))")
     @Mapping(target = "goalValue", expression = "java(getCurrentGoal(adviser))")
     @Mapping(target = "currentMonthSales", ignore = true)
@@ -25,6 +26,8 @@ public interface AdviserMapper {
     AdviserResponse tResponse(Adviser adviser);
 
     @Mapping(source = "lastName", target = "lastname")
+    @Mapping(source = "teamRole", target = "teamRole")
+    @Mapping(source = "restDay", target = "restDay")
     @Mapping(target = "sales", ignore = true)
     @Mapping(target = "goals", ignore = true)
     @Mapping(target = "monthlySummaries", ignore = true)

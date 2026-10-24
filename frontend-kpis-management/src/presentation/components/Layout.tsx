@@ -6,6 +6,7 @@ import { OnboardingWizard } from "./OnboardingWizard";
 import { useSidebarStore } from "../stores/ui/sidebar.store";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useOnboardingStore } from "../stores/ui/onboarding.store";
+import { useTourStore } from "../stores/ui/tour.store";
 import { FiMenu } from "react-icons/fi";
 
 interface LayoutProps {
@@ -15,6 +16,10 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { isCollapsed, isMobileOpen, openMobile, closeMobile } = useSidebarStore();
   const { visible: onboardingVisible, dismiss: dismissOnboarding } = useOnboardingStore();
+  // La guía de bienvenida espera a que se revise si hay recorrido de novedades, que la reemplaza
+  const releaseChecked = useTourStore((s) => s.releaseChecked);
+  const tourActive = useTourStore((s) => s.active !== null);
+  const showOnboarding = onboardingVisible && releaseChecked && !tourActive;
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
 
@@ -76,7 +81,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </motion.main>
 
       <AnimatePresence>
-        {onboardingVisible && (
+        {showOnboarding && (
           <OnboardingWizard onDismiss={dismissOnboarding} />
         )}
       </AnimatePresence>

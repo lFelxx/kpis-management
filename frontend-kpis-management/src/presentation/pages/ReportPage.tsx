@@ -351,17 +351,17 @@ export const ReportPage = () => {
                   </p>
                 </div>
               )}
-              {salesSummary.bestAvgPriceAdviserName && salesSummary.bestAvgPriceValue != null && (
+              {salesSummary.bestAupAdviserName && salesSummary.bestAupValue != null && (
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
                     <FaBoxOpen className="w-3 h-3 text-amber-400" />
-                    Artículos más caros por factura (AVG)
+                    Precio promedio por artículo (AUP)
                   </p>
                   <p className="text-lg font-black text-foreground">
-                    {salesSummary.bestAvgPriceAdviserName.split(' ').slice(0, 2).join(' ')}
+                    {salesSummary.bestAupAdviserName.split(' ').slice(0, 2).join(' ')}
                   </p>
                   <p className="text-sm font-bold text-amber-500 mt-0.5">
-                    {formatCurrency(salesSummary.bestAvgPriceValue)} / unidad
+                    {formatCurrency(salesSummary.bestAupValue)} / unidad
                   </p>
                 </div>
               )}

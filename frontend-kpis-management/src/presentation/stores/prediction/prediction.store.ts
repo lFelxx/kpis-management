@@ -4,12 +4,14 @@ import { RiskDetection } from '../../../core/domain/Prediction/RiskDetection';
 import { AdviserPrediction } from '../../../core/domain/Prediction/AdviserPrediction';
 import { SalesPattern } from '../../../core/domain/Prediction/SalesPattern';
 import { SalesAnomaly } from '../../../core/domain/Prediction/SalesAnomaly';
+import { AdviserInsight } from '../../../core/domain/Prediction/AdviserInsight';
 import {
   getStoreClosingUseCase,
   getAdviserRiskUseCase,
   getAdviserClosingUseCase,
   getAdviserPatternsUseCase,
   getAdviserAnomaliesUseCase,
+  getAdviserInsightUseCase,
 } from '../../../core/instances/instances';
 
 interface AdviserDetailState {
@@ -17,10 +19,13 @@ interface AdviserDetailState {
   closing: AdviserPrediction | null;
   patterns: SalesPattern | null;
   anomalies: SalesAnomaly | null;
+  insight: AdviserInsight | null;
   loadingRisk: boolean;
   loadingClosing: boolean;
   loadingPatterns: boolean;
   loadingAnomalies: boolean;
+  loadingInsight: boolean;
+  insightError: string | null;
 }
 
 interface PredictionState {
@@ -38,6 +43,7 @@ interface PredictionActions {
   fetchAdviserClosing: (adviserId: number, year: number, month: number) => Promise<void>;
   fetchAdviserPatterns: (adviserId: number) => Promise<void>;
   fetchAdviserAnomalies: (adviserId: number, year: number, month: number) => Promise<void>;
+  fetchAdviserInsight: (adviserId: number, year: number, month: number) => Promise<void>;
 }
 
 type PredictionStore = PredictionState & PredictionActions;
@@ -47,10 +53,13 @@ const emptyAdviserDetail: AdviserDetailState = {
   closing: null,
   patterns: null,
   anomalies: null,
+  insight: null,
   loadingRisk: false,
   loadingClosing: false,
   loadingPatterns: false,
   loadingAnomalies: false,
+  loadingInsight: false,
+  insightError: null,
 };
 
 export const usePredictionStore = create<PredictionStore>((set) => ({
@@ -111,6 +120,22 @@ export const usePredictionStore = create<PredictionStore>((set) => ({
       set((s) => ({ adviserDetail: { ...s.adviserDetail, anomalies, loadingAnomalies: false } }));
     } catch {
       set((s) => ({ adviserDetail: { ...s.adviserDetail, loadingAnomalies: false } }));
+    }
+  },
+
+  fetchAdviserInsight: async (adviserId, year, month) => {
+    set((s) => ({ adviserDetail: { ...s.adviserDetail, loadingInsight: true, insightError: null } }));
+    try {
+      const insight = await getAdviserInsightUseCase.execute(adviserId, year, month);
+      set((s) => ({ adviserDetail: { ...s.adviserDetail, insight, loadingInsight: false } }));
+    } catch {
+      set((s) => ({
+        adviserDetail: {
+          ...s.adviserDetail,
+          loadingInsight: false,
+          insightError: 'No se pudo generar el insight. Verifica la conexión con el servicio de IA.',
+        },
+      }));
     }
   },
 }));

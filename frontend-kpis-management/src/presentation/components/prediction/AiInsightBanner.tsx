@@ -195,7 +195,7 @@ export const AiInsightBanner = ({ data, onClick }: AiInsightBannerProps) => {
               className="text-[9px] font-black uppercase tracking-[0.3em]"
               style={{ color: EMERALD }}
             >
-              Inteligencia IA · En vivo
+              Proyección estadística · Tiempo real
             </span>
           </div>
 

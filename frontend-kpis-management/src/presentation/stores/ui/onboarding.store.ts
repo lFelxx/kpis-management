@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+// Guía de bienvenida (solo usuarios nuevos). Las novedades por versión van en tours/releaseTour.ts
 const STORAGE_KEY = 'kpis_onboarded_v1';
 
 interface OnboardingStore {

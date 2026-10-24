@@ -34,79 +34,90 @@ public class SecurityConfiguration {
     private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(configurationSourceSource()))
-            .exceptionHandling(e -> e.authenticationEntryPoint(authEntryPointJwt))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Rutas públicas (sin autenticación)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/", "/favicon.ico").permitAll() 
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/metrics/**").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(configurationSourceSource()))
+                .exceptionHandling(e -> e.authenticationEntryPoint(authEntryPointJwt))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Rutas públicas (sin autenticación)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/", "/favicon.ico").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/metrics/**").permitAll()
 
-                // Rutas de asesores - GET público, otros métodos requieren autenticación
-                .requestMatchers(HttpMethod.GET, "/api/advisers/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.POST, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.DELETE, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
-                
-                // Rutas de presupuesto - GET público, modificaciones solo ADMIN/MANAGER
-                .requestMatchers(HttpMethod.GET, "/api/v1/budget-template/**").permitAll()
-                .requestMatchers("/api/v1/budget-template/**").hasAnyRole("ADMIN", "MANAGER")
+                        // Rutas de asesores - GET público, otros métodos requieren autenticación
+                        .requestMatchers(HttpMethod.GET, "/api/advisers/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/advisers/**").hasAnyRole("ADMIN", "MANAGER")
 
-                // Rutas de ventas - Requieren autenticación
-                .requestMatchers("/api/v1/sales/**").hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
+                        // Rutas de presupuesto - GET público, modificaciones solo ADMIN/MANAGER
+                        .requestMatchers(HttpMethod.GET, "/api/v1/budget-template/**").permitAll()
+                        .requestMatchers("/api/v1/budget-template/**").hasAnyRole("ADMIN", "MANAGER")
 
-                // Rutas de reporte de ventas CSV
-                .requestMatchers(HttpMethod.POST, "/api/v1/adviser-sales-report/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/adviser-sales-report/**").hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
-                
-                
-                // Cualquier otra ruta requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+                        // Rutas de ventas - Requieren autenticación
+                        .requestMatchers("/api/v1/sales/**").hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
+
+                        // Rutas de reporte de ventas CSV
+                        .requestMatchers(HttpMethod.POST, "/api/v1/adviser-sales-report/**")
+                        .hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/adviser-sales-report/**")
+                        .hasAnyRole("USER", "ADMIN", "ADVISER", "MANAGER")
+
+                        // Rutas de horarios - GET autenticado, modificaciones solo ADMIN/MANAGER
+                        .requestMatchers(HttpMethod.GET, "/api/v1/schedule/**").authenticated()
+                        .requestMatchers("/api/v1/schedule/**").hasAnyRole("ADMIN", "MANAGER")
+
+                        // Turnos (shift templates) - GET público, modificaciones solo ADMIN/MANAGER
+                        .requestMatchers(HttpMethod.GET, "/api/v1/shift-templates/**").permitAll()
+                        .requestMatchers("/api/v1/shift-templates/**").hasAnyRole("ADMIN", "MANAGER")
+
+                        // Reglas de generación - GET autenticado, modificaciones solo ADMIN/MANAGER
+                        .requestMatchers(HttpMethod.GET, "/api/v1/generation-rules/**").authenticated()
+                        .requestMatchers("/api/v1/generation-rules/**").hasAnyRole("ADMIN", "MANAGER")
+
+                        // Cualquier otra ruta requiere autenticación
+                        .anyRequest().authenticated())
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(){
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public CorsConfigurationSource configurationSourceSource(){
+    public CorsConfigurationSource configurationSourceSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:4173",
-            "https://kpis-management.vercel.app",
-            "http://84.247.165.126",
-            "http://84.247.165.126:80",
-            "http://84.247.165.126:3000",
-            "https://kpis-management.online",
-            "https://www.kpis-management.online"
-        ));
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:4173",
+                "https://kpis-management.vercel.app",
+                "http://84.247.165.126",
+                "http://84.247.165.126:80",
+                "http://84.247.165.126:3000",
+                "https://kpis-management.online",
+                "https://www.kpis-management.online"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

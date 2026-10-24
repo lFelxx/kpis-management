@@ -6,6 +6,7 @@ import { RiskDetection } from '../../core/domain/Prediction/RiskDetection';
 import { AdviserPrediction } from '../../core/domain/Prediction/AdviserPrediction';
 import { SalesPattern, DayPattern, WeekPattern } from '../../core/domain/Prediction/SalesPattern';
 import { SalesAnomaly, Anomaly } from '../../core/domain/Prediction/SalesAnomaly';
+import { AdviserInsight } from '../../core/domain/Prediction/AdviserInsight';
 import { PredictionRepository } from '../../core/interfaces/repositories/PredictionRepository';
 import { request } from './apiClient';
 
@@ -274,5 +275,20 @@ export class PredictionApiRepository implements PredictionRepository {
     if (!response.ok) throw new Error('Error al obtener las anomalías del asesor');
     const raw: RawSalesAnomaly = await response.json();
     return toSalesAnomaly(raw);
+  }
+
+  async getAdviserInsight(adviserId: number, year: number, month: number): Promise<AdviserInsight> {
+    const response = await request(
+      `${this.baseUrl}/predictions/insights/${adviserId}?year=${year}&month=${month}`,
+      {},
+      { requireAuth: true }
+    );
+    if (!response.ok) throw new Error('Error al obtener el insight del asesor');
+    const raw: { adviser_id: number; insight_text: string; model_used: string } = await response.json();
+    return {
+      adviserId:   raw.adviser_id,
+      insightText: raw.insight_text,
+      modelUsed:   raw.model_used,
+    };
   }
 }

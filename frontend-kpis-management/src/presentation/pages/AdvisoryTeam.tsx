@@ -63,7 +63,7 @@ export const AdvisoryTeam = () => {
             onClick={openAddModal}
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg shadow-md transition-colors text-sm self-start sm:self-auto"
           >
-            + Agregar asesor
+            + Agregar integrante
           </button>
         </div>
 

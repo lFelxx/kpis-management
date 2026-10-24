@@ -10,6 +10,7 @@ import { AdvisersPage } from "../pages/AdvisersPage";
 import { BudgetTemplatePage } from "../pages/BudgetTemplatePage";
 import { SalesReportUploadPage } from "../pages/SalesReportUploadPage";
 import { InsightsPage } from "../pages/InsightsPage";
+import { SchedulePage } from "../pages/SchedulePage";
 import { Layout } from "../components/Layout";
 import { PublicRoute } from "./PublicRoute";
 
@@ -63,6 +64,11 @@ export const AppRouter = () => {
                 <Route path="/insights" element={
                     <Layout>
                         <InsightsPage />
+                    </Layout>
+                } />
+                <Route path="/schedule" element={
+                    <Layout>
+                        <SchedulePage />
                     </Layout>
                 } />
             </Route>

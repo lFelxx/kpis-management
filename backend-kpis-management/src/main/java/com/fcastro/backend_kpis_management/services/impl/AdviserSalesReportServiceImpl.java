@@ -279,7 +279,7 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 .grossSales(grossSales)
                 .netSales(report.getNetSales())
                 .atv(invoiceCount > 0 ? grossSales / invoiceCount : null)
-                .avgUnitPrice(unitsSold > 0 ? grossSales / unitsSold : null)
+                .aup(unitsSold > 0 ? grossSales / unitsSold : null)
                 .starProductSku(report.getStarProductSku())
                 .starProductQty(report.getStarProductQty())
                 .wowCurrentWeekSales(latestWow.map(WeeklySalesComparison::getCurrentWeekSales).orElse(null))
@@ -309,9 +309,9 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 .max(Comparator.comparingDouble(a -> a.getUpt() != null ? a.getUpt() : 0.0))
                 .orElse(null);
 
-        AdviserSalesReportResponse bestAvgPrice = advisers.stream()
-                .filter(a -> a.getAvgUnitPrice() != null)
-                .max(Comparator.comparingDouble(AdviserSalesReportResponse::getAvgUnitPrice))
+        AdviserSalesReportResponse bestAup = advisers.stream()
+                .filter(a -> a.getAup() != null)
+                .max(Comparator.comparingDouble(AdviserSalesReportResponse::getAup))
                 .orElse(null);
 
         AdviserSalesReportResponse bestAtv = advisers.stream()
@@ -325,9 +325,9 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
                 bestUpt != null ? bestUpt.getAdviserId() : null,
                 bestUpt != null ? bestUpt.getAdviserName() : null,
                 bestUpt != null ? bestUpt.getUpt() : null,
-                bestAvgPrice != null ? bestAvgPrice.getAdviserId() : null,
-                bestAvgPrice != null ? bestAvgPrice.getAdviserName() : null,
-                bestAvgPrice != null ? bestAvgPrice.getAvgUnitPrice() : null,
+                bestAup != null ? bestAup.getAdviserId() : null,
+                bestAup != null ? bestAup.getAdviserName() : null,
+                bestAup != null ? bestAup.getAup() : null,
                 bestAtv != null ? bestAtv.getAdviserId() : null,
                 bestAtv != null ? bestAtv.getAdviserName() : null,
                 bestAtv != null ? bestAtv.getAtv() : null,

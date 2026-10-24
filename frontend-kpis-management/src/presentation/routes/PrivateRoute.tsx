@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth"
 import { Navigate, Outlet } from "react-router-dom";
+import { ReleaseTourHost } from "../components/tour/ReleaseTourHost";
 
 export const PrivateRoute = () =>{
     const { checkAuth } = useAuth();
@@ -26,5 +27,10 @@ export const PrivateRoute = () =>{
     
       if (!isAuthenticated) return <Navigate to="/login" replace />;
     
-      return <Outlet />;
+      return (
+        <>
+          <Outlet />
+          <ReleaseTourHost />
+        </>
+      );
 }

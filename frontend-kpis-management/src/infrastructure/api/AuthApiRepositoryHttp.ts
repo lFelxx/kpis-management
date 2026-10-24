@@ -23,7 +23,7 @@ export class AuthApiRepositoryHttp implements AuthRepository {
 
         const data = await response.json();
         localStorage.setItem('token', data.jwt);
-        return data as User;
+        return { ...data, token: data.jwt } as User;
     }
 
     async logout(): Promise<void> {

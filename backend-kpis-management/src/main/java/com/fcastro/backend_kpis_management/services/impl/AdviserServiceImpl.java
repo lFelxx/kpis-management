@@ -98,6 +98,8 @@ public class AdviserServiceImpl implements AdviserService {
         entity.setLastname(adviser.getLastName());
         entity.setActive(adviser.getActive());
         entity.setUpt(adviser.getUpt());
+        if (adviser.getTeamRole() != null) entity.setTeamRole(adviser.getTeamRole());
+        entity.setRestDay(adviser.getRestDay());
 
         AdviserResponse response = adviserMapper.tResponse(adviserRepository.save(entity));
         LocalDate yesterday = LocalDate.now().minusDays(1);

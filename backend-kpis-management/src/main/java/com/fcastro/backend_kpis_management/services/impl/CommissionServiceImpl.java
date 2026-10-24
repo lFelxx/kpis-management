@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
@@ -39,7 +40,7 @@ public class CommissionServiceImpl implements CommissionService {
 
     @Override
     public double computeStoreGoalAchievementPercent(int year, int month, LocalDate cutoffDate) {
-        List<Adviser> active = adviserRepository.findAllActiveAdvisers();
+        List<Adviser> active = adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING);
         if (active.isEmpty()) return 0.0;
 
         List<MonthlySummary> summaries = monthlySummaryRepository.findByYearAndMonth(year, month);

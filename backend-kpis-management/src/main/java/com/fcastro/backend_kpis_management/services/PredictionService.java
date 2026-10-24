@@ -8,4 +8,5 @@ public interface PredictionService {
     StoreClosingResponse predictStoreClosing(int year, int month);
     PatternResponse analyzePatternsForAdviser(Long adviserId);
     AnomalyResponse detectAnomaliesForAdviser(Long adviserId, int year, int month);
+    AdviserInsightResponse getAdviserInsight(Long adviserId, int year, int month);
 }

@@ -7,6 +7,7 @@ import com.fcastro.backend_kpis_management.model.dto.budget.ParsedBudgetTemplate
 import com.fcastro.backend_kpis_management.model.dto.budget.ParsedDayData;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.AdviserDailyExclusion;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.model.entities.BudgetTemplate;
 import com.fcastro.backend_kpis_management.model.entities.DailyBudgetDistribution;
 import com.fcastro.backend_kpis_management.repositories.AdviserDailyExclusionRepository;
@@ -252,7 +253,7 @@ public class BudgetTemplateServiceImpl implements BudgetTemplateService {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDate firstDay  = LocalDate.of(year, month, 1);
 
-        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING);
         List<Long> adviserIds = activeAdvisers.stream().map(Adviser::getId).toList();
 
         // Una sola query para todas las exclusiones del mes

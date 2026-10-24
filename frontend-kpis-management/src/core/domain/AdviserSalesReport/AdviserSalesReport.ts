@@ -9,7 +9,7 @@ export interface AdviserSalesReport {
   grossSales: number;
   netSales: number;
   atv: number | null;
-  avgUnitPrice: number | null;
+  aup: number | null;
   starProductSku: string | null;
   starProductQty: number | null;
   wowCurrentWeekSales: number | null;
@@ -29,9 +29,9 @@ export interface SalesReportSummary {
   bestUptAdviserId: number | null;
   bestUptAdviserName: string | null;
   bestUptValue: number | null;
-  bestAvgPriceAdviserId: number | null;
-  bestAvgPriceAdviserName: string | null;
-  bestAvgPriceValue: number | null;
+  bestAupAdviserId: number | null;
+  bestAupAdviserName: string | null;
+  bestAupValue: number | null;
   bestAtvAdviserId: number | null;
   bestAtvAdviserName: string | null;
   bestAtvValue: number | null;

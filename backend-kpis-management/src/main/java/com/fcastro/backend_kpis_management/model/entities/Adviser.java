@@ -1,5 +1,6 @@
 package com.fcastro.backend_kpis_management.model.entities;
 
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,6 +27,14 @@ public class Adviser {
 
     @Column(name = "upt")
     private Double upt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "team_role", nullable = false)
+    private TeamRole teamRole = TeamRole.ADVISER;
+
+    /** Día de descanso fijo: 1=lunes … 7=domingo (ISO). Null = sin día fijo asignado. */
+    @Column(name = "rest_day")
+    private Integer restDay;
 
     @OneToMany(mappedBy = "adviser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Sale> sales;

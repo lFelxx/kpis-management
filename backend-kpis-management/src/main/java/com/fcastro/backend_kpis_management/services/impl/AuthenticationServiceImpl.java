@@ -1,5 +1,6 @@
 package com.fcastro.backend_kpis_management.services.impl;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -75,6 +76,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var userDetails = (UserDetailsImpl) auth.getPrincipal();
         String jwt = jwtUtils.genereteToken(userDetails);
 
-        return new AuthenticationResponse(jwt, userDetails.getUsername(), userDetails.getEmail());
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .collect(java.util.stream.Collectors.toList());
+
+        return new AuthenticationResponse(jwt, userDetails.getUsername(), userDetails.getEmail(), roles);
     }
 }

@@ -11,6 +11,7 @@ import com.fcastro.backend_kpis_management.mapper.StoreMetricsMapper;
 import com.fcastro.backend_kpis_management.model.dto.store.StoreMetricsRequest;
 import com.fcastro.backend_kpis_management.model.dto.store.StoreMetricsResponse;
 import com.fcastro.backend_kpis_management.model.entities.StoreMetrics;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
@@ -136,7 +137,7 @@ public class StoreMetricsServiceImpl implements StoreMetricsService {
      * Reutiliza la lógica de MetricsServiceImpl para calcular meta total
      */
     private Double calculateTotalGoal(int year, int month) {
-        return adviserRepository.findAllActiveAdvisers().stream()
+        return adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING).stream()
                 .mapToDouble(adviser -> {
                     return goalRepository
                             .findByAdviserIdAndYearAndMonth(adviser.getId(), year, month)

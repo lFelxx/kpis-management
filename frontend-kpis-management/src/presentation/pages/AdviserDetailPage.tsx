@@ -104,7 +104,7 @@ export const AdviserDetailPage = () => {
             background: 'rgba(248,113,113,0.08)',
             border: '1px solid rgba(248,113,113,0.2)',
           }}>
-          <p className="text-red-400 font-bold mb-4">{error || 'Asesor no encontrado'}</p>
+          <p className="text-red-400 font-bold mb-4">{error || 'Integrante no encontrado'}</p>
           <button onClick={() => navigate('/advisers')} className="btn-primary">
             Volver a la lista
           </button>

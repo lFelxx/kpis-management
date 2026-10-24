@@ -35,8 +35,10 @@ const emptyAdviser: AdviserForm = {
     sales: 0,
     goalValue: 0,
     active: true,
+    teamRole: 'ADVISER',
     previousGoalValue: undefined,
     monthlySummaries: [],
+    restDay: null,
 };
 
 export const useAdviserModalStore = create<AdviserModalStore>((set) => ({

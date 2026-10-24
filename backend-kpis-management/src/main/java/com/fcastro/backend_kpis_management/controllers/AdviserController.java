@@ -43,10 +43,10 @@ public class AdviserController {
     @GetMapping("{id}")
     public AdviserResponse getAdviserById(@PathVariable Long id) {
         return adviserService.getAdviserById(id);
-    }  
-    
+    }
+
     @PostMapping
-    public AdviserResponse CreateAdviser(@RequestBody AdviserRequest adviser) {   
+    public AdviserResponse CreateAdviser(@RequestBody AdviserRequest adviser) {
         return adviserService.create(adviser);
     }
 
@@ -56,7 +56,7 @@ public class AdviserController {
     }
 
     @DeleteMapping("{id}")
-    public void deleteAdviser(@PathVariable Long id){
+    public void deleteAdviser(@PathVariable Long id) {
         adviserService.delete(id);
     }
 }

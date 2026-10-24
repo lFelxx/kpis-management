@@ -6,6 +6,7 @@ import { useAdvisersStore } from '../../../stores/advisers/advisers.store';
 import { notificationService } from '../../../../core/instances/instances';
 import { formatCurrency } from '../../../lib/format';
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { TEAM_ROLE_LABELS, TeamRole } from '../../../../core/domain/Adviser/Adviser';
 
 type FormErrors = {
     name?: string;
@@ -70,7 +71,7 @@ export const AddEditAdviserModal = () => {
                 // Actualiza los datos básicos del asesor
                 await updateAdviser(form.id, form);
 
-                notificationService.showSuccess('Asesor actualizado exitosamente');
+                notificationService.showSuccess('Integrante actualizado exitosamente');
             } else {
                 await createAdviser({
                     ...form,
@@ -78,7 +79,7 @@ export const AddEditAdviserModal = () => {
                     goalValue: Number(tempGoal) || 0,
                     currentMonthSales: Number(tempSales) || 0
                 });
-                notificationService.showSuccess('Asesor creado exitosamente');
+                notificationService.showSuccess('Integrante creado exitosamente');
             }
             closeModal();
             resetForm();
@@ -121,7 +122,7 @@ export const AddEditAdviserModal = () => {
                                 <div className="flex items-center justify-between p-6 border-b border-border">
                                     <div>
                                         <DialogTitle className="text-2xl font-bold text-foreground">
-                                            {form.id ? 'Editar Asesor' : 'Agregar Asesor'}
+                                            {form.id ? 'Editar integrante' : 'Agregar integrante'}
                                         </DialogTitle>
                                     </div>
                                     <button
@@ -143,7 +144,7 @@ export const AddEditAdviserModal = () => {
                                                 value={form.name}
                                                 onChange={(e) => updateField('name', e.target.value)}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
-                                                placeholder="Nombre del asesor"
+                                                placeholder="Nombre del integrante"
                                                 required
                                             />
                                             {formErrors.name && <p className="text-sm text-destructive mt-1">{formErrors.name}</p>}
@@ -157,7 +158,7 @@ export const AddEditAdviserModal = () => {
                                                 value={form.lastName}
                                                 onChange={(e) => updateField('lastName', e.target.value)}
                                                 className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-lg font-bold transition"
-                                                placeholder="Apellido del asesor"
+                                                placeholder="Apellido del integrante"
                                                 required
                                             />
                                             {formErrors.lastName && <p className="text-sm text-destructive mt-1">{formErrors.lastName}</p>}
@@ -203,6 +204,20 @@ export const AddEditAdviserModal = () => {
                                                 Formato: <span className="font-semibold text-primary">{formatCurrency(Number(tempGoal) || 0)}</span>
                                             </p>
                                             {formErrors.goalValue && <p className="text-sm text-destructive mt-1">{formErrors.goalValue}</p>}
+                                        </div>
+
+                                        {/* Rol de equipo */}
+                                        <div className="text-left">
+                                            <label className="block text-sm font-semibold text-foreground mb-2">Rol en el equipo</label>
+                                            <select
+                                                value={form.teamRole ?? 'ADVISER'}
+                                                onChange={(e) => updateField('teamRole', e.target.value as TeamRole)}
+                                                className="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-input text-foreground text-base font-semibold transition"
+                                            >
+                                                {(Object.entries(TEAM_ROLE_LABELS) as [TeamRole, string][]).map(([value, label]) => (
+                                                    <option key={value} value={value}>{label}</option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         {/* Activo */}

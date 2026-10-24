@@ -36,6 +36,10 @@ public class MlServiceClient {
         return post("/analyze/anomalies", request, AnomalyResponse.class);
     }
 
+    public AdviserInsightResponse getAdviserInsight(AdviserInsightRequest request) {
+        return post("/insights/adviser-summary", request, AdviserInsightResponse.class);
+    }
+
     private <T> T post(String uri, Object body, Class<T> responseType) {
         return webClient.post()
                 .uri(uri)

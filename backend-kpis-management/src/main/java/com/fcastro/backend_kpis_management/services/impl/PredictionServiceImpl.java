@@ -4,6 +4,7 @@ import com.fcastro.backend_kpis_management.client.MlServiceClient;
 import com.fcastro.backend_kpis_management.exceptions.ResourceNotFoundException;
 import com.fcastro.backend_kpis_management.model.dto.budget.DailyDistributionResponse;
 import com.fcastro.backend_kpis_management.model.dto.prediction.*;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
 import com.fcastro.backend_kpis_management.model.entities.Sale;
@@ -95,7 +96,7 @@ public class PredictionServiceImpl implements PredictionService {
         LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
         LocalDate cutoff = isFutureOrCurrentMonth(today, year, month) ? today : lastDay;
 
-        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING);
         List<Long> adviserIds = activeAdvisers.stream().map(Adviser::getId).toList();
 
         Map<Long, Double> goals = resolveFullMonthGoalsForAll(adviserIds, year, month);
@@ -122,6 +123,62 @@ public class PredictionServiceImpl implements PredictionService {
         List<HistoricalMonthDto> history = buildHistoricalMonths(adviser, LocalDate.now().getYear(), LocalDate.now().getMonthValue());
 
         return mlServiceClient.analyzePatterns(new PatternRequest(adviserId, history));
+    }
+
+    // ── Insight de IA por asesor ──────────────────────────────────────────────
+
+    @Override
+    public AdviserInsightResponse getAdviserInsight(Long adviserId, int year, int month) {
+        ClosingPredictionResponse closing  = predictClosingForAdviser(adviserId, year, month);
+        RiskDetectionResponse     risk     = detectRiskForAdviser(adviserId, year, month);
+        PatternResponse           patterns = safeAnalyzePatterns(adviserId);
+        AnomalyResponse           anomalies = safeDetectAnomalies(adviserId, year, month);
+
+        // closing ya contiene adviserName implícitamente; usamos risk.adviserName() que
+        // viene del campo adviser_name del ML service (ambos lo incluyen).
+        return mlServiceClient.getAdviserInsight(new AdviserInsightRequest(
+                adviserId,
+                risk.adviserName(),
+                year,
+                month,
+                closing.daysInMonth() - closing.daysRemaining(),
+                closing.daysInMonth(),
+                closing.currentSales(),
+                closing.fullMonthGoal(),
+                closing.projectedSales(),
+                closing.projectedAchievementPct(),
+                closing.confidence(),
+                closing.riskLevel(),
+                closing.daysRemaining(),
+                closing.historicalDailyRate(),
+                closing.trendMonthlyPct(),
+                closing.trendDirection(),
+                risk.riskScore(),
+                risk.alertLevel(),
+                risk.paceRatio(),
+                risk.daysToAct(),
+                risk.reason(),
+                patterns != null ? patterns.bestDayOfWeek()   : null,
+                patterns != null ? patterns.worstDayOfWeek()  : null,
+                patterns != null ? patterns.bestWeekOfMonth() : null,
+                anomalies != null ? anomalies.anomalyCount()  : 0
+        ));
+    }
+
+    private PatternResponse safeAnalyzePatterns(Long adviserId) {
+        try {
+            return analyzePatternsForAdviser(adviserId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private AnomalyResponse safeDetectAnomalies(Long adviserId, int year, int month) {
+        try {
+            return detectAnomaliesForAdviser(adviserId, year, month);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ── Detección de anomalías por asesor ─────────────────────────────────────

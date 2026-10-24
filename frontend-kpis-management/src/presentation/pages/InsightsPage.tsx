@@ -1447,7 +1447,171 @@ function AdviserRow({
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
 
-type DetailTab = 'closing' | 'patterns' | 'simulator';
+type DetailTab = 'closing' | 'patterns' | 'simulator' | 'ai';
+
+// ── AI Insight Tab ────────────────────────────────────────────────────────────
+
+const GEMINI_PURPLE = '#8b5cf6';
+
+function AiInsightTab({ adviserId, year, month }: { adviserId: number; year: number; month: number }) {
+  const { fetchAdviserInsight, adviserDetail } = usePredictionStore();
+  const { insight, loadingInsight, insightError } = adviserDetail;
+
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping]           = useState(false);
+  const [generated, setGenerated]         = useState(false);
+
+  // Resetea el estado local cuando cambia el asesor seleccionado.
+  useEffect(() => {
+    setGenerated(false);
+    setDisplayedText('');
+    setIsTyping(false);
+  }, [adviserId]);
+
+  const handleGenerate = () => {
+    setGenerated(true);
+    setDisplayedText('');
+    fetchAdviserInsight(adviserId, year, month);
+  };
+
+  useEffect(() => {
+    if (!insight || loadingInsight) return;
+    setIsTyping(true);
+    setDisplayedText('');
+    let i = 0;
+    const text = insight.insightText;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedText(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(interval);
+        setIsTyping(false);
+      }
+    }, 18);
+    return () => clearInterval(interval);
+  }, [insight?.insightText, loadingInsight]);
+
+  if (!generated) {
+    return (
+      <motion.div
+        key="ai-idle"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center gap-4 py-6 px-2 text-center"
+      >
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center"
+          style={{ background: `${GEMINI_PURPLE}18`, border: `1px solid ${GEMINI_PURPLE}30` }}
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M14 3C14 3 8 8 8 14s6 11 6 11 6-5 6-11S14 3 14 3z" fill={`${GEMINI_PURPLE}60`} />
+            <circle cx="14" cy="14" r="3.5" fill={GEMINI_PURPLE} />
+            <path d="M3 14h5M20 14h5M14 3v5M14 20v5" stroke={GEMINI_PURPLE} strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+          </svg>
+        </div>
+        <div>
+          <div className="text-xs font-black" style={{ color: 'var(--t-primary)' }}>Análisis con IA</div>
+          <div className="text-[10px] mt-1 leading-relaxed" style={{ color: 'var(--t-muted)', maxWidth: 200 }}>
+            Genera un insight accionable basado en todos los datos de proyección, riesgo y patrones de este asesor.
+          </div>
+        </div>
+        <motion.button
+          onClick={handleGenerate}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest cursor-pointer"
+          style={{
+            background: `${GEMINI_PURPLE}20`,
+            border:     `1px solid ${GEMINI_PURPLE}50`,
+            color:      GEMINI_PURPLE,
+          }}
+        >
+          Generar insight
+        </motion.button>
+        <div className="text-[9px] flex items-center gap-1" style={{ color: 'var(--t-micro)' }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.2 9.2 2 12l7.2 2.8L12 22l2.8-7.2L22 12l-7.2-2.8z"/></svg>
+          Powered by Gemini 1.5 Flash
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (loadingInsight) {
+    return (
+      <motion.div key="ai-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8 flex flex-col items-center gap-3">
+        <div className="flex gap-1">
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ background: GEMINI_PURPLE }}
+              animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+            />
+          ))}
+        </div>
+        <div className="text-[10px]" style={{ color: 'var(--t-muted)' }}>Consultando Gemini AI…</div>
+      </motion.div>
+    );
+  }
+
+  if (insightError) {
+    return (
+      <motion.div key="ai-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 text-center">
+        <div className="text-[10px] mb-3" style={{ color: RED }}>{insightError}</div>
+        <button
+          onClick={handleGenerate}
+          className="text-[10px] underline cursor-pointer"
+          style={{ color: 'var(--t-muted)' }}
+        >
+          Reintentar
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div key="ai-result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+      <div
+        className="rounded-xl p-4 relative overflow-hidden"
+        style={{ background: `${GEMINI_PURPLE}0c`, border: `1px solid ${GEMINI_PURPLE}25` }}
+      >
+        <div className="absolute top-3 right-3 opacity-20">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={GEMINI_PURPLE}><path d="M12 2L9.2 9.2 2 12l7.2 2.8L12 22l2.8-7.2L22 12l-7.2-2.8z"/></svg>
+        </div>
+        <p
+          className="text-[11px] leading-[1.7] pr-4"
+          style={{ color: 'var(--t-primary)', fontStyle: 'normal', whiteSpace: 'pre-wrap' }}
+        >
+          {displayedText}
+          {isTyping && (
+            <motion.span
+              className="inline-block w-[1px] h-3 ml-0.5 align-middle"
+              style={{ background: GEMINI_PURPLE }}
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity }}
+            />
+          )}
+        </p>
+      </div>
+      <div className="flex items-center justify-between px-0.5">
+        <div className="text-[9px] flex items-center gap-1" style={{ color: 'var(--t-micro)' }}>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.2 9.2 2 12l7.2 2.8L12 22l2.8-7.2L22 12l-7.2-2.8z"/></svg>
+          Gemini 1.5 Flash · Este insight es orientativo
+        </div>
+        {!isTyping && (
+          <button
+            onClick={handleGenerate}
+            className="text-[9px] cursor-pointer transition-opacity hover:opacity-80"
+            style={{ color: GEMINI_PURPLE }}
+          >
+            Regenerar
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 function AdviserDetailPanel({
   adviserId, adviserName, year, month, onClose, onScrollToPlan,
@@ -1463,6 +1627,7 @@ function AdviserDetailPanel({
     { key: 'closing',   label: 'Proyección' },
     { key: 'patterns',  label: 'Patrones'   },
     { key: 'simulator', label: 'Simulador'  },
+    { key: 'ai',        label: '✦ IA'       },
   ];
 
   return (
@@ -1499,20 +1664,25 @@ function AdviserDetailPanel({
 
       {/* Tabs */}
       <div className="flex px-3 pt-3 gap-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide cursor-pointer transition-all duration-200"
-            style={{
-              color:      activeTab === tab.key ? EMERALD : 'var(--t-muted)',
-              background: activeTab === tab.key ? `${EMERALD}15` : 'transparent',
-              border:     `1px solid ${activeTab === tab.key ? `${EMERALD}30` : 'transparent'}`,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const isAi   = tab.key === 'ai';
+          const accent = isAi ? GEMINI_PURPLE : EMERALD;
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide cursor-pointer transition-all duration-200"
+              style={{
+                color:      active ? accent : isAi ? `${GEMINI_PURPLE}90` : 'var(--t-muted)',
+                background: active ? `${accent}18` : 'transparent',
+                border:     `1px solid ${active ? `${accent}35` : isAi ? `${GEMINI_PURPLE}20` : 'transparent'}`,
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
@@ -1540,6 +1710,14 @@ function AdviserDetailPanel({
               transition={{ duration: 0.2 }}
             >
               <SimulatorTab detail={detail} />
+            </motion.div>
+          )}
+          {activeTab === 'ai' && (
+            <motion.div key="ai"
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AiInsightTab adviserId={adviserId} year={year} month={month} />
             </motion.div>
           )}
         </AnimatePresence>

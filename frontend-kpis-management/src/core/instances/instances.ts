@@ -1,4 +1,6 @@
 import { AdviserApiRepository } from "../../infrastructure/api/AdviserApiRepository";
+import { ScheduleApiRepository } from "../../infrastructure/api/ScheduleApiRepository";
+import { AppInfoApiRepository } from "../../infrastructure/api/AppInfoApiRepository";
 import { PredictionApiRepository } from "../../infrastructure/api/PredictionApiRepository";
 import { AdviserSalesReportApiRepository } from "../../infrastructure/api/AdviserSalesReportApiRepository";
 import { BudgetTemplateApiRepository } from "../../infrastructure/api/BudgetTemplateApiRepository";
@@ -25,6 +27,7 @@ import { GetAdviserRiskUseCase } from "../usecases/prediction/GetAdviserRiskUseC
 import { GetAdviserClosingUseCase } from "../usecases/prediction/GetAdviserClosingUseCase";
 import { GetAdviserPatternsUseCase } from "../usecases/prediction/GetAdviserPatternsUseCase";
 import { GetAdviserAnomaliesUseCase } from "../usecases/prediction/GetAdviserAnomaliesUseCase";
+import { GetAdviserInsightUseCase } from "../usecases/prediction/GetAdviserInsightUseCase";
 
 // Auth use cases
 import { LoginUseCase } from "../usecases/auth/LoginUseCase";
@@ -91,7 +94,14 @@ export const getAdviserRiskUseCase = new GetAdviserRiskUseCase(predictionReposit
 export const getAdviserClosingUseCase = new GetAdviserClosingUseCase(predictionRepository);
 export const getAdviserPatternsUseCase = new GetAdviserPatternsUseCase(predictionRepository);
 export const getAdviserAnomaliesUseCase = new GetAdviserAnomaliesUseCase(predictionRepository);
+export const getAdviserInsightUseCase = new GetAdviserInsightUseCase(predictionRepository);
 
 // ─── Adviser sales report use cases ──────────────────────────────────────────
 export const uploadSalesReportUseCase = new UploadSalesReportUseCase(adviserSalesReportRepository);
 export const getSalesReportUseCase = new GetSalesReportUseCase(adviserSalesReportRepository);
+
+// ─── Schedule repository ──────────────────────────────────────────────────────
+export const scheduleRepository = new ScheduleApiRepository(config.apiUrl);
+
+// ─── App info repository ──────────────────────────────────────────────────────
+export const appInfoRepository = new AppInfoApiRepository(config.apiUrl);

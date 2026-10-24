@@ -42,7 +42,7 @@ export const DeleteAdviserModal = () => {
                   <div className="flex items-center justify-between p-6 border-b border-border">
                     <div>
                       <DialogTitle className="text-2xl font-bold text-foreground">
-                        ¿Eliminar asesor?
+                        ¿Eliminar integrante?
                       </DialogTitle>
                     </div>
                     <button
@@ -56,7 +56,7 @@ export const DeleteAdviserModal = () => {
                   {/* Content */}
                   <div className="p-6">
                     <p className="text-foreground font-medium">
-                      Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este asesor?
+                      Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este integrante?
                     </p>
                   </div>
 

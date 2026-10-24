@@ -6,6 +6,7 @@ import {
   FaChartBar,
   FaExclamationTriangle,
   FaTachometerAlt,
+  FaCalendarAlt,
 } from 'react-icons/fa';
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? '1.0';
@@ -28,12 +29,12 @@ const STEPS: Step[] = [
     accent:  '#10b981',
     label:   `v${APP_VERSION}`,
     title:   '¡Hay novedades en la app!',
-    body:    'Esta versión trae nuevas métricas, alertas automáticas y una mejor experiencia de carga. La guía te muestra los cambios clave en 4 pasos rápidos.',
+    body:    'Esta versión trae el módulo de Horarios y varias mejoras. La guía te muestra los cambios clave en 5 pasos rápidos.',
     bullets: [
-      'PAF Global — presupuesto acumulado a la fecha según distribución de días',
-      'Proyección al cierre del mes en el Total Ventas',
-      'Alerta automática de asesores en riesgo de meta (< 80%)',
-      'Skeleton loaders en Dashboard y Asesores',
+      'Horarios: arma, publica y exporta el horario semanal',
+      'Selector de hora cada 10 minutos, con doble clic para escribir una hora exacta',
+      'Exportar a Excel con el formato y los logos de la tienda',
+      'Confirmación antes de limpiar un horario',
     ],
   },
   {
@@ -71,6 +72,15 @@ const STEPS: Step[] = [
     title:   'Las métricas en un vistazo',
     body:    'El dashboard centraliza 6 indicadores: Total Ventas (con proyección), Meta Total del mes, Cumplimiento, PAF Global, Mejor UPT y Líder de Ventas del equipo.',
     tip:     'El PAF Global es el presupuesto acumulado hasta hoy según la distribución de días cargada — no el mes completo.',
+  },
+  {
+    number:  '05',
+    icon:    FaCalendarAlt,
+    accent:  '#8b5cf6',
+    label:   'Horarios',
+    title:   'Arma el horario semanal',
+    body:    'Elige un turno en la barra y píntalo sobre la semana. Al entrar siempre ves la semana actual. El número grande es lo trabajado sin almuerzo y debajo ves el total real con almuerzo.',
+    tip:     'Para una hora exacta, haz doble clic en el selector y escríbela (ej. 8:25 am). Limpiar ahora pide confirmación antes de borrar el horario.',
   },
 ];
 

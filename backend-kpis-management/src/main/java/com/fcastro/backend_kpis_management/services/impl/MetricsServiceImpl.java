@@ -9,6 +9,7 @@ import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
 import com.fcastro.backend_kpis_management.model.entities.MonthlySummary;
 import com.fcastro.backend_kpis_management.model.entities.Sale;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.AdviserSalesReportRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
@@ -49,7 +50,7 @@ public class MetricsServiceImpl implements MetricsService {
 
     @Override
     public DashboardMetricsResponse getDashboardMetrics(int year, int month, LocalDate cutoffDate) {
-        List<Adviser> activeAdvisers = adviserRepository.findAllActiveAdvisers();
+        List<Adviser> activeAdvisers = adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING);
 
         if (activeAdvisers.isEmpty()) {
             return new DashboardMetricsResponse(

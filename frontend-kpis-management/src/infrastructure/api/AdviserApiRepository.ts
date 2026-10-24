@@ -25,13 +25,23 @@ export class AdviserApiRepository implements AdviserRepository {
   }
 
   async create(adviser: Omit<Adviser, 'id'>): Promise<Adviser> {
+    const payload = {
+      name:      adviser.name,
+      lastName:  adviser.lastName,
+      active:    adviser.active,
+      goalValue: adviser.goalValue ?? 0,
+      teamRole:  adviser.teamRole ?? 'ADVISER',
+      upt:       adviser.upt ?? null,
+      restDay:   adviser.restDay ?? null,
+    };
     const response = await request(
       `${this.baseUrl}/advisers`,
-      { method: 'POST', body: JSON.stringify(adviser) },
+      { method: 'POST', body: JSON.stringify(payload) },
       { requireAuth: true }
     );
     if (!response.ok) {
-      throw new Error('Error al crear el asesor');
+      const text = await response.text().catch(() => '');
+      throw new Error(text || 'Error al crear el integrante');
     }
     return response.json();
   }

@@ -1,4 +1,4 @@
-import { Adviser } from "../../../core/domain/Adviser/Adviser";
+import { Adviser, TEAM_ROLE_LABELS } from "../../../core/domain/Adviser/Adviser";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { UpdateAllGoalsModal } from "./modals/UpdateAllGoalsModal";
@@ -47,7 +47,7 @@ export const AdviserTable = ({
               Listado General
             </span>
             <h2 className="text-lg sm:text-2xl font-black tracking-tighter" style={{ color: 'var(--t-primary)' }}>
-              Lista de Asesores
+              Lista de Integrantes
             </h2>
           </div>
           {!hideActions && (
@@ -65,7 +65,7 @@ export const AdviserTable = ({
             <thead>
               <tr style={{ background: 'var(--s-subtle)' }}>
                 <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-[10px] font-black uppercase tracking-widest"
-                  style={{ color: 'var(--t-micro)' }}>Asesor</th>
+                  style={{ color: 'var(--t-micro)' }}>Integrante</th>
                 <th className="px-3 sm:px-6 py-3 sm:py-4 text-[10px] font-black uppercase tracking-widest text-left"
                   style={{ color: 'var(--t-micro)' }}>Ventas</th>
                 <th className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 text-[10px] font-black uppercase tracking-widest text-left"
@@ -82,10 +82,10 @@ export const AdviserTable = ({
                 <tr>
                   <td colSpan={hideActions ? 5 : 6} className="px-7 py-12 text-center">
                     <p className="text-sm font-medium" style={{ color: 'var(--t-muted)' }}>
-                      No hay asesores registrados.
+                      No hay integrantes registrados.
                     </p>
                     <p className="text-xs mt-1" style={{ color: 'var(--t-micro)' }}>
-                      Usa el botón &quot;+ Agregar asesor&quot; para crear el primero.
+                      Usa el botón &quot;+ Agregar integrante&quot; para crear el primero.
                     </p>
                   </td>
                 </tr>
@@ -120,9 +120,16 @@ export const AdviserTable = ({
                           >
                             {initials}
                           </div>
-                          <span className="font-bold text-base group-hover:text-emerald-400 transition-colors duration-200" style={{ color: 'var(--t-secondary)' }}>
-                            {adviser.name} {adviser.lastName}
-                          </span>
+                          <div>
+                            <span className="font-bold text-base group-hover:text-emerald-400 transition-colors duration-200" style={{ color: 'var(--t-secondary)' }}>
+                              {adviser.name} {adviser.lastName}
+                            </span>
+                            {adviser.teamRole && adviser.teamRole !== 'ADVISER' && (
+                              <span className="block text-[10px] font-semibold mt-0.5" style={{ color: 'var(--t-micro)' }}>
+                                {TEAM_ROLE_LABELS[adviser.teamRole]}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
 
