@@ -226,7 +226,7 @@ public class MetricsServiceImpl implements MetricsService {
     // ─── UPT desde CSV ───────────────────────────────────────────────────────
 
     private Map<Long, Double> buildUptMap(int year, int month) {
-        return adviserSalesReportRepository.findByYearAndMonth(year, month).stream()
+        return adviserSalesReportRepository.findByYearAndMonthExcludingRoles(year, month, TeamRole.NON_SELLING).stream()
                 .collect(Collectors.toMap(
                         r -> r.getAdviser().getId(),
                         AdviserSalesReport::getUpt,
