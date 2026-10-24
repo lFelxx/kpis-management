@@ -37,7 +37,7 @@ export const ReportPage = () => {
   const currentDateLabel = `${cutoff.getDate()} de ${MONTH_NAMES[currentMonth]} de ${currentYear}`;
 
   useEffect(() => {
-    fetchAdvisers(cutoffDate);
+    fetchAdvisers(cutoffDate, true);
     fetchMetrics();
     fetchReports(currentYear, currentMonth);
     window.scrollTo(0, 0);
@@ -165,7 +165,7 @@ export const ReportPage = () => {
           <p className="text-destructive font-bold mb-4">{error}</p>
           <button
             onClick={() => {
-              fetchAdvisers(cutoffDate);
+              fetchAdvisers(cutoffDate, true);
               fetchMetrics();
             }}
             className="btn-primary"

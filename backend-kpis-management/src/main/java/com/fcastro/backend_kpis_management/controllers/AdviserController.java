@@ -30,9 +30,10 @@ public class AdviserController {
 
     @GetMapping
     public List<AdviserResponse> getAllAdvisers(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cutoffDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cutoffDate,
+            @RequestParam(defaultValue = "false") boolean sellingOnly) {
         LocalDate effective = cutoffDate != null ? cutoffDate : LocalDate.now().minusDays(1);
-        return adviserService.getAdvisers(effective);
+        return adviserService.getAdvisers(effective, sellingOnly);
     }
 
     @GetMapping("{id}/commissions/monthly")

@@ -24,7 +24,7 @@ interface AdvisersState {
 }
 
 interface AdvisersActions {
-    fetchAdvisers: (cutoffDate: string) => Promise<void>;
+    fetchAdvisers: (cutoffDate: string, sellingOnly?: boolean) => Promise<void>;
     fetchAdviserById: (id: string) => Promise<Adviser | null>;
     createAdviser: (adviser: Omit<Adviser, 'id'>) => Promise<Adviser>;
     updateAdviser: (id: string, data: Partial<Adviser>) => Promise<Adviser>;
@@ -48,10 +48,10 @@ export const useAdvisersStore = create<AdvisersStore>((set, get) => ({
     loading: false,
     error: null,
 
-    fetchAdvisers: async (cutoffDate: string) => {
+    fetchAdvisers: async (cutoffDate: string, sellingOnly = false) => {
         set({ loading: true, error: null });
         try {
-            const data = await getAllAdvisersUseCase.execute(cutoffDate);
+            const data = await getAllAdvisersUseCase.execute(cutoffDate, sellingOnly);
             set({ advisers: data, loading: false });
         } catch (error) {
             const errorMessage = (error as Error).message;
@@ -127,7 +127,7 @@ export const useAdvisersStore = create<AdvisersStore>((set, get) => ({
         set({ loading: true, error: null });
         try {
             await handleSumUseCase.execute(adviser, value);
-            await get().fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
+            await get().fetchAdvisers(new Date(Date.now() - 864e5).toISOString().slice(0, 10), true);
             set({ loading: false });
         } catch (error) {
             const errorMessage = (error as Error).message;

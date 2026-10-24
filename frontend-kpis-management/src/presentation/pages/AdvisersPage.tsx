@@ -26,7 +26,7 @@ export const AdvisersPage: React.FC = () => {
   const currentMonth = cutoff.getMonth() + 1;
 
   useEffect(() => {
-    fetchAdvisers(cutoffDate);
+    fetchAdvisers(cutoffDate, true);
     fetchMetrics();
     fetchReports(currentYear, currentMonth);
   }, [fetchAdvisers, fetchMetrics, fetchReports, cutoffDate, currentYear, currentMonth]);
@@ -87,7 +87,7 @@ export const AdvisersPage: React.FC = () => {
         <p className="text-destructive/80">{error}</p>
         <button
           onClick={() => {
-            fetchAdvisers(cutoffDate);
+            fetchAdvisers(cutoffDate, true);
             fetchMetrics();
           }}
           className="mt-4 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"

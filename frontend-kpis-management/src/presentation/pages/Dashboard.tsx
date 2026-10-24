@@ -49,7 +49,7 @@ export const Dashboard = () => {
   const { template, fetchTemplate } = useBudgetStore();
 
   useEffect(() => {
-    fetchAdvisers(cutoffDate);
+    fetchAdvisers(cutoffDate, true);
     fetchMetrics();
     fetchTemplate(currentYear, currentMonth);
     window.scrollTo(0, 0);
@@ -129,7 +129,7 @@ export const Dashboard = () => {
         <div className="bg-red-500/10 p-8 rounded-[2rem] border border-red-500/20 text-center max-w-sm">
           <p className="text-red-600 dark:text-red-400 font-bold mb-4">{error}</p>
           <button
-            onClick={() => { fetchAdvisers(cutoffDate); fetchMetrics(); }}
+            onClick={() => { fetchAdvisers(cutoffDate, true); fetchMetrics(); }}
             className="btn-primary"
           >
             Reintentar

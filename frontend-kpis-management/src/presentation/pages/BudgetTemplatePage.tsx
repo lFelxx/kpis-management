@@ -206,14 +206,14 @@ export const BudgetTemplatePage = () => {
 
   useEffect(() => {
     const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
-    fetchAdvisers(yesterday);
+    fetchAdvisers(yesterday, true);
   }, [fetchAdvisers]);
 
   // Re-fetch advisers cuando el template cambia (toggle de ausencias recalcula fullMonthGoal en backend)
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return; }
     const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
-    fetchAdvisers(yesterday);
+    fetchAdvisers(yesterday, true);
   }, [template, fetchAdvisers]);
 
   useEffect(() => {

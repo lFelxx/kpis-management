@@ -2,7 +2,7 @@ import { Adviser } from '../../domain/Adviser/Adviser';
 import { DashboardMetrics } from '../../domain/Adviser/DashboardMetrics';
 
 export interface AdviserRepository {
-  getAll(cutoffDate: string): Promise<Adviser[]>;
+  getAll(cutoffDate: string, sellingOnly?: boolean): Promise<Adviser[]>;
   getById(id: string): Promise<Adviser | null>;
   create(adviser: Omit<Adviser, 'id' | 'createdAt' | 'updatedAt'>): Promise<Adviser>;
   update(id: string, adviser: Partial<Adviser>): Promise<Adviser>;

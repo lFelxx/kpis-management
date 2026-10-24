@@ -7,8 +7,8 @@ export class AdviserApiRepository implements AdviserRepository {
 
   constructor(private readonly baseUrl: string) {}
 
-  async getAll(cutoffDate: string): Promise<Adviser[]> {
-    const response = await request(`${this.baseUrl}/advisers?cutoffDate=${cutoffDate}`);
+  async getAll(cutoffDate: string, sellingOnly = false): Promise<Adviser[]> {
+    const response = await request(`${this.baseUrl}/advisers?cutoffDate=${cutoffDate}&sellingOnly=${sellingOnly}`);
     if (!response.ok) {
       throw new Error('Error al obtener los asesores');
     }

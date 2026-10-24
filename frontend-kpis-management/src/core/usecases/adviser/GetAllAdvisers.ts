@@ -4,8 +4,8 @@ import { AdviserRepository } from '../../interfaces/repositories/AdviserReposito
 export class GetAllAdvisersUseCase {
   constructor(private adviserRepository: AdviserRepository) {}
 
-  async execute(cutoffDate: string): Promise<Adviser[]> {
-    const advisers = await this.adviserRepository.getAll(cutoffDate);
+  async execute(cutoffDate: string, sellingOnly = false): Promise<Adviser[]> {
+    const advisers = await this.adviserRepository.getAll(cutoffDate, sellingOnly);
     return advisers ?? [];
   }
 } 

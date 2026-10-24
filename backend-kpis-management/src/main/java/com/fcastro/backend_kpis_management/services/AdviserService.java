@@ -9,7 +9,7 @@ import com.fcastro.backend_kpis_management.model.dto.sale.SaleRequest;
 import com.fcastro.backend_kpis_management.model.dto.sale.WeekSale;
 
 public interface AdviserService {
-    List<AdviserResponse> getAdvisers(LocalDate cutoffDate);
+    List<AdviserResponse> getAdvisers(LocalDate cutoffDate, boolean sellingOnly);
 
     AdviserResponse create(AdviserRequest adviser);
 

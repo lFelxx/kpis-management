@@ -14,7 +14,7 @@ export function useAdviserUI() {
         if (!adviser) return;
         try {
             await handleSumUseCase.execute(adviser, Number(value));
-            await advisersStore.fetchAdvisers(useReportingDateStore.getState().cutoffDate);
+            await advisersStore.fetchAdvisers(useReportingDateStore.getState().cutoffDate, true);
             actionModalStore.closeSumModal();
             notificationService.showSuccess('Suma aplicada exitosamente');
         } catch {
@@ -39,7 +39,7 @@ export function useAdviserUI() {
         if (!adviser) return;
         try {
             await advisersStore.updateAdviser(adviser.id, { ...adviser, upt: value });
-            await advisersStore.fetchAdvisers(useReportingDateStore.getState().cutoffDate);
+            await advisersStore.fetchAdvisers(useReportingDateStore.getState().cutoffDate, true);
             actionModalStore.closeUptModal();
             notificationService.showSuccess('UPT actualizado exitosamente');
         } catch {

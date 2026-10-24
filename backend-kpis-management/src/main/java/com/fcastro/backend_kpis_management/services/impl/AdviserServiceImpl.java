@@ -18,6 +18,7 @@ import com.fcastro.backend_kpis_management.model.dto.sale.WeekSale;
 import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.Goal;
 import com.fcastro.backend_kpis_management.model.entities.Sale;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.BudgetTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.GoalRepository;
@@ -52,9 +53,11 @@ public class AdviserServiceImpl implements AdviserService {
     private final MonthlySummaryRepository monthlySummaryRepository;
 
     @Override
-    public List<AdviserResponse> getAdvisers(LocalDate cutoffDate) {
+    public List<AdviserResponse> getAdvisers(LocalDate cutoffDate, boolean sellingOnly) {
         log.info("Obteniendo lista de asesores");
-        List<Adviser> advisers = adviserRepository.findAll();
+        List<Adviser> advisers = sellingOnly
+                ? adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING)
+                : adviserRepository.findAll();
         List<AdviserResponse> responses = adviserMapper.toResponseList(advisers);
         enrichGoal(responses, cutoffDate);
         enrichSales(responses, cutoffDate);

@@ -37,7 +37,7 @@ export const AdviserDetailPage = () => {
   }, [id, fetchAdviserById, clearSelectAdviser]);
 
   useEffect(() => {
-    fetchAdvisers(cutoffDate);
+    fetchAdvisers(cutoffDate, true);
     fetchReports(currentYear, currentMonth);
   }, [cutoffDate, fetchAdvisers, fetchReports, currentYear, currentMonth]);
 
