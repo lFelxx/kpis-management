@@ -31,7 +31,7 @@ interface ScheduleActions {
   clearCurrent(): void;
 }
 
-export const useScheduleStore = create<ScheduleState & ScheduleActions>((set, get) => ({
+export const useScheduleStore = create<ScheduleState & ScheduleActions>((set) => ({
   summaries: [],
   current: null,
   config: null,

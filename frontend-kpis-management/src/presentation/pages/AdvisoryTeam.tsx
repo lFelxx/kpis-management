@@ -18,6 +18,7 @@ const emptyAdviser: Adviser = {
   sales: 0,
   goalValue: 0,
   active: true,
+  teamRole: 'ADVISER',
 };
 
 export const AdvisoryTeam = () => {

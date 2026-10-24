@@ -404,7 +404,6 @@ export function SchedulePage() {
               schedule={current}
               weekDates={weekDates}
               brushes={brushes}
-              activeBrush={activeBrush}
               onCellClick={handleCellClick}
             />
           </div>

@@ -161,14 +161,15 @@ describe('FeatureTour', () => {
       act(() => useTourStore.getState().start(boxOnlyTour));
 
       const dialog = await screen.findByRole('dialog');
-      const initialTop = dialog.style.top;
-      expect(initialTop).not.toBe('');
+      // Elemento grande → tarjeta acoplada abajo → usa `bottom`, no `top`
+      const initialBottom = dialog.style.bottom;
+      expect(initialBottom).not.toBe('');
 
       for (const top of [-300, -800, 400, -1500, 20]) {
         placeBox(top, 900);
         act(() => { window.dispatchEvent(new Event('scroll')); });
         await act(async () => { await new Promise((resolve) => requestAnimationFrame(() => resolve(null))); });
-        expect(screen.getByRole('dialog').style.top).toBe(initialTop);
+        expect(screen.getByRole('dialog').style.bottom).toBe(initialBottom);
       }
     });
 

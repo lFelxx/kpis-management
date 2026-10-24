@@ -52,6 +52,7 @@ export const AdvisersPage: React.FC = () => {
     sales: bestAdviser.totalSales,
     goalValue: bestAdviser.totalGoal,
     active: true,
+    teamRole: 'ADVISER' as const,
     currentMonthSales: bestAdviser.totalSales,
     monthlySummaries: [],
     upt: (() => {
@@ -67,6 +68,7 @@ export const AdvisersPage: React.FC = () => {
     sales: worstAdviser.totalSales,
     goalValue: worstAdviser.totalGoal,
     active: true,
+    teamRole: 'ADVISER' as const,
     currentMonthSales: worstAdviser.totalSales,
     monthlySummaries: [],
     upt: (() => {

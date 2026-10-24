@@ -9,7 +9,6 @@ interface Props {
   schedule: WeeklySchedule;
   weekDates: string[];
   brushes: Brush[];
-  activeBrush: Brush | null;
   onCellClick: (slot: ScheduleSlot) => void;
 }
 
@@ -164,7 +163,7 @@ function detectBrush(slot: ScheduleSlot, brushes: Brush[]): Brush | null {
   const s = slot.startTime.slice(0, 5);
   const e = slot.endTime?.slice(0, 5) ?? '';
   return brushes.find(b => !b.isRest && b.start === s && b.end === e) ?? {
-    id: 'custom', name: 'Turno', start: s, end: e, color: '#6b7280', isRest: false,
+    id: 'custom', name: 'Turno', start: s, end: e, color: '#6b7280', isRest: false, hasLunch: false,
   };
 }
 
@@ -326,7 +325,7 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
 
 // ─── Main grid ───────────────────────────────────────────────────────────────
 
-export function ScheduleGrid({ schedule, weekDates, brushes, activeBrush, onCellClick }: Props) {
+export function ScheduleGrid({ schedule, weekDates, brushes, onCellClick }: Props) {
   const { byDay, byAdviser } = parseWarnings(schedule.warnings ?? []);
 
   const ORDER: Record<string, number> = { ADMIN: 0, CO_ADMIN: 1, ADVISER: 2, AUXILIARY: 3 };
@@ -359,9 +358,7 @@ export function ScheduleGrid({ schedule, weekDates, brushes, activeBrush, onCell
   const ROLE_LABEL: Record<string, string> = {
     ADMIN: 'Admin', CO_ADMIN: 'Co-Admin', ADVISER: 'Asesor', AUXILIARY: 'Auxiliar',
   };
-  const ROLE_COLOR: Record<string, string> = {
-    ADMIN: '#8b5cf6', CO_ADMIN: '#06b6d4', ADVISER: '#10b981', AUXILIARY: '#f59e0b',
-  };
+
 
   return (
     <div className="rounded-[22px] overflow-hidden border"
@@ -425,7 +422,6 @@ export function ScheduleGrid({ schedule, weekDates, brushes, activeBrush, onCell
             const target = 44;
             const pct = Math.min(100, totalMin / (target * 60) * 100);
             const diff = totalMin / 60 - target;
-            const rc = ROLE_COLOR[role] ?? '#10b981';
             const adviserMsgs = byAdviser.get(name) ?? [];
             const hasAdviserWarn = adviserMsgs.length > 0;
 

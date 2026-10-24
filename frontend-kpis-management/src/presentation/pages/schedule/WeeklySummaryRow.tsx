@@ -5,10 +5,6 @@ interface Props {
   slots: ScheduleSlot[];
 }
 
-function hex2rgba(hex: string, a: number) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-}
 
 const ROLE_COLOR: Record<string, string> = {
   ADMIN: '#8b5cf6', CO_ADMIN: '#06b6d4', ADVISER: '#10b981', AUXILIARY: '#f59e0b',
