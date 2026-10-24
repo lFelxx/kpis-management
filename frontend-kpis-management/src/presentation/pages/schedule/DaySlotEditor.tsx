@@ -38,6 +38,7 @@ export function DaySlotEditor({ slot, isPublished, onClose, onSave, saving }: Pr
       endTime:   isRestDay ? null : toApi(endTime),
       isRestDay,
       notes: notes || null,
+      shiftTemplateId: slot.shiftTemplateId ?? null,
     });
   };
 

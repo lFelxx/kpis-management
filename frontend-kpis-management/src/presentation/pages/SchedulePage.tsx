@@ -68,6 +68,7 @@ export function SchedulePage() {
   const [exporting, setExporting]         = useState(false);
   const [exportingImg, setExportingImg]   = useState(false);
   const [brushOpen, setBrushOpen]         = useState(true);
+  const [showShiftNames, setShowShiftNames] = useState(true);
 
   // Auto-select first brush when templates load
   useEffect(() => {
@@ -143,6 +144,16 @@ export function SchedulePage() {
     setShowExportModal(false);
     try {
       const node = exportRef.current;
+
+      // Expand to full grid width regardless of screen size
+      const scrollDiv = node.querySelector('.overflow-x-auto') as HTMLElement | null;
+      const prevNodeOverflow = node.style.overflow;
+      const prevNodeMinWidth = node.style.minWidth;
+      const prevScrollOverflow = scrollDiv?.style.overflow ?? '';
+      node.style.overflow = 'visible';
+      node.style.minWidth = '1200px';
+      if (scrollDiv) scrollDiv.style.overflow = 'visible';
+
       const png = await toPng(node, {
         cacheBust: true,
         pixelRatio: 2,
@@ -150,6 +161,12 @@ export function SchedulePage() {
           .getPropertyValue('--bg').trim() || '#0a0a0a',
         filter: (el) => !(el instanceof HTMLElement && el.dataset.html2canvasIgnore === 'true'),
       });
+
+      // Restore
+      node.style.overflow = prevNodeOverflow;
+      node.style.minWidth = prevNodeMinWidth;
+      if (scrollDiv) scrollDiv.style.overflow = prevScrollOverflow;
+
       const link = document.createElement('a');
       link.download = `Horario ${current.weekStart} – ${current.weekEnd}.png`;
       link.href = png;
@@ -332,6 +349,8 @@ export function SchedulePage() {
               <ShiftBrushBar
                 activeBrushId={activeBrushId}
                 onSelectBrush={setActiveBrush}
+                showShiftNames={showShiftNames}
+                onToggleShiftNames={() => setShowShiftNames(v => !v)}
               />
             </motion.div>
           )}
@@ -404,7 +423,9 @@ export function SchedulePage() {
               schedule={current}
               weekDates={weekDates}
               brushes={brushes}
+              showShiftNames={showShiftNames}
               onCellClick={handleCellClick}
+              onCellDoubleClick={setEditingSlot}
             />
           </div>
 

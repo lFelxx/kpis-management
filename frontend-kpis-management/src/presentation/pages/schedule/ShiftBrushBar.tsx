@@ -48,9 +48,11 @@ const EMPTY_EDIT: EditState = { name: '', start: '08:00', end: '17:00', color: '
 interface Props {
   activeBrushId: string | null;
   onSelectBrush: (id: string | null) => void;
+  showShiftNames: boolean;
+  onToggleShiftNames: () => void;
 }
 
-export function ShiftBrushBar({ activeBrushId, onSelectBrush }: Props) {
+export function ShiftBrushBar({ activeBrushId, onSelectBrush, showShiftNames, onToggleShiftNames }: Props) {
   const { templates, loading, saving, fetchAll, create, update, remove } = useShiftTemplateStore();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -140,6 +142,29 @@ export function ShiftBrushBar({ activeBrushId, onSelectBrush }: Props) {
           </motion.div>
           Nuevo turno
         </motion.button>
+      </div>
+
+      {/* ── Show/hide names toggle ── */}
+      <div className="mb-3">
+        <button type="button" onClick={onToggleShiftNames}
+          className="relative flex items-center gap-2.5 cursor-pointer"
+          style={{ outline: 'none' }}>
+          <div className="relative w-9 h-5 rounded-full transition-all duration-200 shrink-0"
+            style={{
+              background: showShiftNames ? 'rgba(16,185,129,0.70)' : 'var(--s-subtle)',
+              border: `1.5px solid ${showShiftNames ? 'rgba(16,185,129,0.55)' : 'var(--b-subtle)'}`,
+            }}>
+            <div className="absolute top-[2px] h-3.5 w-3.5 rounded-full transition-all duration-200"
+              style={{
+                left: showShiftNames ? 'calc(100% - 16px)' : '2px',
+                background: showShiftNames ? 'white' : 'var(--t-muted)',
+              }} />
+          </div>
+          <span className="text-[11px] font-semibold transition-colors duration-150"
+            style={{ color: showShiftNames ? '#10b981' : 'var(--t-muted)' }}>
+            Mostrar nombres de turnos
+          </span>
+        </button>
       </div>
 
       {/* ── Brush pills ── */}

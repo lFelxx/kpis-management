@@ -9,7 +9,9 @@ interface Props {
   schedule: WeeklySchedule;
   weekDates: string[];
   brushes: Brush[];
+  showShiftNames: boolean;
   onCellClick: (slot: ScheduleSlot) => void;
+  onCellDoubleClick: (slot: ScheduleSlot) => void;
 }
 
 // 6am–midnight = 18h window for the time bar
@@ -186,11 +188,13 @@ interface CellProps {
   brushes: Brush[];
   isPublished: boolean;
   isToday: boolean;
-  columnWarnings: string[];  // warnings that apply to this day-column
+  showShiftNames: boolean;
+  columnWarnings: string[];
   onCellClick: (slot: ScheduleSlot) => void;
+  onCellDoubleClick: (slot: ScheduleSlot) => void;
 }
 
-function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick }: CellProps) {
+function Cell({ slot, brushes, isPublished, isToday, showShiftNames, columnWarnings, onCellClick, onCellDoubleClick }: CellProps) {
   const [shaking, setShaking] = useState(false);
   const hasColWarn = columnWarnings.length > 0;
 
@@ -211,6 +215,12 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
       return;
     }
     if (slot) onCellClick(slot);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPublished || !slot || slot.isRestDay || !slot.shiftTemplateId) return;
+    onCellDoubleClick(slot);
   };
 
   if (!slot) return (
@@ -265,11 +275,20 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
   const barLeft  = Math.max(0, (slotStart / 60 - SPAN_START) / SPAN * 100);
   const barWidth = Math.min(100 - barLeft, ((slotEnd - slotStart) / 60) / SPAN * 100);
 
+  // Detect if hours were manually overridden (slot times differ from template times)
+  const hasCustomHours = !isRest && slot.shiftTemplateId != null && slot.startTime != null && brush != null
+    && brush.start != null && slot.startTime.slice(0, 5) !== brush.start;
+
+  const displayStart = slot.startTime ? slot.startTime.slice(0, 5) : brush?.start ?? '';
+  const displayEnd   = slot.endTime   ? slot.endTime.slice(0, 5)   : brush?.end   ?? '';
+
   return (
     <motion.button
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       animate={shaking ? { x: [0, -3, 3, -3, 3, 0] } : { x: 0 }}
       transition={{ duration: 0.3 }}
+      title={!isPublished && !isRest && slot.shiftTemplateId ? 'Doble clic para ajustar horas' : undefined}
       className={[
         'h-[66px] w-full rounded-xl border flex flex-col justify-between px-2.5 py-2 text-left transition-all duration-150',
         isPublished ? 'cursor-not-allowed' : 'cursor-pointer',
@@ -278,7 +297,6 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
         background: hex2rgba(color, isToday ? 0.20 : 0.14),
         borderColor: warnBorder ?? hex2rgba(color, isToday ? 0.55 : 0.40),
         borderStyle: isRest ? 'dashed' : 'solid',
-        // Subtle amber glow background on column-warned cells
         boxShadow: hasColWarn ? 'inset 0 0 0 1px rgba(245,158,11,0.12)' : 'none',
       }}
       onMouseEnter={(e) => {
@@ -292,19 +310,31 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
         (e.currentTarget as HTMLElement).style.background = hex2rgba(color, isToday ? 0.20 : 0.14);
       }}
     >
+      {/* Top row: name + duration */}
       <div className="flex items-center justify-between gap-1">
-        <span className="text-[11px] font-semibold leading-none truncate" style={{ color }}>
-          {isRest ? 'Libre' : (brush?.name ?? 'Turno')}
-        </span>
-        {!isRest && netMins > 0 && (
-          <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--t-muted)' }}>{durationLabel}</span>
+        {showShiftNames && (
+          <span className="text-[11px] font-semibold leading-none truncate" style={{ color }}>
+            {isRest ? 'Libre' : (brush?.name ?? 'Turno')}
+          </span>
         )}
+        <div className="flex items-center gap-1 ml-auto shrink-0">
+          {hasCustomHours && (
+            <span title="Horas ajustadas" style={{
+              width: 5, height: 5, borderRadius: '50%',
+              background: color, opacity: 0.9, flexShrink: 0,
+            }} />
+          )}
+          {!isRest && netMins > 0 && (
+            <span className="text-[10px] font-mono" style={{ color: 'var(--t-muted)' }}>{durationLabel}</span>
+          )}
+        </div>
       </div>
 
-      {!isRest && !isNoHours && brush && brush.start && (
+      {!isRest && !isNoHours && displayStart && (
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-mono" style={{ color: 'var(--t-muted)' }}>
-            {fmtShort(brush.start)} – {fmtShort(brush.end)}
+          <span className={showShiftNames ? 'text-[11px] font-mono' : 'text-[11px] font-mono font-semibold'}
+            style={{ color: 'rgba(255,255,255,0.70)' }}>
+            {fmtShort(displayStart)} – {fmtShort(displayEnd)}
           </span>
           <div className="relative h-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <div className="absolute top-0 bottom-0 rounded-full"
@@ -325,7 +355,7 @@ function Cell({ slot, brushes, isPublished, isToday, columnWarnings, onCellClick
 
 // ─── Main grid ───────────────────────────────────────────────────────────────
 
-export function ScheduleGrid({ schedule, weekDates, brushes, onCellClick }: Props) {
+export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onCellClick, onCellDoubleClick }: Props) {
   const { byDay, byAdviser } = parseWarnings(schedule.warnings ?? []);
 
   const ORDER: Record<string, number> = { ADMIN: 0, CO_ADMIN: 1, ADVISER: 2, AUXILIARY: 3 };
@@ -465,8 +495,10 @@ export function ScheduleGrid({ schedule, weekDates, brushes, onCellClick }: Prop
                     brushes={brushes}
                     isPublished={isPublished}
                     isToday={day - 1 === todayIdx}
+                    showShiftNames={showShiftNames}
                     columnWarnings={byDay.get(day) ?? []}
                     onCellClick={onCellClick}
+                    onCellDoubleClick={onCellDoubleClick}
                   />
                 ))}
 

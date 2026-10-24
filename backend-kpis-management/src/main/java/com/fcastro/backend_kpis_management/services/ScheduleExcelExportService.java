@@ -69,6 +69,17 @@ public class ScheduleExcelExportService {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("HORARIO");
 
+            // Match original: landscape, 68% scale, tight margins
+            PrintSetup ps = sheet.getPrintSetup();
+            ps.setLandscape(true);
+            ps.setScale((short) 68);
+            sheet.setMargin(Sheet.LeftMargin,   0.25);
+            sheet.setMargin(Sheet.RightMargin,  0.25);
+            sheet.setMargin(Sheet.TopMargin,    0.75);
+            sheet.setMargin(Sheet.BottomMargin, 0.75);
+            sheet.setMargin(Sheet.HeaderMargin, 0.3);
+            sheet.setMargin(Sheet.FooterMargin, 0.3);
+
             applyColumnWidths(sheet);
 
             Styles s = new Styles(wb);
