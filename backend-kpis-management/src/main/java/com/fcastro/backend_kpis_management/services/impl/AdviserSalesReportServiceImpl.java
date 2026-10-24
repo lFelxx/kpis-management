@@ -9,6 +9,7 @@ import com.fcastro.backend_kpis_management.model.entities.AdviserSalesReport;
 import com.fcastro.backend_kpis_management.model.entities.Sale;
 import com.fcastro.backend_kpis_management.model.entities.WeeklySalesComparison;
 import com.fcastro.backend_kpis_management.model.entities.WeeklyTopProduct;
+import com.fcastro.backend_kpis_management.model.enums.TeamRole;
 import com.fcastro.backend_kpis_management.repositories.AdviserRepository;
 import com.fcastro.backend_kpis_management.repositories.AdviserSalesReportRepository;
 import com.fcastro.backend_kpis_management.repositories.SaleRepository;
@@ -46,8 +47,9 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
     public CsvUploadResponse processCsvReport(MultipartFile file) {
         List<CsvRow> rows = parseFile(file);
         Map<String, Adviser> advisersByNormalizedName = buildAdviserLookupMap();
+        Set<String> ignoredNames = buildIgnoredNamesSet();
 
-        List<String> unmatchedVendors = processMonthlyReports(rows, advisersByNormalizedName);
+        List<String> unmatchedVendors = processMonthlyReports(rows, advisersByNormalizedName, ignoredNames);
         processWeeklyComparisons(rows, advisersByNormalizedName);
         weeklyTopProductService.storeCurrentWeekTop(rows);
 
@@ -59,7 +61,9 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
 
     @Override
     public SalesReportPageResponse getByYearAndMonth(int year, int month) {
-        List<AdviserSalesReportResponse> advisers = salesReportRepository.findByYearAndMonth(year, month).stream()
+        List<AdviserSalesReportResponse> advisers = salesReportRepository
+                .findByYearAndMonthExcludingRoles(year, month, TeamRole.NON_SELLING)
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
 
@@ -70,12 +74,15 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
 
     // ─── Procesamiento mensual ────────────────────────────────────────────────
 
-    private List<String> processMonthlyReports(List<CsvRow> rows, Map<String, Adviser> advisersByNormalizedName) {
+    private List<String> processMonthlyReports(List<CsvRow> rows, Map<String, Adviser> advisersByNormalizedName, Set<String> ignoredNames) {
         Map<GroupKey, List<CsvRow>> rowsByGroup = groupByVendorAndPeriod(rows);
         List<String> unmatchedVendors = new ArrayList<>();
 
         for (Map.Entry<GroupKey, List<CsvRow>> entry : rowsByGroup.entrySet()) {
             GroupKey key = entry.getKey();
+
+            if (ignoredNames.contains(normalize(key.vendorName()))) continue;
+
             Optional<Adviser> adviserOpt = resolveAdviser(key.vendorName(), advisersByNormalizedName);
 
             if (adviserOpt.isEmpty()) {
@@ -231,12 +238,19 @@ public class AdviserSalesReportServiceImpl implements AdviserSalesReportService 
     // ─── Matching de asesores ─────────────────────────────────────────────────
 
     private Map<String, Adviser> buildAdviserLookupMap() {
-        return adviserRepository.findAll().stream()
+        return adviserRepository.findAllActiveSellingAdvisers(TeamRole.NON_SELLING).stream()
                 .collect(Collectors.toMap(
                         adviser -> normalize(adviser.getName() + " " + adviser.getLastname()),
                         adviser -> adviser,
                         (a, b) -> a
                 ));
+    }
+
+    private Set<String> buildIgnoredNamesSet() {
+        return adviserRepository.findAll().stream()
+                .filter(a -> TeamRole.NON_SELLING.contains(a.getTeamRole()))
+                .map(a -> normalize(a.getName() + " " + a.getLastname()))
+                .collect(Collectors.toSet());
     }
 
     private Map<GroupKey, List<CsvRow>> groupByVendorAndPeriod(List<CsvRow> rows) {
