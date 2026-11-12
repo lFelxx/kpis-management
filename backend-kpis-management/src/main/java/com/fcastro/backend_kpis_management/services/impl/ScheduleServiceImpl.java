@@ -10,6 +10,7 @@ import com.fcastro.backend_kpis_management.repositories.ScheduleConfigRepository
 import com.fcastro.backend_kpis_management.repositories.ScheduleSlotRepository;
 import com.fcastro.backend_kpis_management.repositories.ShiftTemplateRepository;
 import com.fcastro.backend_kpis_management.repositories.WeeklyScheduleRepository;
+import com.fcastro.backend_kpis_management.services.AdviserScheduleOrder;
 import com.fcastro.backend_kpis_management.services.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -216,10 +217,27 @@ public class ScheduleServiceImpl implements ScheduleService {
         return toResponse(schedule);
     }
 
+    @Override
+    @Transactional
+    public void reorderTeam(List<Long> adviserIds) {
+        if (adviserIds == null || adviserIds.stream().distinct().count() != adviserIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La lista de integrantes es inválida");
+        }
+        var advisers = adviserRepo.findAllById(adviserIds);
+        if (advisers.size() != adviserIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hay integrantes que no existen");
+        }
+        advisers.forEach(a -> a.setScheduleOrder(adviserIds.indexOf(a.getId())));
+        adviserRepo.saveAll(advisers);
+    }
+
     // --- mapping ---
 
     private WeeklyScheduleResponse toResponse(WeeklySchedule schedule) {
         List<ScheduleSlotResponse> slotResponses = schedule.getSlots().stream()
+                .sorted(java.util.Comparator
+                        .comparing(ScheduleSlot::getAdviser, AdviserScheduleOrder.COMPARATOR)
+                        .thenComparingInt(ScheduleSlot::getDayOfWeek))
                 .map(this::toSlotResponse)
                 .toList();
         List<WeeklyAdviserSummary> summaries = buildAdviserSummaries(schedule, slotResponses);

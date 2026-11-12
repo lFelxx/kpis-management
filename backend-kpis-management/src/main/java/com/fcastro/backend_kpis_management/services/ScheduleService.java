@@ -24,4 +24,6 @@ public interface ScheduleService {
     ScheduleConfigResponse saveConfig(ScheduleConfigRequest request);
 
     WeeklyScheduleResponse clearSlots(Long id);
+
+    void reorderTeam(List<Long> adviserIds);
 }

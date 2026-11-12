@@ -28,6 +28,7 @@ interface ScheduleActions {
   saveConfig(cfg: Partial<ScheduleConfig>): Promise<void>;
   clearSlots(id: number): Promise<void>;
   exportExcel(id: number, filename: string): Promise<void>;
+  reorderTeam(adviserIds: number[]): Promise<void>;
   clearCurrent(): void;
 }
 
@@ -183,6 +184,27 @@ export const useScheduleStore = create<ScheduleState & ScheduleActions>((set) =>
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
+      notificationService.showError((e as Error).message);
+    }
+  },
+
+  reorderTeam: async (adviserIds) => {
+    const rank = new Map(adviserIds.map((id, i) => [id, i]));
+    const byRank = <T extends { adviserId: number }>(items: T[]) =>
+      [...items].sort((a, b) => (rank.get(a.adviserId) ?? Infinity) - (rank.get(b.adviserId) ?? Infinity));
+
+    // Se reordena al instante; si el servidor falla se vuelve al orden anterior
+    let previous: WeeklySchedule | null = null;
+    set((s) => {
+      previous = s.current;
+      return s.current
+        ? { current: { ...s.current, slots: byRank(s.current.slots), adviserSummaries: byRank(s.current.adviserSummaries) } }
+        : {};
+    });
+    try {
+      await scheduleRepository.reorderTeam(adviserIds);
+    } catch (e) {
+      set({ current: previous });
       notificationService.showError((e as Error).message);
     }
   },

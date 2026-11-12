@@ -36,6 +36,10 @@ public class Adviser {
     @Column(name = "rest_day")
     private Integer restDay;
 
+    /** Posición en el horario (0 = primero). Null = aún sin ordenar a mano. */
+    @Column(name = "schedule_order")
+    private Integer scheduleOrder;
+
     @OneToMany(mappedBy = "adviser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Sale> sales;
 

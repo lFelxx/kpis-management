@@ -46,7 +46,7 @@ function findCurrentWeek(summaries: WeeklyScheduleSummary[]): WeeklyScheduleSumm
 export function SchedulePage() {
   const {
     summaries, current, loading, saving,
-    fetchAll, fetchById, create, generate, updateSlot, publish, unpublish, clearSlots, exportExcel,
+    fetchAll, fetchById, create, generate, updateSlot, publish, unpublish, clearSlots, exportExcel, reorderTeam,
   } = useScheduleStore();
 
   const startTour = useTourStore((s) => s.start);
@@ -420,6 +420,7 @@ export function SchedulePage() {
               </span>
             </div>
             <ScheduleGrid
+              onReorder={reorderTeam}
               schedule={current}
               weekDates={weekDates}
               brushes={brushes}

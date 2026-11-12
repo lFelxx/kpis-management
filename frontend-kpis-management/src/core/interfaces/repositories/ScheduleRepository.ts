@@ -17,4 +17,5 @@ export interface ScheduleRepository {
   saveConfig(cfg: Partial<ScheduleConfig>): Promise<ScheduleConfig>;
   clearSlots(id: number): Promise<WeeklySchedule>;
   exportExcel(id: number): Promise<Blob>;
+  reorderTeam(adviserIds: number[]): Promise<void>;
 }

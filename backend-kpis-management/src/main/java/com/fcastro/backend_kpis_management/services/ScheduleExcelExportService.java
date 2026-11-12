@@ -1,5 +1,6 @@
 package com.fcastro.backend_kpis_management.services;
 
+import com.fcastro.backend_kpis_management.model.entities.Adviser;
 import com.fcastro.backend_kpis_management.model.entities.ScheduleSlot;
 import com.fcastro.backend_kpis_management.model.entities.WeeklySchedule;
 import com.fcastro.backend_kpis_management.model.enums.TeamRole;
@@ -25,6 +26,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Replica exactamente el "Formato 1" del horario semanal en Excel.
@@ -266,24 +268,16 @@ public class ScheduleExcelExportService {
     // ─── Employee rows ────────────────────────────────────────────────────────────
 
     private void writeEmployeeRows(Sheet sheet, Styles s, WeeklySchedule schedule) {
-        // Group slots by adviser, sorted: ADMIN first, CO_ADMIN, then ADVISER/AUXILIARY by id
+        // Mismo orden que la pantalla: el que el usuario arrastró (ver AdviserScheduleOrder)
         var slots = schedule.getSlots();
 
+        // Por id: Adviser (@Data) no sirve para distinct() por sus colecciones
         List<Long> adviserOrder = slots.stream()
-                .map(sl -> sl.getAdviser().getId())
-                .distinct()
-                .sorted(Comparator.comparing(id -> {
-                    TeamRole role = slots.stream()
-                            .filter(sl -> sl.getAdviser().getId().equals(id))
-                            .findFirst().map(sl -> sl.getAdviser().getTeamRole())
-                            .orElse(TeamRole.ADVISER);
-                    return switch (role) {
-                        case ADMIN -> 0;
-                        case CO_ADMIN -> 1;
-                        case ADVISER -> 2;
-                        case AUXILIARY -> 3;
-                    };
-                }))
+                .map(ScheduleSlot::getAdviser)
+                .collect(Collectors.toMap(Adviser::getId, a -> a, (a, b) -> a))
+                .values().stream()
+                .sorted(AdviserScheduleOrder.COMPARATOR)
+                .map(Adviser::getId)
                 .toList();
 
         int rowIdx = 5; // Excel row 6

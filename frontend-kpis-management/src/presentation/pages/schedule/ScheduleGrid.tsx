@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
+import { MdDragIndicator } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { WeeklySchedule, ScheduleSlot, DAY_LABELS, grossMinutes, formatTotalWithLunch } from '../../../core/domain/Schedule/Schedule';
 import { Brush } from './ShiftBrushBar';
@@ -12,6 +13,8 @@ interface Props {
   showShiftNames: boolean;
   onCellClick: (slot: ScheduleSlot) => void;
   onCellDoubleClick: (slot: ScheduleSlot) => void;
+  /** Se llama al soltar una fila (o moverla con el teclado) con los ids en su nuevo orden. */
+  onReorder: (adviserIds: number[]) => void;
 }
 
 // 6am–midnight = 18h window for the time bar
@@ -353,20 +356,83 @@ function Cell({ slot, brushes, isPublished, isToday, showShiftNames, columnWarni
   );
 }
 
+// ─── Fila reordenable ────────────────────────────────────────────────────────
+
+interface ReorderRowProps {
+  id: number;
+  name: string;
+  /** Mueve la fila una posición (-1 arriba, 1 abajo); es la alternativa al arrastre para teclado. */
+  onMove: (delta: -1 | 1) => void;
+  onDragEnd: () => void;
+  children: React.ReactNode;
+}
+
+function ReorderRow({ id, name, onMove, onDragEnd, children }: ReorderRowProps) {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      as="div"
+      value={id}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
+      whileDrag={{ scale: 1.005, boxShadow: '0 14px 36px rgba(0,0,0,0.35)', backgroundColor: 'var(--s-card)', zIndex: 20 }}
+      className="group/row relative grid gap-2 px-5 py-2.5 border-b transition-colors hover:bg-white/[0.015]"
+      style={{ gridTemplateColumns: '210px repeat(7, minmax(0, 1fr)) 160px', borderColor: 'var(--b-line)' }}
+    >
+      {/* Está fuera del flujo (absolute) y no sale en la imagen exportada */}
+      <button
+        type="button"
+        data-html2canvas-ignore="true"
+        aria-label={`Reordenar a ${name}: arrastra o usa las flechas arriba y abajo`}
+        onPointerDown={(e) => controls.start(e)}
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+          e.preventDefault();
+          onMove(e.key === 'ArrowUp' ? -1 : 1);
+        }}
+        className="absolute left-0.5 top-1/2 -translate-y-1/2 w-[18px] h-9 flex items-center justify-center rounded-md cursor-grab active:cursor-grabbing touch-none opacity-30 group-hover/row:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline-2 focus-visible:outline-emerald-500"
+        style={{ color: 'var(--t-muted)' }}
+      >
+        <MdDragIndicator size={16} aria-hidden="true" />
+      </button>
+      {children}
+    </Reorder.Item>
+  );
+}
+
 // ─── Main grid ───────────────────────────────────────────────────────────────
 
-export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onCellClick, onCellDoubleClick }: Props) {
+export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onCellClick, onCellDoubleClick, onReorder }: Props) {
   const { byDay, byAdviser } = parseWarnings(schedule.warnings ?? []);
 
-  const ORDER: Record<string, number> = { ADMIN: 0, CO_ADMIN: 1, ADVISER: 2, AUXILIARY: 3 };
   const grouped = new Map<number, { name: string; role: string; slots: ScheduleSlot[] }>();
   for (const slot of schedule.slots) {
     if (!grouped.has(slot.adviserId))
       grouped.set(slot.adviserId, { name: slot.adviserName, role: slot.teamRole, slots: [] });
     grouped.get(slot.adviserId)!.slots.push(slot);
   }
-  const rows = [...grouped.entries()]
-    .sort((a, b) => (ORDER[a[1].role] ?? 9) - (ORDER[b[1].role] ?? 9));
+
+  // El servidor ya manda los integrantes en el orden elegido; `order` es la copia viva mientras se arrastra
+  const serverOrder = [...grouped.keys()];
+  const serverKey = serverOrder.join(',');
+  const [order, setOrder] = useState(serverOrder);
+  const [syncedKey, setSyncedKey] = useState(serverKey);
+  if (serverKey !== syncedKey) { setSyncedKey(serverKey); setOrder(serverOrder); }
+
+  const rows = order.flatMap((id) => (grouped.has(id) ? [[id, grouped.get(id)!] as const] : []));
+
+  const commitOrder = (ids: number[]) => { if (ids.join(',') !== serverKey) onReorder(ids); };
+  const moveRow = (id: number, delta: -1 | 1) => {
+    const from = order.indexOf(id);
+    const to = from + delta;
+    if (to < 0 || to >= order.length) return;
+    const next = [...order];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    setOrder(next);
+    commitOrder(next);
+  };
 
   const isPublished = schedule.status === 'PUBLISHED';
   const today = new Date().toISOString().slice(0, 10);
@@ -444,6 +510,7 @@ export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onC
           </div>
 
           {/* Rows */}
+          <Reorder.Group as="div" axis="y" values={order} onReorder={setOrder}>
           {rows.map(([adviserId, { name, role, slots }], rowIndex) => {
             const byDay2 = new Map(slots.map(s => [s.dayOfWeek, s]));
             const totalMin = slots.reduce((a, s) => a + s.netMinutes, 0);
@@ -456,15 +523,9 @@ export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onC
             const hasAdviserWarn = adviserMsgs.length > 0;
 
             return (
-              <div key={adviserId}
-                className="grid gap-2 px-5 py-2.5 border-b transition-colors"
-                style={{
-                  gridTemplateColumns: '210px repeat(7, minmax(0, 1fr)) 160px',
-                  borderColor: 'var(--b-line)',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.015)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
+              <ReorderRow key={adviserId} id={adviserId} name={name}
+                onMove={(delta) => moveRow(adviserId, delta)}
+                onDragEnd={() => commitOrder(order)}>
                 {/* Adviser info — amber left stripe if has warnings */}
                 <div className="flex items-center gap-3 min-w-0 py-1 pl-1"
                   style={{
@@ -523,9 +584,10 @@ export function ScheduleGrid({ schedule, weekDates, brushes, showShiftNames, onC
                     {formatTotalWithLunch(totalGrossMin, totalMin)}
                   </span>
                 </div>
-              </div>
+              </ReorderRow>
             );
           })}
+          </Reorder.Group>
 
           {/* Coverage footer */}
           <div data-tour="coverage" data-html2canvas-ignore="true" className="grid gap-2 px-5 py-4"

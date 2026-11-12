@@ -108,6 +108,15 @@ export class ScheduleApiRepository implements ScheduleRepository {
     return r.json();
   }
 
+  async reorderTeam(adviserIds: number[]): Promise<void> {
+    const r = await request(
+      `${this.base}/team-order`,
+      { method: 'PUT', body: JSON.stringify({ adviserIds }) },
+      { requireAuth: true }
+    );
+    if (!r.ok) throw new Error('Error al guardar el orden del equipo');
+  }
+
   async exportExcel(id: number): Promise<Blob> {
     const r = await request(`${this.base}/${id}/export`, {}, { requireAuth: true });
     if (!r.ok) throw new Error('Error al exportar el horario');

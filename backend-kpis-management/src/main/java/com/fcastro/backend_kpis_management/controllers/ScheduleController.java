@@ -86,6 +86,13 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.clearSlots(id));
     }
 
+    @PutMapping("/team-order")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ResponseEntity<Void> reorderTeam(@RequestBody TeamOrderRequest request) {
+        scheduleService.reorderTeam(request.adviserIds());
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/config")
     public ResponseEntity<ScheduleConfigResponse> getConfig() {
         return ResponseEntity.ok(scheduleService.getConfig());

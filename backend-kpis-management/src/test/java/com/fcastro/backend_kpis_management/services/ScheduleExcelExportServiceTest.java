@@ -151,6 +151,26 @@ class ScheduleExcelExportServiceTest {
         assertThat(a.getDy2()).isEqualTo(dy2);
     }
 
+    @Test
+    void export_respetaElOrdenElegidoPorElUsuario() throws Exception {
+        ScheduleSlot ana = slot(1, 1, "Ana", "Ruiz");
+        ScheduleSlot beto = slot(1, 2, "Beto", "Paz");
+        ana.getAdviser().setScheduleOrder(1);
+        beto.getAdviser().setScheduleOrder(0);
+
+        WeeklySchedule schedule = new WeeklySchedule();
+        schedule.setId(2L);
+        schedule.setWeekStart(LocalDate.of(2026, 10, 19));
+        schedule.setWeekEnd(LocalDate.of(2026, 10, 25));
+        schedule.setSlots(List.of(ana, beto));
+        when(scheduleRepo.findById(2L)).thenReturn(Optional.of(schedule));
+
+        XSSFSheet ordered = new XSSFWorkbook(new ByteArrayInputStream(service.buildFormat1(2L))).getSheetAt(0);
+
+        assertThat(ordered.getRow(5).getCell(0).getStringCellValue()).isEqualTo("BETO PAZ");
+        assertThat(ordered.getRow(6).getCell(0).getStringCellValue()).isEqualTo("ANA RUIZ");
+    }
+
     private void assertCrop(XSSFPicture picture, int left, int top, int right, int bottom) {
         CTRelativeRect crop = picture.getCTPicture().getBlipFill().getSrcRect();
         assertThat(crop.getL()).isEqualTo(left);
